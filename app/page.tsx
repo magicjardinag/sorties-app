@@ -1,6 +1,6 @@
 "use client"
-
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 
 const evenements = [
   { id: 1, titre: "Concert Jazz", ville: "Paris", quand: "Ce soir", prix: "Gratuit", categorie: "Musique", emoji: "🎵", couleur: "bg-purple-100" },
@@ -22,6 +22,7 @@ const categories = [
 ]
 
 export default function Home() {
+  const router = useRouter()
   const [categorieActive, setCategorieActive] = useState("Tout")
   const [recherche, setRecherche] = useState("")
 
@@ -90,7 +91,7 @@ export default function Home() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {evenementsFiltres.map((e) => (
-              <div key={e.id} className="bg-white rounded-xl shadow p-4 hover:shadow-md transition-shadow cursor-pointer">
+              <div key={e.id} onClick={() => router.push(`/evenement/${e.id}`)} className="bg-white rounded-xl shadow p-4 hover:shadow-md transition-shadow cursor-pointer">
                 <div className={`${e.couleur} rounded-lg h-32 mb-3 flex items-center justify-center text-4xl`}>
                   {e.emoji}
                 </div>
