@@ -1,15 +1,7 @@
 "use client"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-
-const evenements = [
-  { id: 1, titre: "Concert Jazz", ville: "Paris", quand: "Ce soir", prix: "Gratuit", categorie: "Musique", emoji: "🎵", couleur: "bg-purple-100" },
-  { id: 2, titre: "Expo Photo", ville: "Lyon", quand: "Demain", prix: "5€", categorie: "Culture", emoji: "🎨", couleur: "bg-orange-100" },
-  { id: 3, titre: "Course urbaine", ville: "Bordeaux", quand: "Samedi", prix: "10€", categorie: "Sport", emoji: "🏃", couleur: "bg-green-100" },
-  { id: 4, titre: "Marché bio", ville: "Nantes", quand: "Dimanche", prix: "Gratuit", categorie: "Food", emoji: "🍕", couleur: "bg-yellow-100" },
-  { id: 5, titre: "Randonnée forêt", ville: "Grenoble", quand: "Samedi", prix: "Gratuit", categorie: "Nature", emoji: "🌿", couleur: "bg-emerald-100" },
-  { id: 6, titre: "Festival Rock", ville: "Paris", quand: "Vendredi", prix: "15€", categorie: "Musique", emoji: "🎸", couleur: "bg-purple-100" },
-]
+import { supabase } from "@/lib/supabase"
 
 const categories = [
   { label: "Tout", emoji: "✨" },
@@ -21,13 +13,44 @@ const categories = [
   { label: "Gratuit", emoji: "🎁" },
 ]
 
+type Evenement = {
+  id: number
+  titre: string
+  categorie: string
+  ville: string
+  quand: string
+  heure: string
+  prix: string
+  emoji: string
+  couleur: string
+  organisateur: string
+  description: string
+}
+
 export default function Home() {
   const router = useRouter()
   const [categorieActive, setCategorieActive] = useState("Tout")
   const [recherche, setRecherche] = useState("")
+  const [evenements, setEvenements] = useState<Evenement[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchEvenements = async () => {
+      const { data, error } = await supabase
+        .from("evenements")
+        .select("*")
+      if (error) {
+        console.error(error)
+      } else {
+        setEvenements(data || [])
+      }
+      setLoading(false)
+    }
+    fetchEvenements()
+  }, [])
 
   const evenementsFiltres = evenements.filter((e) => {
-    const matchCategorie = categorieActive === "Tout" || 
+    const matchCategorie = categorieActive === "Tout" ||
       (categorieActive === "Gratuit" ? e.prix === "Gratuit" : e.categorie === categorieActive)
     const matchRecherche = e.titre.toLowerCase().includes(recherche.toLowerCase()) ||
       e.ville.toLowerCase().includes(recherche.toLowerCase())
@@ -43,8 +66,8 @@ export default function Home() {
           <p className="text-gray-500 text-sm">Trouve des activités près de chez toi</p>
         </div>
         <button onClick={() => router.push("/publier")} className="bg-purple-600 text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-purple-700">
-  Publier un événement
-</button>
+          Publier un événement
+        </button>
       </header>
 
       {/* Hero */}
@@ -80,32 +103,41 @@ export default function Home() {
 
       {/* Événements */}
       <section className="px-6 py-8">
-        <h3 className="text-xl font-bold text-gray-800 mb-4">
-          {evenementsFiltres.length} événement{evenementsFiltres.length > 1 ? "s" : ""} trouvé{evenementsFiltres.length > 1 ? "s" : ""}
-        </h3>
-        {evenementsFiltres.length === 0 ? (
+        {loading ? (
           <div className="text-center py-16 text-gray-400">
-            <p className="text-4xl mb-4">😕</p>
-            <p className="text-lg">Aucun événement trouvé</p>
+            <p className="text-4xl mb-4">⏳</p>
+            <p className="text-lg">Chargement des événements...</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {evenementsFiltres.map((e) => (
-              <div key={e.id} onClick={() => router.push(`/evenement/${e.id}`)} className="bg-white rounded-xl shadow p-4 hover:shadow-md transition-shadow cursor-pointer">
-                <div className={`${e.couleur} rounded-lg h-32 mb-3 flex items-center justify-center text-4xl`}>
-                  {e.emoji}
-                </div>
-                <span className="text-xs bg-purple-100 text-purple-600 px-2 py-1 rounded-full font-medium">
-                  {e.categorie}
-                </span>
-                <h4 className="font-bold text-gray-800 mt-2">{e.titre}</h4>
-                <p className="text-gray-500 text-sm">{e.ville} • {e.quand}</p>
-                <p className={`font-medium text-sm mt-1 ${e.prix === "Gratuit" ? "text-green-600" : "text-gray-800"}`}>
-                  {e.prix}
-                </p>
+          <>
+            <h3 className="text-xl font-bold text-gray-800 mb-4">
+              {evenementsFiltres.length} événement{evenementsFiltres.length > 1 ? "s" : ""} trouvé{evenementsFiltres.length > 1 ? "s" : ""}
+            </h3>
+            {evenementsFiltres.length === 0 ? (
+              <div className="text-center py-16 text-gray-400">
+                <p className="text-4xl mb-4">😕</p>
+                <p className="text-lg">Aucun événement trouvé</p>
               </div>
-            ))}
-          </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {evenementsFiltres.map((e) => (
+                  <div key={e.id} onClick={() => router.push(`/evenement/${e.id}`)} className="bg-white rounded-xl shadow p-4 hover:shadow-md transition-shadow cursor-pointer">
+                    <div className={`${e.couleur} rounded-lg h-32 mb-3 flex items-center justify-center text-4xl`}>
+                      {e.emoji}
+                    </div>
+                    <span className="text-xs bg-purple-100 text-purple-600 px-2 py-1 rounded-full font-medium">
+                      {e.categorie}
+                    </span>
+                    <h4 className="font-bold text-gray-800 mt-2">{e.titre}</h4>
+                    <p className="text-gray-500 text-sm">{e.ville} • {e.quand}</p>
+                    <p className={`font-medium text-sm mt-1 ${e.prix === "Gratuit" ? "text-green-600" : "text-gray-800"}`}>
+                      {e.prix}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </section>
     </main>
