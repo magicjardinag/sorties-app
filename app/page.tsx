@@ -59,18 +59,21 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-gray-50">
-      {/* Header */}
       <header className="bg-white shadow-sm py-4 px-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-purple-600">SortiesApp</h1>
           <p className="text-gray-500 text-sm">Trouve des activités près de chez toi</p>
         </div>
-        <button onClick={() => router.push("/publier")} className="bg-purple-600 text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-purple-700">
-          Publier un événement
-        </button>
+        <div className="flex gap-3">
+          <button onClick={() => router.push("/auth")} className="border border-purple-600 text-purple-600 px-4 py-2 rounded-full text-sm font-medium hover:bg-purple-50">
+            Se connecter
+          </button>
+          <button onClick={() => router.push("/publier")} className="bg-purple-600 text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-purple-700">
+            Publier un événement
+          </button>
+        </div>
       </header>
 
-      {/* Hero */}
       <section className="bg-purple-600 py-12 px-6 text-center">
         <h2 className="text-white text-3xl font-bold mb-4">
           Que faire près de chez toi ?
@@ -84,7 +87,6 @@ export default function Home() {
         />
       </section>
 
-      {/* Filtres */}
       <section className="px-6 py-4 bg-white border-b flex gap-3 overflow-x-auto">
         {categories.map((cat) => (
           <button
@@ -101,7 +103,6 @@ export default function Home() {
         ))}
       </section>
 
-      {/* Événements */}
       <section className="px-6 py-8">
         {loading ? (
           <div className="text-center py-16 text-gray-400">
