@@ -65,13 +65,16 @@ export default function Home() {
           <p className="text-gray-500 text-sm">Trouve des activités près de chez toi</p>
         </div>
         <div className="flex gap-3">
-          <button onClick={() => router.push("/auth")} className="border border-purple-600 text-purple-600 px-4 py-2 rounded-full text-sm font-medium hover:bg-purple-50">
-            Se connecter
-          </button>
-          <button onClick={() => router.push("/publier")} className="bg-purple-600 text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-purple-700">
-            Publier un événement
-          </button>
-        </div>
+  <button onClick={() => router.push("/carte")} className="border border-gray-300 text-gray-600 px-4 py-2 rounded-full text-sm font-medium hover:bg-gray-50">
+    🗺️ Carte
+  </button>
+  <button onClick={() => router.push("/auth")} className="border border-purple-600 text-purple-600 px-4 py-2 rounded-full text-sm font-medium hover:bg-purple-50">
+    Se connecter
+  </button>
+  <button onClick={() => router.push("/publier")} className="bg-purple-600 text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-purple-700">
+    Publier un événement
+  </button>
+</div>
       </header>
 
       <section className="bg-purple-600 py-12 px-6 text-center">
