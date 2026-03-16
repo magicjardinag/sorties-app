@@ -42,9 +42,9 @@ export default function Home() {
           <h1 className="text-2xl font-bold text-purple-600">SortiesApp</h1>
           <p className="text-gray-500 text-sm">Trouve des activités près de chez toi</p>
         </div>
-        <button className="bg-purple-600 text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-purple-700">
-          Publier un événement
-        </button>
+        <button onClick={() => router.push("/publier")} className="bg-purple-600 text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-purple-700">
+  Publier un événement
+</button>
       </header>
 
       {/* Hero */}
