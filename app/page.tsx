@@ -33,20 +33,20 @@ export default function Home() {
   const [recherche, setRecherche] = useState("")
   const [evenements, setEvenements] = useState<Evenement[]>([])
   const [loading, setLoading] = useState(true)
+  const [user, setUser] = useState<any>(null)
 
   useEffect(() => {
     const fetchEvenements = async () => {
-      const { data, error } = await supabase
-        .from("evenements")
-        .select("*")
-      if (error) {
-        console.error(error)
-      } else {
-        setEvenements(data || [])
-      }
+      const { data, error } = await supabase.from("evenements").select("*")
+      if (error) { console.error(error) } else { setEvenements(data || []) }
       setLoading(false)
     }
+    const fetchUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      setUser(user)
+    }
     fetchEvenements()
+    fetchUser()
   }, [])
 
   const evenementsFiltres = evenements.filter((e) => {
@@ -65,16 +65,22 @@ export default function Home() {
           <p className="text-gray-500 text-sm">Trouve des activités près de chez toi</p>
         </div>
         <div className="flex gap-3">
-  <button onClick={() => router.push("/carte")} className="border border-gray-300 text-gray-600 px-4 py-2 rounded-full text-sm font-medium hover:bg-gray-50">
-    🗺️ Carte
-  </button>
-  <button onClick={() => router.push("/auth")} className="border border-purple-600 text-purple-600 px-4 py-2 rounded-full text-sm font-medium hover:bg-purple-50">
-    Se connecter
-  </button>
-  <button onClick={() => router.push("/publier")} className="bg-purple-600 text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-purple-700">
-    Publier un événement
-  </button>
-</div>
+          <button onClick={() => router.push("/carte")} className="border border-gray-300 text-gray-600 px-4 py-2 rounded-full text-sm font-medium hover:bg-gray-50">
+            🗺️ Carte
+          </button>
+          {user ? (
+            <button onClick={() => router.push("/dashboard")} className="border border-purple-600 text-purple-600 px-4 py-2 rounded-full text-sm font-medium hover:bg-purple-50">
+              Mon espace
+            </button>
+          ) : (
+            <button onClick={() => router.push("/auth")} className="border border-purple-600 text-purple-600 px-4 py-2 rounded-full text-sm font-medium hover:bg-purple-50">
+              Se connecter
+            </button>
+          )}
+          <button onClick={() => router.push("/publier")} className="bg-purple-600 text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-purple-700">
+            Publier un événement
+          </button>
+        </div>
       </header>
 
       <section className="bg-purple-600 py-12 px-6 text-center">
