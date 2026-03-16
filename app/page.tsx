@@ -1,14 +1,52 @@
-import Image from "next/image";
+"use client"
+
+import { useState } from "react"
+
+const evenements = [
+  { id: 1, titre: "Concert Jazz", ville: "Paris", quand: "Ce soir", prix: "Gratuit", categorie: "Musique", emoji: "🎵", couleur: "bg-purple-100" },
+  { id: 2, titre: "Expo Photo", ville: "Lyon", quand: "Demain", prix: "5€", categorie: "Culture", emoji: "🎨", couleur: "bg-orange-100" },
+  { id: 3, titre: "Course urbaine", ville: "Bordeaux", quand: "Samedi", prix: "10€", categorie: "Sport", emoji: "🏃", couleur: "bg-green-100" },
+  { id: 4, titre: "Marché bio", ville: "Nantes", quand: "Dimanche", prix: "Gratuit", categorie: "Food", emoji: "🍕", couleur: "bg-yellow-100" },
+  { id: 5, titre: "Randonnée forêt", ville: "Grenoble", quand: "Samedi", prix: "Gratuit", categorie: "Nature", emoji: "🌿", couleur: "bg-emerald-100" },
+  { id: 6, titre: "Festival Rock", ville: "Paris", quand: "Vendredi", prix: "15€", categorie: "Musique", emoji: "🎸", couleur: "bg-purple-100" },
+]
+
+const categories = [
+  { label: "Tout", emoji: "✨" },
+  { label: "Musique", emoji: "🎵" },
+  { label: "Sport", emoji: "🏃" },
+  { label: "Culture", emoji: "🎨" },
+  { label: "Food", emoji: "🍕" },
+  { label: "Nature", emoji: "🌿" },
+  { label: "Gratuit", emoji: "🎁" },
+]
+
 export default function Home() {
+  const [categorieActive, setCategorieActive] = useState("Tout")
+  const [recherche, setRecherche] = useState("")
+
+  const evenementsFiltres = evenements.filter((e) => {
+    const matchCategorie = categorieActive === "Tout" || 
+      (categorieActive === "Gratuit" ? e.prix === "Gratuit" : e.categorie === categorieActive)
+    const matchRecherche = e.titre.toLowerCase().includes(recherche.toLowerCase()) ||
+      e.ville.toLowerCase().includes(recherche.toLowerCase())
+    return matchCategorie && matchRecherche
+  })
+
   return (
     <main className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow-sm py-4 px-6">
-        <h1 className="text-2xl font-bold text-purple-600">SortiesApp</h1>
-        <p className="text-gray-500 text-sm">Trouve des activités près de chez toi</p>
+      <header className="bg-white shadow-sm py-4 px-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-purple-600">SortiesApp</h1>
+          <p className="text-gray-500 text-sm">Trouve des activités près de chez toi</p>
+        </div>
+        <button className="bg-purple-600 text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-purple-700">
+          Publier un événement
+        </button>
       </header>
 
-      {/* Barre de recherche */}
+      {/* Hero */}
       <section className="bg-purple-600 py-12 px-6 text-center">
         <h2 className="text-white text-3xl font-bold mb-4">
           Que faire près de chez toi ?
@@ -17,30 +55,57 @@ export default function Home() {
           type="text"
           placeholder="Recherche un événement, une ville..."
           className="w-full max-w-xl px-4 py-3 rounded-full text-gray-800 shadow-md outline-none"
+          value={recherche}
+          onChange={(e) => setRecherche(e.target.value)}
         />
+      </section>
+
+      {/* Filtres */}
+      <section className="px-6 py-4 bg-white border-b flex gap-3 overflow-x-auto">
+        {categories.map((cat) => (
+          <button
+            key={cat.label}
+            onClick={() => setCategorieActive(cat.label)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-medium whitespace-nowrap transition-colors ${
+              categorieActive === cat.label
+                ? "bg-purple-600 text-white border-purple-600"
+                : "border-gray-200 text-gray-600 hover:bg-purple-50 hover:border-purple-300 hover:text-purple-600"
+            }`}
+          >
+            {cat.emoji} {cat.label}
+          </button>
+        ))}
       </section>
 
       {/* Événements */}
       <section className="px-6 py-8">
-        <h3 className="text-xl font-bold text-gray-800 mb-4">Événements à la une</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Carte événement */}
-          <div className="bg-white rounded-xl shadow p-4">
-            <div className="bg-purple-100 rounded-lg h-32 mb-3 flex items-center justify-center text-purple-400 text-4xl">🎵</div>
-            <h4 className="font-bold text-gray-800">Concert Jazz</h4>
-            <p className="text-gray-500 text-sm">Paris • Ce soir • Gratuit</p>
+        <h3 className="text-xl font-bold text-gray-800 mb-4">
+          {evenementsFiltres.length} événement{evenementsFiltres.length > 1 ? "s" : ""} trouvé{evenementsFiltres.length > 1 ? "s" : ""}
+        </h3>
+        {evenementsFiltres.length === 0 ? (
+          <div className="text-center py-16 text-gray-400">
+            <p className="text-4xl mb-4">😕</p>
+            <p className="text-lg">Aucun événement trouvé</p>
           </div>
-          <div className="bg-white rounded-xl shadow p-4">
-            <div className="bg-orange-100 rounded-lg h-32 mb-3 flex items-center justify-center text-orange-400 text-4xl">🎨</div>
-            <h4 className="font-bold text-gray-800">Expo Photo</h4>
-            <p className="text-gray-500 text-sm">Lyon • Demain • 5€</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {evenementsFiltres.map((e) => (
+              <div key={e.id} className="bg-white rounded-xl shadow p-4 hover:shadow-md transition-shadow cursor-pointer">
+                <div className={`${e.couleur} rounded-lg h-32 mb-3 flex items-center justify-center text-4xl`}>
+                  {e.emoji}
+                </div>
+                <span className="text-xs bg-purple-100 text-purple-600 px-2 py-1 rounded-full font-medium">
+                  {e.categorie}
+                </span>
+                <h4 className="font-bold text-gray-800 mt-2">{e.titre}</h4>
+                <p className="text-gray-500 text-sm">{e.ville} • {e.quand}</p>
+                <p className={`font-medium text-sm mt-1 ${e.prix === "Gratuit" ? "text-green-600" : "text-gray-800"}`}>
+                  {e.prix}
+                </p>
+              </div>
+            ))}
           </div>
-          <div className="bg-white rounded-xl shadow p-4">
-            <div className="bg-green-100 rounded-lg h-32 mb-3 flex items-center justify-center text-green-400 text-4xl">🏃</div>
-            <h4 className="font-bold text-gray-800">Course urbaine</h4>
-            <p className="text-gray-500 text-sm">Bordeaux • Samedi • 10€</p>
-          </div>
-        </div>
+        )}
       </section>
     </main>
   )
