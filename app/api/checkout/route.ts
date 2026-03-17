@@ -3,7 +3,10 @@ import Stripe from "stripe"
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 
-export async function POST() {
+export async function POST(request: Request) {
+  const body = await request.json()
+  const { titre, categorie, ville, date, heure, prix, description } = body
+
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ["card"],
     line_items: [
@@ -12,7 +15,7 @@ export async function POST() {
           currency: "eur",
           product_data: {
             name: "Publication d'un événement",
-            description: "Publiez votre événement sur SortiesApp",
+            description: `${titre} - ${ville}`,
           },
           unit_amount: 990,
         },
@@ -20,8 +23,17 @@ export async function POST() {
       },
     ],
     mode: "payment",
-    success_url: "http://localhost:3000/publier/success",
-    cancel_url: "http://localhost:3000/publier",
+    success_url: `${process.env.NEXT_PUBLIC_URL}/publier/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${process.env.NEXT_PUBLIC_URL}/publier`,
+    metadata: {
+      titre,
+      categorie,
+      ville,
+      date,
+      heure,
+      prix: prix || "Gratuit",
+      description,
+    },
   })
 
   return NextResponse.json({ url: session.url })
