@@ -41,7 +41,7 @@ export default function Admin() {
     const { data } = await supabase
       .from("evenements")
       .select("*")
-      .order("created_at", { ascending: false })
+      .order("titre", { ascending: true })
     setEvenements(data || [])
     setLoading(false)
   }
