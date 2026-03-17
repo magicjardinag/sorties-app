@@ -45,17 +45,18 @@ export async function POST(request: Request) {
 
     await supabase.from("evenements").insert({
       titre,
-      categorie,
-      ville,
-      quand: date,
-      heure,
-      prix,
-      description,
-      emoji: emojis[categorie] || "🎉",
-      couleur: couleurs[categorie] || "bg-blue-100",
-      organisateur: session.customer_details?.email || "Organisateur",
-      user_id: session.metadata?.user_id || null,
-    })
+  categorie,
+  ville,
+  quand: date,
+  heure,
+  prix,
+  description,
+  emoji: emojis[categorie] || "🎉",
+  couleur: couleurs[categorie] || "bg-blue-100",
+  organisateur: session.customer_details?.email || "Organisateur",
+  user_id: session.metadata?.user_id || null,
+  statut: "en_attente",
+})
   }
 
   return NextResponse.json({ received: true })

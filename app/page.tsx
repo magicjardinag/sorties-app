@@ -40,7 +40,7 @@ export default function Home() {
 
   useEffect(() => {
     const fetchEvenements = async () => {
-      const { data, error } = await supabase.from("evenements").select("*")
+      const { data, error } = await supabase.from("evenements").select("*").eq("statut", "approuve")
       if (error) { console.error(error) } else { setEvenements(data || []) }
       setLoading(false)
     }
