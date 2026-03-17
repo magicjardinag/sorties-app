@@ -34,7 +34,8 @@ export default function Home() {
   const [evenements, setEvenements] = useState<Evenement[]>([])
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
-  const [pub, setPub] = useState<any>(null)
+  const [pubs, setPubs] = useState<any[]>([])
+  const [pubIndex, setPubIndex] = useState(0)
   const [showPub, setShowPub] = useState(true)
 
   useEffect(() => {
@@ -47,19 +48,25 @@ export default function Home() {
       const { data: { user } } = await supabase.auth.getUser()
       setUser(user)
     }
-    const fetchPub = async () => {
+    const fetchPubs = async () => {
       const { data } = await supabase
         .from("publicites")
         .select("*")
         .eq("actif", true)
-        .limit(1)
-        .single()
-      setPub(data)
+      setPubs(data || [])
     }
     fetchEvenements()
     fetchUser()
-    fetchPub()
+    fetchPubs()
   }, [])
+
+  useEffect(() => {
+    if (pubs.length === 0) return
+    const interval = setInterval(() => {
+      setPubIndex((prev) => (prev + 1) % pubs.length)
+    }, 4000)
+    return () => clearInterval(interval)
+  }, [pubs])
 
   const evenementsFiltres = evenements.filter((e) => {
     const matchCategorie = categorieActive === "Tout" ||
@@ -95,20 +102,23 @@ export default function Home() {
         </div>
       </header>
 
-      {pub && showPub && (
+      {pubs.length > 0 && showPub && (
         <div className="bg-amber-50 border-b border-amber-200 px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <span className="text-xs bg-amber-200 text-amber-800 px-2 py-1 rounded-full font-medium">Pub</span>
-            <span className="text-sm font-medium text-amber-900">{pub.nom_commerce}</span>
-            <span className="text-sm text-amber-700">{pub.description}</span>
+            <span className="text-sm font-medium text-amber-900">{pubs[pubIndex]?.nom_commerce}</span>
+            <span className="text-sm text-amber-700">{pubs[pubIndex]?.description}</span>
           </div>
           <div className="flex items-center gap-3">
-            <a href={pub.lien} target="_blank" className="text-sm text-amber-600 font-medium hover:underline">
+            <a href={pubs[pubIndex]?.lien} target="_blank" className="text-sm text-amber-600 font-medium hover:underline">
               En savoir plus →
             </a>
-            <button onClick={() => setShowPub(false)} className="text-amber-400 hover:text-amber-600 text-lg">
-              ✕
-            </button>
+            <div className="flex gap-1">
+              {pubs.map((_, i) => (
+                <div key={i} className={`w-1.5 h-1.5 rounded-full ${i === pubIndex ? "bg-amber-600" : "bg-amber-300"}`}/>
+              ))}
+            </div>
+            <button onClick={() => setShowPub(false)} className="text-amber-400 hover:text-amber-600 text-lg">✕</button>
           </div>
         </div>
       )}
