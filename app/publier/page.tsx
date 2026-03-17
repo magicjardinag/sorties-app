@@ -35,23 +35,47 @@ export default function Publier() {
     setForm({ ...form, [e.target.name]: e.target.value })
   }
 
-  const searchVille = async (query: string) => {
-    setVilleInput(query)
-    setVilleValidee(false)
-    if (query.length < 2) {
-      setSuggestions([])
-      return
-    }
-    const res = await fetch(`https://geo.api.gouv.fr/communes?nom=${query}&fields=nom,codesPostaux,centre&limit=5`)
-    const data = await res.json()
-    const results = data.map((item: any) => ({
-      nom: item.nom,
-      codePostal: item.codesPostaux?.[0] || "",
-      lat: item.centre?.coordinates?.[1] || 0,
-      lng: item.centre?.coordinates?.[0] || 0,
-    }))
-    setSuggestions(results)
+const searchVille = async (query: string) => {
+  setVilleInput(query)
+  setVilleValidee(false)
+  if (query.length < 2) {
+    setSuggestions([])
+    return
   }
+
+  const isCodePostal = /^\d+$/.test(query)
+
+  try {
+    let results: VilleSuggestion[] = []
+
+    if (isCodePostal) {
+      const [byCP, byNom] = await Promise.all([
+        fetch(`https://geo.api.gouv.fr/communes?codePostal=${query}&fields=nom,codesPostaux,centre&limit=5`).then(r => r.json()),
+        fetch(`https://geo.api.gouv.fr/communes?nom=${query}&fields=nom,codesPostaux,centre&limit=5`).then(r => r.json()),
+      ])
+      const all = [...(Array.isArray(byCP) ? byCP : []), ...(Array.isArray(byNom) ? byNom : [])]
+      results = all.map((item: any) => ({
+        nom: item.nom,
+        codePostal: item.codesPostaux?.[0] || "",
+        lat: item.centre?.coordinates?.[1] || 0,
+        lng: item.centre?.coordinates?.[0] || 0,
+      }))
+    } else {
+      const res = await fetch(`https://geo.api.gouv.fr/communes?nom=${query}&fields=nom,codesPostaux,centre&limit=5`)
+      const data = await res.json()
+      results = data.map((item: any) => ({
+        nom: item.nom,
+        codePostal: item.codesPostaux?.[0] || "",
+        lat: item.centre?.coordinates?.[1] || 0,
+        lng: item.centre?.coordinates?.[0] || 0,
+      }))
+    }
+
+    setSuggestions(results)
+  } catch (err) {
+    console.error(err)
+  }
+}
 
   const selectVille = (suggestion: VilleSuggestion) => {
     setVilleInput(`${suggestion.nom} (${suggestion.codePostal})`)
