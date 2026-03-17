@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabase"
 
 export default function Auth() {
   const router = useRouter()
-  const [mode, setMode] = useState<"login" | "signup">("login")
+  const [mode, setMode] = useState<"login" | "signup" | "reset">("login")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
@@ -15,6 +15,19 @@ export default function Auth() {
   const handleAuth = async () => {
     setLoading(true)
     setMessage("")
+
+    if (mode === "reset") {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/update-password`,
+      })
+      if (error) {
+        setMessage(error.message)
+      } else {
+        setMessage("Email envoyé ! Vérifie ta boîte mail pour réinitialiser ton mot de passe.")
+      }
+      setLoading(false)
+      return
+    }
 
     if (mode === "signup") {
       const { error } = await supabase.auth.signUp({ email, password })
@@ -43,24 +56,34 @@ export default function Auth() {
         </div>
 
         <div className="bg-white rounded-2xl shadow p-8">
-          <div className="flex mb-6 bg-gray-100 rounded-full p-1">
-            <button
-              onClick={() => setMode("login")}
-              className={`flex-1 py-2 rounded-full text-sm font-medium transition-colors ${
-                mode === "login" ? "bg-white text-purple-600 shadow" : "text-gray-500"
-              }`}
-            >
-              Connexion
-            </button>
-            <button
-              onClick={() => setMode("signup")}
-              className={`flex-1 py-2 rounded-full text-sm font-medium transition-colors ${
-                mode === "signup" ? "bg-white text-purple-600 shadow" : "text-gray-500"
-              }`}
-            >
-              Inscription
-            </button>
-          </div>
+
+          {mode !== "reset" && (
+            <div className="flex mb-6 bg-gray-100 rounded-full p-1">
+              <button
+                onClick={() => { setMode("login"); setMessage("") }}
+                className={`flex-1 py-2 rounded-full text-sm font-medium transition-colors ${
+                  mode === "login" ? "bg-white text-purple-600 shadow" : "text-gray-500"
+                }`}
+              >
+                Connexion
+              </button>
+              <button
+                onClick={() => { setMode("signup"); setMessage("") }}
+                className={`flex-1 py-2 rounded-full text-sm font-medium transition-colors ${
+                  mode === "signup" ? "bg-white text-purple-600 shadow" : "text-gray-500"
+                }`}
+              >
+                Inscription
+              </button>
+            </div>
+          )}
+
+          {mode === "reset" && (
+            <div className="mb-6">
+              <h2 className="text-lg font-bold text-gray-800">Mot de passe oublié</h2>
+              <p className="text-gray-500 text-sm mt-1">Entre ton email pour recevoir un lien de réinitialisation.</p>
+            </div>
+          )}
 
           <div className="flex flex-col gap-4">
             <div>
@@ -73,20 +96,33 @@ export default function Auth() {
                 className="w-full border border-gray-200 rounded-lg px-4 py-3 outline-none focus:border-purple-400"
               />
             </div>
-            <div>
-              <label className="text-sm font-medium text-gray-700 mb-1 block">Mot de passe</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full border border-gray-200 rounded-lg px-4 py-3 outline-none focus:border-purple-400"
-              />
-            </div>
+
+            {mode !== "reset" && (
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-sm font-medium text-gray-700">Mot de passe</label>
+                  {mode === "login" && (
+                    <button
+                      onClick={() => { setMode("reset"); setMessage("") }}
+                      className="text-xs text-purple-600 hover:underline"
+                    >
+                      Mot de passe oublié ?
+                    </button>
+                  )}
+                </div>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full border border-gray-200 rounded-lg px-4 py-3 outline-none focus:border-purple-400"
+                />
+              </div>
+            )}
 
             {message && (
               <p className={`text-sm px-4 py-3 rounded-lg ${
-                message.includes("créé") ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600"
+                message.includes("envoyé") || message.includes("créé") ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600"
               }`}>
                 {message}
               </p>
@@ -94,11 +130,20 @@ export default function Auth() {
 
             <button
               onClick={handleAuth}
-              disabled={loading || !email || !password}
+              disabled={loading || !email || (mode !== "reset" && !password)}
               className="w-full bg-purple-600 text-white py-3 rounded-full font-bold hover:bg-purple-700 transition-colors disabled:opacity-40"
             >
-              {loading ? "Chargement..." : mode === "login" ? "Se connecter" : "Créer mon compte"}
+              {loading ? "Chargement..." : mode === "login" ? "Se connecter" : mode === "signup" ? "Créer mon compte" : "Envoyer le lien"}
             </button>
+
+            {mode === "reset" && (
+              <button
+                onClick={() => { setMode("login"); setMessage("") }}
+                className="w-full border border-gray-200 text-gray-600 py-3 rounded-full font-medium hover:bg-gray-50 transition-colors"
+              >
+                ← Retour à la connexion
+              </button>
+            )}
           </div>
         </div>
 
