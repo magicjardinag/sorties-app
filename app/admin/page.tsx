@@ -46,11 +46,12 @@ export default function Admin() {
   }
 
   const handleStatut = async (id: number, statut: string, organisateur: string, titre: string) => {
-    await fetch("/api/moderation", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, statut, organisateur, titre })
-    })
+  await fetch("/api/moderation", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id, statut, organisateur, titre })
+  })
+  await fetchEvenements()
     setEvenements(evenements.map((e) => e.id === id ? { ...e, statut } : e))
   }
 
