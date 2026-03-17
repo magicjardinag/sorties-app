@@ -120,9 +120,17 @@ export default function Publier() {
               <button onClick={() => setEtape(2)} className="w-full border border-gray-200 text-gray-600 py-3 rounded-full font-bold hover:bg-gray-50 transition-colors">← Modifier</button>
               <button
                 onClick={async () => {
-                  const res = await fetch("/api/checkout", { method: "POST" })
-                  const { url } = await res.json()
-                  window.location.href = url
+                  try {
+                    const res = await fetch("/api/checkout", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify(form)
+                    })
+                    const { url } = await res.json()
+                    window.location.href = url
+                  } catch (err) {
+                    console.error(err)
+                  }
                 }}
                 className="w-full bg-purple-600 text-white py-3 rounded-full font-bold hover:bg-purple-700 transition-colors"
               >
