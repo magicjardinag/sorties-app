@@ -16,7 +16,6 @@ type Evenement = {
   emoji: string
   organisateur: string
   statut: string
-  created_at: string
 }
 
 export default function Admin() {
@@ -46,8 +45,12 @@ export default function Admin() {
     setLoading(false)
   }
 
-  const handleStatut = async (id: number, statut: string) => {
-    await supabase.from("evenements").update({ statut }).eq("id", id)
+  const handleStatut = async (id: number, statut: string, organisateur: string, titre: string) => {
+    await fetch("/api/moderation", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, statut, organisateur, titre })
+    })
     setEvenements(evenements.map((e) => e.id === id ? { ...e, statut } : e))
   }
 
@@ -72,7 +75,6 @@ export default function Admin() {
 
       <div className="max-w-5xl mx-auto px-6 py-8">
 
-        {/* Stats */}
         <div className="grid grid-cols-3 gap-4 mb-8">
           <div className="bg-white rounded-xl shadow p-4 text-center">
             <p className="text-2xl font-bold text-amber-500">{evenements.filter(e => e.statut === "en_attente").length}</p>
@@ -88,7 +90,6 @@ export default function Admin() {
           </div>
         </div>
 
-        {/* Filtres */}
         <div className="flex gap-3 mb-6">
           {["en_attente", "approuve", "refuse", "tous"].map((s) => (
             <button
@@ -103,7 +104,6 @@ export default function Admin() {
           ))}
         </div>
 
-        {/* Liste */}
         {loading ? (
           <div className="text-center py-16 text-gray-400">
             <p className="text-4xl mb-4">⏳</p>
@@ -136,12 +136,12 @@ export default function Admin() {
                   </div>
                   <div className="flex gap-2">
                     {e.statut !== "approuve" && (
-                      <button onClick={() => handleStatut(e.id, "approuve")} className="bg-green-500 text-white px-3 py-2 rounded-lg text-sm hover:bg-green-600">
+                      <button onClick={() => handleStatut(e.id, "approuve", e.organisateur, e.titre)} className="bg-green-500 text-white px-3 py-2 rounded-lg text-sm hover:bg-green-600">
                         ✓ Approuver
                       </button>
                     )}
                     {e.statut !== "refuse" && (
-                      <button onClick={() => handleStatut(e.id, "refuse")} className="bg-amber-500 text-white px-3 py-2 rounded-lg text-sm hover:bg-amber-600">
+                      <button onClick={() => handleStatut(e.id, "refuse", e.organisateur, e.titre)} className="bg-amber-500 text-white px-3 py-2 rounded-lg text-sm hover:bg-amber-600">
                         ✗ Refuser
                       </button>
                     )}
