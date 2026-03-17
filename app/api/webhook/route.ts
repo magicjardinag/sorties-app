@@ -11,7 +11,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-const ADMIN_EMAIL = "magicjardinag@gmail.com"
+const ADMIN_EMAIL = "a.giraudon@astem.fr"
 
 export async function POST(request: Request) {
   const body = await request.text()
@@ -27,7 +27,7 @@ export async function POST(request: Request) {
 
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as any
-    const { titre, categorie, ville, date, heure, prix, description } = session.metadata
+    const { titre, categorie, ville, codePostal, lat, lng, date, heure, prix, description } = session.metadata
     const organisateurEmail = session.customer_details?.email || ""
 
     const emojis: Record<string, string> = {
@@ -39,17 +39,19 @@ export async function POST(request: Request) {
       Food: "bg-yellow-100", Nature: "bg-emerald-100", Autre: "bg-blue-100",
     }
 
-    const { data: evenement } = await supabase.from("evenements").insert({
+    await supabase.from("evenements").insert({
       titre, categorie, ville,
-      quand: date, heure, prix, description,
+      quand: date, heure,
+      prix, description,
       emoji: emojis[categorie] || "🎉",
       couleur: couleurs[categorie] || "bg-blue-100",
       organisateur: organisateurEmail,
       user_id: session.metadata?.user_id || null,
       statut: "en_attente",
-    }).select().single()
+      lat: parseFloat(lat) || null,
+      lng: parseFloat(lng) || null,
+    })
 
-    // Email à l'admin
     await resend.emails.send({
       from: "SortiesApp <onboarding@resend.dev>",
       to: ADMIN_EMAIL,
@@ -60,7 +62,7 @@ export async function POST(request: Request) {
           <div style="background: #f3f4f6; padding: 16px; border-radius: 8px; margin: 16px 0;">
             <p><strong>Titre :</strong> ${titre}</p>
             <p><strong>Catégorie :</strong> ${categorie}</p>
-            <p><strong>Ville :</strong> ${ville}</p>
+            <p><strong>Ville :</strong> ${ville} ${codePostal}</p>
             <p><strong>Date :</strong> ${date} à ${heure}</p>
             <p><strong>Prix :</strong> ${prix || "Gratuit"}</p>
             <p><strong>Organisateur :</strong> ${organisateurEmail}</p>
@@ -76,4 +78,3 @@ export async function POST(request: Request) {
 
   return NextResponse.json({ received: true })
 }
-

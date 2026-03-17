@@ -3,6 +3,13 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 
+type VilleSuggestion = {
+  nom: string
+  codePostal: string
+  lat: number
+  lng: number
+}
+
 export default function Publier() {
   const router = useRouter()
   const [etape, setEtape] = useState(1)
@@ -10,16 +17,53 @@ export default function Publier() {
     titre: "",
     categorie: "",
     ville: "",
+    codePostal: "",
+    lat: 0,
+    lng: 0,
     date: "",
     heure: "",
     prix: "",
     description: "",
   })
+  const [suggestions, setSuggestions] = useState<VilleSuggestion[]>([])
+  const [villeInput, setVilleInput] = useState("")
+  const [villeValidee, setVilleValidee] = useState(false)
 
   const categories = ["Musique", "Sport", "Culture", "Food", "Nature", "Autre"]
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value })
+  }
+
+  const searchVille = async (query: string) => {
+    setVilleInput(query)
+    setVilleValidee(false)
+    if (query.length < 2) {
+      setSuggestions([])
+      return
+    }
+    const res = await fetch(`https://geo.api.gouv.fr/communes?nom=${query}&fields=nom,codesPostaux,centre&limit=5`)
+    const data = await res.json()
+    const results = data.map((item: any) => ({
+      nom: item.nom,
+      codePostal: item.codesPostaux?.[0] || "",
+      lat: item.centre?.coordinates?.[1] || 0,
+      lng: item.centre?.coordinates?.[0] || 0,
+    }))
+    setSuggestions(results)
+  }
+
+  const selectVille = (suggestion: VilleSuggestion) => {
+    setVilleInput(`${suggestion.nom} (${suggestion.codePostal})`)
+    setForm({
+      ...form,
+      ville: suggestion.nom,
+      codePostal: suggestion.codePostal,
+      lat: suggestion.lat,
+      lng: suggestion.lng,
+    })
+    setSuggestions([])
+    setVilleValidee(true)
   }
 
   return (
@@ -62,11 +106,33 @@ export default function Publier() {
                 {categories.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
-            <div>
+            <div className="relative">
               <label className="text-sm font-medium text-gray-700 mb-1 block">Ville</label>
-              <input name="ville" value={form.ville} onChange={handleChange} placeholder="Ex: Paris" className="w-full border border-gray-200 rounded-lg px-4 py-3 text-gray-800 outline-none focus:border-purple-400"/>
+              <input
+                value={villeInput}
+                onChange={(e) => searchVille(e.target.value)}
+                placeholder="Ex: Paris, Lyon, Bordeaux..."
+                className={`w-full border rounded-lg px-4 py-3 text-gray-800 outline-none focus:border-purple-400 ${villeValidee ? "border-green-400 bg-green-50" : "border-gray-200"}`}
+              />
+              {villeValidee && (
+                <span className="absolute right-3 top-10 text-green-500 text-lg">✓</span>
+              )}
+              {suggestions.length > 0 && (
+                <div className="absolute z-10 w-full bg-white border border-gray-200 rounded-lg shadow-lg mt-1">
+                  {suggestions.map((s, i) => (
+                    <button
+                      key={i}
+                      onClick={() => selectVille(s)}
+                      className="w-full text-left px-4 py-3 hover:bg-purple-50 text-sm border-b border-gray-100 last:border-0"
+                    >
+                      <span className="font-medium text-gray-800">{s.nom}</span>
+                      <span className="text-gray-400 ml-2">{s.codePostal}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
-            <button onClick={() => setEtape(2)} disabled={!form.titre || !form.categorie || !form.ville} className="w-full bg-purple-600 text-white py-3 rounded-full font-bold hover:bg-purple-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+            <button onClick={() => setEtape(2)} disabled={!form.titre || !form.categorie || !villeValidee} className="w-full bg-purple-600 text-white py-3 rounded-full font-bold hover:bg-purple-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
               Suivant →
             </button>
           </div>
@@ -106,7 +172,7 @@ export default function Publier() {
               <div className="flex flex-col gap-3 text-sm">
                 <div className="flex justify-between"><span className="text-gray-400">Titre</span><span className="font-medium text-gray-800">{form.titre}</span></div>
                 <div className="flex justify-between"><span className="text-gray-400">Catégorie</span><span className="font-medium text-gray-800">{form.categorie}</span></div>
-                <div className="flex justify-between"><span className="text-gray-400">Ville</span><span className="font-medium text-gray-800">{form.ville}</span></div>
+                <div className="flex justify-between"><span className="text-gray-400">Ville</span><span className="font-medium text-gray-800">{form.ville} ({form.codePostal})</span></div>
                 <div className="flex justify-between"><span className="text-gray-400">Date</span><span className="font-medium text-gray-800">{form.date} à {form.heure}</span></div>
                 <div className="flex justify-between"><span className="text-gray-400">Prix</span><span className="font-medium text-gray-800">{form.prix || "Gratuit"}</span></div>
               </div>
