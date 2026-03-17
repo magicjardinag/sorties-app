@@ -34,6 +34,8 @@ export default function Home() {
   const [evenements, setEvenements] = useState<Evenement[]>([])
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
+  const [pub, setPub] = useState<any>(null)
+  const [showPub, setShowPub] = useState(true)
 
   useEffect(() => {
     const fetchEvenements = async () => {
@@ -45,8 +47,18 @@ export default function Home() {
       const { data: { user } } = await supabase.auth.getUser()
       setUser(user)
     }
+    const fetchPub = async () => {
+      const { data } = await supabase
+        .from("publicites")
+        .select("*")
+        .eq("actif", true)
+        .limit(1)
+        .single()
+      setPub(data)
+    }
     fetchEvenements()
     fetchUser()
+    fetchPub()
   }, [])
 
   const evenementsFiltres = evenements.filter((e) => {
@@ -82,6 +94,24 @@ export default function Home() {
           </button>
         </div>
       </header>
+
+      {pub && showPub && (
+        <div className="bg-amber-50 border-b border-amber-200 px-6 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="text-xs bg-amber-200 text-amber-800 px-2 py-1 rounded-full font-medium">Pub</span>
+            <span className="text-sm font-medium text-amber-900">{pub.nom_commerce}</span>
+            <span className="text-sm text-amber-700">{pub.description}</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <a href={pub.lien} target="_blank" className="text-sm text-amber-600 font-medium hover:underline">
+              En savoir plus →
+            </a>
+            <button onClick={() => setShowPub(false)} className="text-amber-400 hover:text-amber-600 text-lg">
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
 
       <section className="bg-purple-600 py-12 px-6 text-center">
         <h2 className="text-white text-3xl font-bold mb-4">
