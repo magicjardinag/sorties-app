@@ -49,10 +49,7 @@ export default function Home() {
       setUser(user)
     }
     const fetchPubs = async () => {
-      const { data } = await supabase
-        .from("publicites")
-        .select("*")
-        .eq("actif", true)
+      const { data } = await supabase.from("publicites").select("*").eq("actif", true)
       setPubs(data || [])
     }
     fetchEvenements()
@@ -77,7 +74,8 @@ export default function Home() {
   })
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen bg-gray-50 flex flex-col">
+      {/* Header */}
       <header className="bg-white shadow-sm py-4 px-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-purple-600">SortiesApp</h1>
@@ -86,10 +84,6 @@ export default function Home() {
         <div className="flex gap-3">
           <button onClick={() => router.push("/carte")} className="border border-gray-300 text-gray-600 px-4 py-2 rounded-full text-sm font-medium hover:bg-gray-50">
             🗺️ Carte
-          <button onClick={() => router.push("/contact")} className="border border-gray-300 text-gray-600 px-4 py-2 rounded-full text-sm font-medium hover:bg-gray-50">
-  Contact
-</button>
-```
           </button>
           {user ? (
             <button onClick={() => router.push("/dashboard")} className="border border-purple-600 text-purple-600 px-4 py-2 rounded-full text-sm font-medium hover:bg-purple-50">
@@ -106,6 +100,7 @@ export default function Home() {
         </div>
       </header>
 
+      {/* Bannière pub */}
       {pubs.length > 0 && showPub && (
         <div className="bg-amber-50 border-b border-amber-200 px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -127,10 +122,9 @@ export default function Home() {
         </div>
       )}
 
+      {/* Hero */}
       <section className="bg-purple-600 py-12 px-6 text-center">
-        <h2 className="text-white text-3xl font-bold mb-4">
-          Que faire près de chez toi ?
-        </h2>
+        <h2 className="text-white text-3xl font-bold mb-4">Que faire près de chez toi ?</h2>
         <input
           type="text"
           placeholder="Recherche un événement, une ville..."
@@ -140,6 +134,7 @@ export default function Home() {
         />
       </section>
 
+      {/* Filtres */}
       <section className="px-6 py-4 bg-white border-b flex gap-3 overflow-x-auto">
         {categories.map((cat) => (
           <button
@@ -156,7 +151,8 @@ export default function Home() {
         ))}
       </section>
 
-      <section className="px-6 py-8">
+      {/* Événements */}
+      <section className="px-6 py-8 flex-1">
         {loading ? (
           <div className="text-center py-16 text-gray-400">
             <p className="text-4xl mb-4">⏳</p>
@@ -194,6 +190,50 @@ export default function Home() {
           </>
         )}
       </section>
+
+      {/* Footer */}
+      <footer className="bg-white border-t border-gray-200 mt-12 py-8 px-6">
+        <div className="max-w-5xl mx-auto">
+          <div className="grid grid-cols-4 gap-8 mb-8">
+            <div>
+              <h3 className="font-bold text-purple-600 text-lg mb-3">SortiesApp</h3>
+              <p className="text-gray-500 text-sm">Trouve des activités et événements près de chez toi.</p>
+            </div>
+            <div>
+              <h4 className="font-bold text-gray-800 mb-3">Navigation</h4>
+              <div className="flex flex-col gap-2">
+                <button onClick={() => router.push("/")} className="text-gray-500 text-sm text-left hover:text-purple-600">Accueil</button>
+                <button onClick={() => router.push("/carte")} className="text-gray-500 text-sm text-left hover:text-purple-600">Carte des événements</button>
+                <button onClick={() => router.push("/publier")} className="text-gray-500 text-sm text-left hover:text-purple-600">Publier un événement</button>
+              </div>
+            </div>
+            <div>
+              <h4 className="font-bold text-gray-800 mb-3">Aide & Support</h4>
+              <div className="flex flex-col gap-2">
+                <button onClick={() => router.push("/contact")} className="text-gray-500 text-sm text-left hover:text-purple-600">Nous contacter</button>
+                <button onClick={() => router.push("/contact")} className="text-gray-500 text-sm text-left hover:text-purple-600">Remboursement</button>
+                <button onClick={() => router.push("/contact")} className="text-gray-500 text-sm text-left hover:text-purple-600">Signaler un événement</button>
+              </div>
+            </div>
+            <div>
+              <h4 className="font-bold text-gray-800 mb-3">Travailler avec nous</h4>
+              <div className="flex flex-col gap-2">
+                <button onClick={() => router.push("/contact")} className="text-gray-500 text-sm text-left hover:text-purple-600">Partenariat local</button>
+                <button onClick={() => router.push("/contact")} className="text-gray-500 text-sm text-left hover:text-purple-600">Programme d'affiliation</button>
+                <button onClick={() => router.push("/contact")} className="text-gray-500 text-sm text-left hover:text-purple-600">Publicité</button>
+              </div>
+            </div>
+          </div>
+          <div className="border-t border-gray-200 pt-6 flex items-center justify-between">
+            <p className="text-gray-400 text-sm">© 2026 SortiesApp. Tous droits réservés.</p>
+            <div className="flex gap-4">
+              <button onClick={() => router.push("/contact")} className="text-gray-400 text-sm hover:text-purple-600">Mentions légales</button>
+              <button onClick={() => router.push("/contact")} className="text-gray-400 text-sm hover:text-purple-600">CGU</button>
+              <button onClick={() => router.push("/contact")} className="text-gray-400 text-sm hover:text-purple-600">Contact</button>
+            </div>
+          </div>
+        </div>
+      </footer>
     </main>
   )
 }
