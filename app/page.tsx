@@ -227,8 +227,8 @@ export default function Home() {
           <div className="border-t border-gray-200 pt-6 flex items-center justify-between">
             <p className="text-gray-400 text-sm">© 2026 SortiesApp. Tous droits réservés.</p>
             <div className="flex gap-4">
-              <button onClick={() => router.push("/contact")} className="text-gray-400 text-sm hover:text-purple-600">Mentions légales</button>
-              <button onClick={() => router.push("/contact")} className="text-gray-400 text-sm hover:text-purple-600">CGU</button>
+              <button onClick={() => router.push("/mentions-legales")} className="text-gray-400 text-sm hover:text-purple-600">Mentions légales</button>
+<button onClick={() => router.push("/cgu")} className="text-gray-400 text-sm hover:text-purple-600">CGU</button>
               <button onClick={() => router.push("/contact")} className="text-gray-400 text-sm hover:text-purple-600">Contact</button>
             </div>
           </div>
