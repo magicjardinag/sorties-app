@@ -86,6 +86,10 @@ export default function Home() {
         <div className="flex gap-3">
           <button onClick={() => router.push("/carte")} className="border border-gray-300 text-gray-600 px-4 py-2 rounded-full text-sm font-medium hover:bg-gray-50">
             🗺️ Carte
+          <button onClick={() => router.push("/contact")} className="border border-gray-300 text-gray-600 px-4 py-2 rounded-full text-sm font-medium hover:bg-gray-50">
+  Contact
+</button>
+```
           </button>
           {user ? (
             <button onClick={() => router.push("/dashboard")} className="border border-purple-600 text-purple-600 px-4 py-2 rounded-full text-sm font-medium hover:bg-purple-50">
