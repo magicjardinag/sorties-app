@@ -27,7 +27,7 @@ export async function POST(request: Request) {
 
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as any
-    const { titre, categorie, ville, codePostal, lat, lng, date, heure, prix, description } = session.metadata
+    const { titre, categorie, ville, codePostal, lat, lng, date, heure, prix, description, image_url } = session.metadata
     const organisateurEmail = session.customer_details?.email || ""
 
     const emojis: Record<string, string> = {
@@ -50,6 +50,7 @@ export async function POST(request: Request) {
       statut: "en_attente",
       lat: parseFloat(lat) || null,
       lng: parseFloat(lng) || null,
+      image_url: image_url || null,
     })
 
     await resend.emails.send({

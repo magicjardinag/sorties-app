@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { supabase } from "@/lib/supabase"
 
 type VilleSuggestion = {
   nom: string
@@ -24,10 +25,14 @@ export default function Publier() {
     heure: "",
     prix: "",
     description: "",
+    image_url: "",
   })
   const [suggestions, setSuggestions] = useState<VilleSuggestion[]>([])
   const [villeInput, setVilleInput] = useState("")
   const [villeValidee, setVilleValidee] = useState(false)
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState("")
+  const [uploadingImage, setUploadingImage] = useState(false)
 
   const categories = ["Musique", "Sport", "Culture", "Food", "Nature", "Autre"]
 
@@ -35,57 +40,71 @@ export default function Publier() {
     setForm({ ...form, [e.target.name]: e.target.value })
   }
 
-const searchVille = async (query: string) => {
-  setVilleInput(query)
-  setVilleValidee(false)
-  if (query.length < 2) {
-    setSuggestions([])
-    return
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setImageFile(file)
+    setImagePreview(URL.createObjectURL(file))
   }
 
-  const isCodePostal = /^\d+$/.test(query)
-
-  try {
-    let results: VilleSuggestion[] = []
-
-    if (isCodePostal) {
-      const [byCP, byNom] = await Promise.all([
-        fetch(`https://geo.api.gouv.fr/communes?codePostal=${query}&fields=nom,codesPostaux,centre&limit=5`).then(r => r.json()),
-        fetch(`https://geo.api.gouv.fr/communes?nom=${query}&fields=nom,codesPostaux,centre&limit=5`).then(r => r.json()),
-      ])
-      const all = [...(Array.isArray(byCP) ? byCP : []), ...(Array.isArray(byNom) ? byNom : [])]
-      results = all.map((item: any) => ({
-        nom: item.nom,
-        codePostal: item.codesPostaux?.[0] || "",
-        lat: item.centre?.coordinates?.[1] || 0,
-        lng: item.centre?.coordinates?.[0] || 0,
-      }))
-    } else {
-      const res = await fetch(`https://geo.api.gouv.fr/communes?nom=${query}&fields=nom,codesPostaux,centre&limit=5`)
-      const data = await res.json()
-      results = data.map((item: any) => ({
-        nom: item.nom,
-        codePostal: item.codesPostaux?.[0] || "",
-        lat: item.centre?.coordinates?.[1] || 0,
-        lng: item.centre?.coordinates?.[0] || 0,
-      }))
+  const uploadImage = async () => {
+    if (!imageFile) return ""
+    setUploadingImage(true)
+    const fileName = `${Date.now()}-${imageFile.name}`
+    const { data, error } = await supabase.storage
+      .from("evenements")
+      .upload(fileName, imageFile)
+    if (error) {
+      console.error(error)
+      setUploadingImage(false)
+      return ""
     }
-
-    setSuggestions(results)
-  } catch (err) {
-    console.error(err)
+    const { data: urlData } = supabase.storage.from("evenements").getPublicUrl(fileName)
+    setUploadingImage(false)
+    return urlData.publicUrl
   }
-}
+
+  const searchVille = async (query: string) => {
+    setVilleInput(query)
+    setVilleValidee(false)
+    if (query.length < 2) {
+      setSuggestions([])
+      return
+    }
+    const isCodePostal = /^\d+$/.test(query)
+    try {
+      let results: VilleSuggestion[] = []
+      if (isCodePostal) {
+        const [byCP, byNom] = await Promise.all([
+          fetch(`https://geo.api.gouv.fr/communes?codePostal=${query}&fields=nom,codesPostaux,centre&limit=5`).then(r => r.json()),
+          fetch(`https://geo.api.gouv.fr/communes?nom=${query}&fields=nom,codesPostaux,centre&limit=5`).then(r => r.json()),
+        ])
+        const all = [...(Array.isArray(byCP) ? byCP : []), ...(Array.isArray(byNom) ? byNom : [])]
+        results = all.map((item: any) => ({
+          nom: item.nom,
+          codePostal: item.codesPostaux?.[0] || "",
+          lat: item.centre?.coordinates?.[1] || 0,
+          lng: item.centre?.coordinates?.[0] || 0,
+        }))
+      } else {
+        const res = await fetch(`https://geo.api.gouv.fr/communes?nom=${query}&fields=nom,codesPostaux,centre&limit=5`)
+        const data = await res.json()
+        results = data.map((item: any) => ({
+          nom: item.nom,
+          codePostal: item.codesPostaux?.[0] || "",
+          lat: item.centre?.coordinates?.[1] || 0,
+          lng: item.centre?.coordinates?.[0] || 0,
+        }))
+      }
+      setSuggestions(results)
+    } catch (err) {
+      console.error(err)
+    }
+  }
 
   const selectVille = (suggestion: VilleSuggestion) => {
     setVilleInput(`${suggestion.nom} (${suggestion.codePostal})`)
-    setForm({
-      ...form,
-      ville: suggestion.nom,
-      codePostal: suggestion.codePostal,
-      lat: suggestion.lat,
-      lng: suggestion.lng,
-    })
+    setForm({ ...form, ville: suggestion.nom, codePostal: suggestion.codePostal, lat: suggestion.lat, lng: suggestion.lng })
     setSuggestions([])
     setVilleValidee(true)
   }
@@ -93,9 +112,7 @@ const searchVille = async (query: string) => {
   return (
     <main className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm py-4 px-6 flex items-center gap-4">
-        <button onClick={() => router.back()} className="text-purple-600 hover:text-purple-800 font-medium text-sm">
-          ← Retour
-        </button>
+        <button onClick={() => router.back()} className="text-purple-600 hover:text-purple-800 font-medium text-sm">← Retour</button>
         <h1 className="text-xl font-bold text-purple-600">SortiesApp</h1>
       </header>
 
@@ -106,14 +123,12 @@ const searchVille = async (query: string) => {
         <div className="flex items-center gap-2 mb-8">
           {[1, 2, 3].map((n) => (
             <div key={n} className="flex items-center gap-2">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${etape >= n ? "bg-purple-600 text-white" : "bg-gray-200 text-gray-400"}`}>
-                {n}
-              </div>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${etape >= n ? "bg-purple-600 text-white" : "bg-gray-200 text-gray-400"}`}>{n}</div>
               {n < 3 && <div className={`h-1 w-16 rounded ${etape > n ? "bg-purple-600" : "bg-gray-200"}`}/>}
             </div>
           ))}
           <span className="text-sm text-gray-500 ml-2">
-            {etape === 1 ? "Infos générales" : etape === 2 ? "Détails" : "Confirmation"}
+            {etape === 1 ? "Infos générales" : etape === 2 ? "Détails & Photo" : "Confirmation"}
           </span>
         </div>
 
@@ -138,17 +153,11 @@ const searchVille = async (query: string) => {
                 placeholder="Ex: Paris, Lyon, Bordeaux..."
                 className={`w-full border rounded-lg px-4 py-3 text-gray-800 outline-none focus:border-purple-400 ${villeValidee ? "border-green-400 bg-green-50" : "border-gray-200"}`}
               />
-              {villeValidee && (
-                <span className="absolute right-3 top-10 text-green-500 text-lg">✓</span>
-              )}
+              {villeValidee && <span className="absolute right-3 top-10 text-green-500 text-lg">✓</span>}
               {suggestions.length > 0 && (
                 <div className="absolute z-10 w-full bg-white border border-gray-200 rounded-lg shadow-lg mt-1">
                   {suggestions.map((s, i) => (
-                    <button
-                      key={i}
-                      onClick={() => selectVille(s)}
-                      className="w-full text-left px-4 py-3 hover:bg-purple-50 text-sm border-b border-gray-100 last:border-0"
-                    >
+                    <button key={i} onClick={() => selectVille(s)} className="w-full text-left px-4 py-3 hover:bg-purple-50 text-sm border-b border-gray-100 last:border-0">
                       <span className="font-medium text-gray-800">{s.nom}</span>
                       <span className="text-gray-400 ml-2">{s.codePostal}</span>
                     </button>
@@ -182,6 +191,25 @@ const searchVille = async (query: string) => {
               <label className="text-sm font-medium text-gray-700 mb-1 block">Description</label>
               <textarea name="description" value={form.description} onChange={handleChange} placeholder="Décris ton événement..." rows={4} className="w-full border border-gray-200 rounded-lg px-4 py-3 text-gray-800 outline-none focus:border-purple-400 resize-none"/>
             </div>
+
+            {/* Upload image */}
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">Photo de l'événement</label>
+              {imagePreview ? (
+                <div className="relative">
+                  <img src={imagePreview} alt="preview" className="w-full h-48 object-cover rounded-lg"/>
+                  <button onClick={() => { setImagePreview(""); setImageFile(null) }} className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm hover:bg-red-600">✕</button>
+                </div>
+              ) : (
+                <label className="w-full h-32 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition-colors">
+                  <span className="text-2xl mb-1">📸</span>
+                  <span className="text-sm text-gray-500">Clique pour ajouter une photo</span>
+                  <span className="text-xs text-gray-400">JPG, PNG — max 5MB</span>
+                  <input type="file" accept="image/*" onChange={handleImageChange} className="hidden"/>
+                </label>
+              )}
+            </div>
+
             <div className="flex gap-3">
               <button onClick={() => setEtape(1)} className="w-full border border-gray-200 text-gray-600 py-3 rounded-full font-bold hover:bg-gray-50 transition-colors">← Retour</button>
               <button onClick={() => setEtape(3)} disabled={!form.date || !form.heure} className="w-full bg-purple-600 text-white py-3 rounded-full font-bold hover:bg-purple-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">Suivant →</button>
@@ -193,6 +221,7 @@ const searchVille = async (query: string) => {
           <div className="flex flex-col gap-4">
             <div className="bg-white rounded-xl shadow p-6">
               <h3 className="font-bold text-gray-800 mb-4">Récapitulatif</h3>
+              {imagePreview && <img src={imagePreview} alt="preview" className="w-full h-40 object-cover rounded-lg mb-4"/>}
               <div className="flex flex-col gap-3 text-sm">
                 <div className="flex justify-between"><span className="text-gray-400">Titre</span><span className="font-medium text-gray-800">{form.titre}</span></div>
                 <div className="flex justify-between"><span className="text-gray-400">Catégorie</span><span className="font-medium text-gray-800">{form.categorie}</span></div>
@@ -211,10 +240,11 @@ const searchVille = async (query: string) => {
               <button
                 onClick={async () => {
                   try {
+                    const imageUrl = await uploadImage()
                     const res = await fetch("/api/checkout", {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify(form)
+                      body: JSON.stringify({ ...form, image_url: imageUrl })
                     })
                     const { url } = await res.json()
                     window.location.href = url
@@ -222,9 +252,10 @@ const searchVille = async (query: string) => {
                     console.error(err)
                   }
                 }}
-                className="w-full bg-purple-600 text-white py-3 rounded-full font-bold hover:bg-purple-700 transition-colors"
+                disabled={uploadingImage}
+                className="w-full bg-purple-600 text-white py-3 rounded-full font-bold hover:bg-purple-700 transition-colors disabled:opacity-40"
               >
-                Payer 9,90€ →
+                {uploadingImage ? "Upload en cours..." : "Payer 9,90€ →"}
               </button>
             </div>
           </div>

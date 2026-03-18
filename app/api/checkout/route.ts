@@ -5,7 +5,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 
 export async function POST(request: Request) {
   const body = await request.json()
-  const { titre, categorie, ville, codePostal, lat, lng, date, heure, prix, description } = body
+  const { titre, categorie, ville, codePostal, lat, lng, date, heure, prix, description, image_url } = body
 
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ["card"],
@@ -36,6 +36,7 @@ export async function POST(request: Request) {
       heure,
       prix: prix || "Gratuit",
       description,
+      image_url: image_url || "",
     },
   })
 
