@@ -40,6 +40,23 @@ function getDistance(lat1: number, lng1: number, lat2: number, lng2: number) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
 }
 
+function formatDate(dateStr: string): string {
+  if (!dateStr) return ""
+  const today = new Date()
+  const eventDate = new Date(dateStr)
+  today.setHours(0, 0, 0, 0)
+  eventDate.setHours(0, 0, 0, 0)
+  const diffDays = Math.round((eventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+  if (diffDays < 0) return "passé"
+  if (diffDays === 0) return "Aujourd'hui"
+  if (diffDays === 1) return "Demain"
+  if (diffDays <= 6) {
+    const jours = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"]
+    return jours[new Date(dateStr).getDay()]
+  }
+  return new Date(dateStr).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })
+}
+
 export default function Home() {
   const router = useRouter()
   const [categorieActive, setCategorieActive] = useState("Tout")
@@ -80,7 +97,7 @@ export default function Home() {
   }, [])
 
   useEffect(() => {
-    if (pubs.length === 0) return
+    if (pubsFiltrees.length === 0) return
     const interval = setInterval(() => {
       setPubIndex((prev) => (prev + 1) % pubsFiltrees.length)
     }, 4000)
@@ -127,6 +144,9 @@ export default function Home() {
       )
     : pubs
 
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
   const evenementsFiltres = evenements.filter((e) => {
     const matchCategorie = categorieActive === "Tout" ||
       (categorieActive === "Gratuit" ? e.prix === "Gratuit" : e.categorie === categorieActive)
@@ -134,8 +154,9 @@ export default function Home() {
       e.ville.toLowerCase().includes(recherche.toLowerCase())
     const matchProximite = !filtreProximite || !position || !e.lat || !e.lng ||
       getDistance(position.lat, position.lng, e.lat, e.lng) <= rayon
-    return matchCategorie && matchRecherche && matchProximite
-  })
+    const matchDate = !e.quand || new Date(e.quand) >= today
+    return matchCategorie && matchRecherche && matchProximite && matchDate
+  }).sort((a, b) => new Date(a.quand).getTime() - new Date(b.quand).getTime())
 
   const pubActuel = pubsFiltrees[pubIndex % Math.max(pubsFiltrees.length, 1)]
 
@@ -223,11 +244,7 @@ export default function Home() {
         ) : (
           <div className="flex items-center gap-3 flex-shrink-0">
             <span className="text-xs text-blue-600 font-medium whitespace-nowrap">📍 {rayon} km</span>
-            <input
-              type="range" min="5" max="200" step="5" value={rayon}
-              onChange={(e) => setRayon(Number(e.target.value))}
-              className="w-24"
-            />
+            <input type="range" min="5" max="200" step="5" value={rayon} onChange={(e) => setRayon(Number(e.target.value))} className="w-24"/>
             <button onClick={desactiverGeolocalisation} className="text-gray-400 hover:text-gray-600 text-lg">✕</button>
           </div>
         )}
@@ -248,10 +265,12 @@ export default function Home() {
             {evenementsFiltres.length === 0 ? (
               <div className="text-center py-16 text-gray-400">
                 <p className="text-4xl mb-4">😕</p>
-                <p className="text-lg">Aucun événement trouvé dans ce rayon</p>
-                <button onClick={() => setRayon(r => Math.min(r + 25, 200))} className="mt-4 text-purple-600 font-medium hover:underline">
-                  Élargir la zone de recherche →
-                </button>
+                <p className="text-lg">Aucun événement trouvé</p>
+                {filtreProximite && (
+                  <button onClick={() => setRayon(r => Math.min(r + 25, 200))} className="mt-4 text-purple-600 font-medium hover:underline">
+                    Élargir la zone de recherche →
+                  </button>
+                )}
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -269,7 +288,7 @@ export default function Home() {
                     </div>
                     <span className="text-xs bg-purple-100 text-purple-600 px-2 py-1 rounded-full font-medium">{e.categorie}</span>
                     <h4 className="font-bold text-gray-800 mt-2">{e.titre}</h4>
-                    <p className="text-gray-500 text-sm">{e.ville} • {e.quand}</p>
+                    <p className="text-gray-500 text-sm">{e.ville} • {formatDate(e.quand)}</p>
                     {filtreProximite && position && e.lat && e.lng && (
                       <p className="text-blue-500 text-xs mt-1">📍 {Math.round(getDistance(position.lat, position.lng, e.lat, e.lng))} km</p>
                     )}
