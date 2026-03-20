@@ -25,6 +25,7 @@ type Evenement = {
   couleur: string
   organisateur: string
   description: string
+  image_url: string
 }
 
 export default function Home() {
@@ -37,6 +38,7 @@ export default function Home() {
   const [pubs, setPubs] = useState<any[]>([])
   const [pubIndex, setPubIndex] = useState(0)
   const [showPub, setShowPub] = useState(true)
+  const [favoris, setFavoris] = useState<number[]>([])
 
   useEffect(() => {
     const fetchEvenements = async () => {
@@ -47,6 +49,10 @@ export default function Home() {
     const fetchUser = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       setUser(user)
+      if (user) {
+        const { data } = await supabase.from("favoris").select("evenement_id").eq("user_id", user.id)
+        setFavoris(data?.map((f: any) => f.evenement_id) || [])
+      }
     }
     const fetchPubs = async () => {
       const { data } = await supabase.from("publicites").select("*").eq("actif", true)
@@ -65,6 +71,22 @@ export default function Home() {
     return () => clearInterval(interval)
   }, [pubs])
 
+  const toggleFavori = async (e: React.MouseEvent, evenementId: number) => {
+    e.stopPropagation()
+    if (!user) {
+      router.push("/auth")
+      return
+    }
+    const isFavori = favoris.includes(evenementId)
+    if (isFavori) {
+      await supabase.from("favoris").delete().eq("user_id", user.id).eq("evenement_id", evenementId)
+      setFavoris(favoris.filter((id) => id !== evenementId))
+    } else {
+      await supabase.from("favoris").insert({ user_id: user.id, evenement_id: evenementId })
+      setFavoris([...favoris, evenementId])
+    }
+  }
+
   const evenementsFiltres = evenements.filter((e) => {
     const matchCategorie = categorieActive === "Tout" ||
       (categorieActive === "Gratuit" ? e.prix === "Gratuit" : e.categorie === categorieActive)
@@ -75,7 +97,6 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Header */}
       <header className="bg-white shadow-sm py-4 px-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-purple-600">SortiesApp</h1>
@@ -100,7 +121,6 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Bannière pub */}
       {pubs.length > 0 && showPub && (
         <div className="bg-amber-50 border-b border-amber-200 px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -109,9 +129,7 @@ export default function Home() {
             <span className="text-sm text-amber-700">{pubs[pubIndex]?.description}</span>
           </div>
           <div className="flex items-center gap-3">
-            <a href={pubs[pubIndex]?.lien} target="_blank" className="text-sm text-amber-600 font-medium hover:underline">
-              En savoir plus →
-            </a>
+            <a href={pubs[pubIndex]?.lien} target="_blank" className="text-sm text-amber-600 font-medium hover:underline">En savoir plus →</a>
             <div className="flex gap-1">
               {pubs.map((_, i) => (
                 <div key={i} className={`w-1.5 h-1.5 rounded-full ${i === pubIndex ? "bg-amber-600" : "bg-amber-300"}`}/>
@@ -122,7 +140,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* Hero */}
       <section className="bg-purple-600 py-12 px-6 text-center">
         <h2 className="text-white text-3xl font-bold mb-4">Que faire près de chez toi ?</h2>
         <input
@@ -134,7 +151,6 @@ export default function Home() {
         />
       </section>
 
-      {/* Filtres */}
       <section className="px-6 py-4 bg-white border-b flex gap-3 overflow-x-auto">
         {categories.map((cat) => (
           <button
@@ -151,7 +167,6 @@ export default function Home() {
         ))}
       </section>
 
-      {/* Événements */}
       <section className="px-6 py-8 flex-1">
         {loading ? (
           <div className="text-center py-16 text-gray-400">
@@ -171,9 +186,21 @@ export default function Home() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {evenementsFiltres.map((e) => (
-                  <div key={e.id} onClick={() => router.push(`/evenement/${e.id}`)} className="bg-white rounded-xl shadow p-4 hover:shadow-md transition-shadow cursor-pointer">
-                    <div className={`${e.couleur} rounded-lg h-32 mb-3 flex items-center justify-center text-4xl`}>
-                      {e.emoji}
+                  <div key={e.id} onClick={() => router.push(`/evenement/${e.id}`)} className="bg-white rounded-xl shadow p-4 hover:shadow-md transition-shadow cursor-pointer relative">
+                    <button
+                      onClick={(ev) => toggleFavori(ev, e.id)}
+                      className="absolute top-6 right-6 text-xl z-10 hover:scale-110 transition-transform"
+                    >
+                      {favoris.includes(e.id) ? "❤️" : "🤍"}
+                    </button>
+                    <div className="rounded-lg h-32 mb-3 overflow-hidden">
+                      {e.image_url ? (
+                        <img src={e.image_url} alt={e.titre} className="w-full h-full object-cover"/>
+                      ) : (
+                        <div className={`${e.couleur} w-full h-full flex items-center justify-center text-4xl`}>
+                          {e.emoji}
+                        </div>
+                      )}
                     </div>
                     <span className="text-xs bg-purple-100 text-purple-600 px-2 py-1 rounded-full font-medium">
                       {e.categorie}
@@ -191,7 +218,6 @@ export default function Home() {
         )}
       </section>
 
-      {/* Footer */}
       <footer className="bg-white border-t border-gray-200 mt-12 py-8 px-6">
         <div className="max-w-5xl mx-auto">
           <div className="grid grid-cols-4 gap-8 mb-8">
@@ -228,7 +254,7 @@ export default function Home() {
             <p className="text-gray-400 text-sm">© 2026 SortiesApp. Tous droits réservés.</p>
             <div className="flex gap-4">
               <button onClick={() => router.push("/mentions-legales")} className="text-gray-400 text-sm hover:text-purple-600">Mentions légales</button>
-<button onClick={() => router.push("/cgu")} className="text-gray-400 text-sm hover:text-purple-600">CGU</button>
+              <button onClick={() => router.push("/cgu")} className="text-gray-400 text-sm hover:text-purple-600">CGU</button>
               <button onClick={() => router.push("/contact")} className="text-gray-400 text-sm hover:text-purple-600">Contact</button>
             </div>
           </div>
