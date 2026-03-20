@@ -1,7 +1,8 @@
 "use client"
 
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet"
+import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from "react-leaflet"
 import { useRouter } from "next/navigation"
+import { useEffect } from "react"
 import L from "leaflet"
 import "leaflet/dist/leaflet.css"
 
@@ -12,8 +13,15 @@ const icon = L.icon({
   iconAnchor: [12, 41],
 })
 
+const userIcon = L.divIcon({
+  className: "",
+  html: `<div style="background:#7c3aed;width:16px;height:16px;border-radius:50%;border:3px solid white;box-shadow:0 0 0 2px #7c3aed;"></div>`,
+  iconSize: [16, 16],
+  iconAnchor: [8, 8],
+})
+
 type Evenement = {
-  id: number
+  id: string
   titre: string
   categorie: string
   ville: string
@@ -24,7 +32,30 @@ type Evenement = {
   lng: number
 }
 
-export default function Map({ evenements }: { evenements: Evenement[] }) {
+type Position = {
+  lat: number
+  lng: number
+}
+
+function CenterMap({ position }: { position: Position | null }) {
+  const map = useMap()
+  useEffect(() => {
+    if (position) {
+      map.setView([position.lat, position.lng], 11)
+    }
+  }, [position])
+  return null
+}
+
+export default function Map({
+  evenements,
+  position,
+  rayon,
+}: {
+  evenements: Evenement[]
+  position?: Position | null
+  rayon?: number
+}) {
   const router = useRouter()
 
   return (
@@ -37,6 +68,26 @@ export default function Map({ evenements }: { evenements: Evenement[] }) {
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
+
+      <CenterMap position={position || null} />
+
+      {/* Position utilisateur */}
+      {position && (
+        <>
+          <Marker position={[position.lat, position.lng]} icon={userIcon}>
+            <Popup>
+              <p style={{ fontWeight: "bold", margin: 0 }}>📍 Vous êtes ici</p>
+            </Popup>
+          </Marker>
+          <Circle
+            center={[position.lat, position.lng]}
+            radius={(rayon || 50) * 1000}
+            pathOptions={{ color: "#7c3aed", fillColor: "#7c3aed", fillOpacity: 0.05, weight: 2 }}
+          />
+        </>
+      )}
+
+      {/* Événements */}
       {evenements.map((e) =>
         e.lat && e.lng ? (
           <Marker key={e.id} position={[e.lat, e.lng]} icon={icon}>

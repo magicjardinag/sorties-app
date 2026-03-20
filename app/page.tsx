@@ -14,7 +14,7 @@ const categories = [
 ]
 
 type Evenement = {
-  id: number
+  id: string
   titre: string
   categorie: string
   ville: string
@@ -26,6 +26,18 @@ type Evenement = {
   organisateur: string
   description: string
   image_url: string
+  lat: number
+  lng: number
+}
+
+function getDistance(lat1: number, lng1: number, lat2: number, lng2: number) {
+  const R = 6371
+  const dLat = (lat2 - lat1) * Math.PI / 180
+  const dLng = (lng2 - lng1) * Math.PI / 180
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLng/2) * Math.sin(dLng/2)
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
 }
 
 export default function Home() {
@@ -38,7 +50,11 @@ export default function Home() {
   const [pubs, setPubs] = useState<any[]>([])
   const [pubIndex, setPubIndex] = useState(0)
   const [showPub, setShowPub] = useState(true)
-  const [favoris, setFavoris] = useState<number[]>([])
+  const [favoris, setFavoris] = useState<string[]>([])
+  const [position, setPosition] = useState<{lat: number, lng: number} | null>(null)
+  const [rayon, setRayon] = useState(50)
+  const [filtreProximite, setFiltreProximite] = useState(false)
+  const [loadingGeo, setLoadingGeo] = useState(false)
 
   useEffect(() => {
     const fetchEvenements = async () => {
@@ -71,7 +87,27 @@ export default function Home() {
     return () => clearInterval(interval)
   }, [pubs])
 
-  const toggleFavori = async (e: React.MouseEvent, evenementId: number) => {
+  const activerGeolocalisation = () => {
+    setLoadingGeo(true)
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setPosition({ lat: pos.coords.latitude, lng: pos.coords.longitude })
+        setFiltreProximite(true)
+        setLoadingGeo(false)
+      },
+      () => {
+        alert("Impossible d'accéder à ta position. Vérifie les permissions.")
+        setLoadingGeo(false)
+      }
+    )
+  }
+
+  const desactiverGeolocalisation = () => {
+    setFiltreProximite(false)
+    setPosition(null)
+  }
+
+  const toggleFavori = async (e: React.MouseEvent, evenementId: string) => {
     e.stopPropagation()
     if (!user) {
       router.push("/auth")
@@ -92,7 +128,9 @@ export default function Home() {
       (categorieActive === "Gratuit" ? e.prix === "Gratuit" : e.categorie === categorieActive)
     const matchRecherche = e.titre.toLowerCase().includes(recherche.toLowerCase()) ||
       e.ville.toLowerCase().includes(recherche.toLowerCase())
-    return matchCategorie && matchRecherche
+    const matchProximite = !filtreProximite || !position || !e.lat || !e.lng ||
+      getDistance(position.lat, position.lng, e.lat, e.lng) <= rayon
+    return matchCategorie && matchRecherche && matchProximite
   })
 
   return (
@@ -151,7 +189,7 @@ export default function Home() {
         />
       </section>
 
-      <section className="px-6 py-4 bg-white border-b flex gap-3 overflow-x-auto">
+      <section className="px-6 py-4 bg-white border-b flex gap-3 overflow-x-auto items-center">
         {categories.map((cat) => (
           <button
             key={cat.label}
@@ -165,6 +203,37 @@ export default function Home() {
             {cat.emoji} {cat.label}
           </button>
         ))}
+
+        <div className="h-6 w-px bg-gray-200 mx-1 flex-shrink-0"/>
+
+        {!filtreProximite ? (
+          <button
+            onClick={activerGeolocalisation}
+            disabled={loadingGeo}
+            className="flex items-center gap-2 px-4 py-2 rounded-full border border-blue-200 text-blue-600 text-sm font-medium whitespace-nowrap hover:bg-blue-50 transition-colors disabled:opacity-50 flex-shrink-0"
+          >
+            {loadingGeo ? "⏳" : "📍"} Près de moi
+          </button>
+        ) : (
+          <div className="flex items-center gap-3 flex-shrink-0">
+            <span className="text-xs text-blue-600 font-medium whitespace-nowrap">📍 {rayon} km</span>
+            <input
+              type="range"
+              min="5"
+              max="200"
+              step="5"
+              value={rayon}
+              onChange={(e) => setRayon(Number(e.target.value))}
+              className="w-24"
+            />
+            <button
+              onClick={desactiverGeolocalisation}
+              className="text-gray-400 hover:text-gray-600 text-lg"
+            >
+              ✕
+            </button>
+          </div>
+        )}
       </section>
 
       <section className="px-6 py-8 flex-1">
@@ -177,11 +246,15 @@ export default function Home() {
           <>
             <h3 className="text-xl font-bold text-gray-800 mb-4">
               {evenementsFiltres.length} événement{evenementsFiltres.length > 1 ? "s" : ""} trouvé{evenementsFiltres.length > 1 ? "s" : ""}
+              {filtreProximite && position && <span className="text-sm font-normal text-blue-600 ml-2">dans un rayon de {rayon} km</span>}
             </h3>
             {evenementsFiltres.length === 0 ? (
               <div className="text-center py-16 text-gray-400">
                 <p className="text-4xl mb-4">😕</p>
-                <p className="text-lg">Aucun événement trouvé</p>
+                <p className="text-lg">Aucun événement trouvé dans ce rayon</p>
+                <button onClick={() => setRayon(r => Math.min(r + 25, 200))} className="mt-4 text-purple-600 font-medium hover:underline">
+                  Élargir la zone de recherche →
+                </button>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -207,6 +280,11 @@ export default function Home() {
                     </span>
                     <h4 className="font-bold text-gray-800 mt-2">{e.titre}</h4>
                     <p className="text-gray-500 text-sm">{e.ville} • {e.quand}</p>
+                    {filtreProximite && position && e.lat && e.lng && (
+                      <p className="text-blue-500 text-xs mt-1">
+                        📍 {Math.round(getDistance(position.lat, position.lng, e.lat, e.lng))} km
+                      </p>
+                    )}
                     <p className={`font-medium text-sm mt-1 ${e.prix === "Gratuit" ? "text-green-600" : "text-gray-800"}`}>
                       {e.prix}
                     </p>
