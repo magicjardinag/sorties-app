@@ -168,7 +168,19 @@ export default function Home() {
           <p className="text-gray-500 text-sm">Trouve des activités près de chez toi</p>
         </div>
         <div className="flex gap-3">
-          <button onClick={() => router.push("/carte")} className="border border-gray-300 text-gray-600 px-4 py-2 rounded-full text-sm font-medium hover:bg-gray-50">
+          <button
+            onClick={() => {
+              const query = new URLSearchParams()
+              if (filtreProximite && position) {
+                query.set("lat", position.lat.toString())
+                query.set("lng", position.lng.toString())
+                query.set("rayon", rayon.toString())
+              }
+              if (categorieActive !== "Tout") query.set("categorie", categorieActive)
+              router.push(`/carte?${query.toString()}`)
+            }}
+            className="border border-gray-300 text-gray-600 px-4 py-2 rounded-full text-sm font-medium hover:bg-gray-50"
+          >
             🗺️ Carte
           </button>
           {user ? (
@@ -207,13 +219,24 @@ export default function Home() {
 
       <section className="bg-purple-600 py-12 px-6 text-center">
         <h2 className="text-white text-3xl font-bold mb-4">Que faire près de chez toi ?</h2>
-        <input
-          type="text"
-          placeholder="Recherche un événement, une ville..."
-          className="w-full max-w-xl px-4 py-3 rounded-full text-gray-800 shadow-md outline-none"
-          value={recherche}
-          onChange={(e) => setRecherche(e.target.value)}
-        />
+        <div className="relative max-w-xl mx-auto">
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg">🔍</span>
+          <input
+            type="text"
+            placeholder="Recherche un événement, une ville..."
+            className="w-full pl-12 pr-10 py-4 rounded-full text-gray-800 shadow-xl outline-none border-2 border-white/30 focus:border-white text-sm font-medium placeholder-gray-400 bg-white"
+            value={recherche}
+            onChange={(e) => setRecherche(e.target.value)}
+          />
+          {recherche && (
+            <button
+              onClick={() => setRecherche("")}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-lg"
+            >
+              ✕
+            </button>
+          )}
+        </div>
       </section>
 
       <section className="px-6 py-4 bg-white border-b flex gap-3 overflow-x-auto items-center">
