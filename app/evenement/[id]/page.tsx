@@ -5,7 +5,7 @@ import { useRouter, useParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 
 type Evenement = {
-  id: number
+  id: string
   titre: string
   categorie: string
   ville: string
@@ -24,6 +24,7 @@ export default function EvenementDetail() {
   const params = useParams()
   const [evenement, setEvenement] = useState<Evenement | null>(null)
   const [loading, setLoading] = useState(true)
+  const [showAffiche, setShowAffiche] = useState(false)
 
   useEffect(() => {
     const fetchEvenement = async () => {
@@ -32,11 +33,7 @@ export default function EvenementDetail() {
         .select("*")
         .eq("id", params.id)
         .single()
-      if (error) {
-        console.error(error)
-      } else {
-        setEvenement(data)
-      }
+      if (error) { console.error(error) } else { setEvenement(data) }
       setLoading(false)
     }
     fetchEvenement()
@@ -69,63 +66,100 @@ export default function EvenementDetail() {
 
   return (
     <main className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm py-4 px-6 flex items-center gap-4">
-        <button onClick={() => router.back()} className="text-purple-600 hover:text-purple-800 font-medium text-sm">
-          ← Retour
-        </button>
-        <h1 className="text-xl font-bold text-purple-600">SortiesApp</h1>
-      </header>
 
-      {/* Image */}
-      <div className="h-64 overflow-hidden">
+      {/* Hero image pleine largeur */}
+      <div className="relative h-96 w-full overflow-hidden">
         {evenement.image_url ? (
           <img src={evenement.image_url} alt={evenement.titre} className="w-full h-full object-cover"/>
         ) : (
-          <div className={`${evenement.couleur} w-full h-full flex items-center justify-center text-7xl`}>
+          <div className={`${evenement.couleur} w-full h-full flex items-center justify-center text-8xl`}>
             {evenement.emoji}
           </div>
         )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"/>
+        <button
+          onClick={() => router.back()}
+          className="absolute top-5 left-5 bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-white/30 transition-colors"
+        >
+          ← Retour
+        </button>
+        <div className="absolute bottom-0 left-0 right-0 px-8 pb-8">
+          <span className="bg-white/20 backdrop-blur-sm text-white text-xs font-medium px-3 py-1 rounded-full mb-3 inline-block">
+            {evenement.categorie}
+          </span>
+          <h1 className="text-4xl font-bold text-white mb-2">{evenement.titre}</h1>
+          <p className="text-white/80 text-lg">{evenement.ville} · {evenement.quand}</p>
+        </div>
       </div>
 
+      {/* Lightbox affiche */}
+      {showAffiche && (
+        <div
+          onClick={() => setShowAffiche(false)}
+          onMouseLeave={() => setShowAffiche(false)}
+          className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
+        >
+          <button className="absolute top-4 right-4 text-white text-2xl hover:text-gray-300">✕</button>
+          <img
+            src={evenement.image_url}
+            alt={evenement.titre}
+            className="max-h-screen max-w-full object-contain rounded-lg"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
+
+      {/* Contenu */}
       <div className="max-w-2xl mx-auto px-6 py-8">
-        <span className="text-xs bg-purple-100 text-purple-600 px-3 py-1 rounded-full font-medium">
-          {evenement.categorie}
-        </span>
-
-        <h2 className="text-3xl font-bold text-gray-800 mt-3 mb-2">{evenement.titre}</h2>
-        <p className="text-gray-500 mb-6">{evenement.ville} • {evenement.quand}</p>
-
-        <div className="bg-white rounded-xl shadow p-6 mb-6 grid grid-cols-2 gap-4">
+        <div className="bg-white rounded-2xl shadow-sm p-6 mb-5 grid grid-cols-2 gap-6">
           <div>
-            <p className="text-gray-400 text-sm">Date</p>
-            <p className="font-medium text-gray-800">{evenement.quand}{evenement.heure ? `, ${evenement.heure}` : ""}</p>
+            <p className="text-gray-400 text-xs uppercase tracking-wide mb-1">Date</p>
+            <p className="font-semibold text-gray-900">{evenement.quand}{evenement.heure ? `, ${evenement.heure}` : ""}</p>
           </div>
           <div>
-            <p className="text-gray-400 text-sm">Lieu</p>
-            <p className="font-medium text-gray-800">{evenement.ville}</p>
+            <p className="text-gray-400 text-xs uppercase tracking-wide mb-1">Lieu</p>
+            <p className="font-semibold text-gray-900">{evenement.ville}</p>
           </div>
           <div>
-            <p className="text-gray-400 text-sm">Prix</p>
-            <p className={`font-medium ${evenement.prix === "Gratuit" ? "text-green-600" : "text-gray-800"}`}>
+            <p className="text-gray-400 text-xs uppercase tracking-wide mb-1">Prix</p>
+            <p className={`font-semibold text-lg ${evenement.prix === "Gratuit" ? "text-green-500" : "text-gray-900"}`}>
               {evenement.prix}
             </p>
           </div>
           <div>
-            <p className="text-gray-400 text-sm">Organisateur</p>
-            <p className="font-medium text-gray-800">{evenement.organisateur}</p>
+            <p className="text-gray-400 text-xs uppercase tracking-wide mb-1">Organisateur</p>
+            <p className="font-semibold text-gray-900">{evenement.organisateur}</p>
           </div>
         </div>
 
         {evenement.description && (
-          <div className="bg-white rounded-xl shadow p-6 mb-6">
-            <h3 className="font-bold text-gray-800 mb-2">À propos</h3>
+          <div className="bg-white rounded-2xl shadow-sm p-6 mb-8">
+            <h3 className="font-bold text-gray-900 mb-3">À propos</h3>
             <p className="text-gray-600 leading-relaxed">{evenement.description}</p>
           </div>
         )}
 
-        <button className="w-full bg-purple-600 text-white py-4 rounded-full text-lg font-bold hover:bg-purple-700 transition-colors">
-          Je participe !
+        <button className="w-full bg-purple-600 text-white py-4 rounded-2xl text-lg font-bold hover:bg-purple-700 transition-colors shadow-lg shadow-purple-200">
+          Je participe ! 🎉
         </button>
+
+        {/* Miniature affiche */}
+        {evenement.image_url && (
+          <div className="mt-8">
+            <p className="text-gray-400 text-sm mb-3">🖼️ Affiche de l'événement</p>
+            <div
+              onClick={() => setShowAffiche(true)}
+              onMouseEnter={() => setShowAffiche(true)}
+              className="relative w-32 cursor-pointer group"
+            >
+              <img
+                src={evenement.image_url}
+                alt="affiche"
+                className="w-32 h-44 object-cover rounded-xl shadow-md group-hover:shadow-xl group-hover:scale-150 group-hover:-translate-y-8 transition-all duration-300 origin-bottom-left"
+              />
+            </div>
+          </div>
+        )}
       </div>
     </main>
   )

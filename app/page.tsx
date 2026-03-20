@@ -82,10 +82,10 @@ export default function Home() {
   useEffect(() => {
     if (pubs.length === 0) return
     const interval = setInterval(() => {
-      setPubIndex((prev) => (prev + 1) % pubs.length)
+      setPubIndex((prev) => (prev + 1) % pubsFiltrees.length)
     }, 4000)
     return () => clearInterval(interval)
-  }, [pubs])
+  }, [pubs, position])
 
   const activerGeolocalisation = () => {
     setLoadingGeo(true)
@@ -109,10 +109,7 @@ export default function Home() {
 
   const toggleFavori = async (e: React.MouseEvent, evenementId: string) => {
     e.stopPropagation()
-    if (!user) {
-      router.push("/auth")
-      return
-    }
+    if (!user) { router.push("/auth"); return }
     const isFavori = favoris.includes(evenementId)
     if (isFavori) {
       await supabase.from("favoris").delete().eq("user_id", user.id).eq("evenement_id", evenementId)
@@ -123,6 +120,13 @@ export default function Home() {
     }
   }
 
+  const pubsFiltrees = position
+    ? pubs.filter((pub) =>
+        !pub.lat || !pub.lng ||
+        getDistance(position.lat, position.lng, pub.lat, pub.lng) <= (pub.rayon || 50)
+      )
+    : pubs
+
   const evenementsFiltres = evenements.filter((e) => {
     const matchCategorie = categorieActive === "Tout" ||
       (categorieActive === "Gratuit" ? e.prix === "Gratuit" : e.categorie === categorieActive)
@@ -132,6 +136,8 @@ export default function Home() {
       getDistance(position.lat, position.lng, e.lat, e.lng) <= rayon
     return matchCategorie && matchRecherche && matchProximite
   })
+
+  const pubActuel = pubsFiltrees[pubIndex % Math.max(pubsFiltrees.length, 1)]
 
   return (
     <main className="min-h-screen bg-gray-50 flex flex-col">
@@ -159,18 +165,18 @@ export default function Home() {
         </div>
       </header>
 
-      {pubs.length > 0 && showPub && (
+      {pubsFiltrees.length > 0 && showPub && pubActuel && (
         <div className="bg-amber-50 border-b border-amber-200 px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <span className="text-xs bg-amber-200 text-amber-800 px-2 py-1 rounded-full font-medium">Pub</span>
-            <span className="text-sm font-medium text-amber-900">{pubs[pubIndex]?.nom_commerce}</span>
-            <span className="text-sm text-amber-700">{pubs[pubIndex]?.description}</span>
+            <span className="text-sm font-medium text-amber-900">{pubActuel.nom_commerce}</span>
+            <span className="text-sm text-amber-700">{pubActuel.description}</span>
           </div>
           <div className="flex items-center gap-3">
-            <a href={pubs[pubIndex]?.lien} target="_blank" className="text-sm text-amber-600 font-medium hover:underline">En savoir plus →</a>
+            <a href={pubActuel.lien} target="_blank" className="text-sm text-amber-600 font-medium hover:underline">En savoir plus →</a>
             <div className="flex gap-1">
-              {pubs.map((_, i) => (
-                <div key={i} className={`w-1.5 h-1.5 rounded-full ${i === pubIndex ? "bg-amber-600" : "bg-amber-300"}`}/>
+              {pubsFiltrees.map((_, i) => (
+                <div key={i} className={`w-1.5 h-1.5 rounded-full ${i === pubIndex % pubsFiltrees.length ? "bg-amber-600" : "bg-amber-300"}`}/>
               ))}
             </div>
             <button onClick={() => setShowPub(false)} className="text-amber-400 hover:text-amber-600 text-lg">✕</button>
@@ -218,20 +224,11 @@ export default function Home() {
           <div className="flex items-center gap-3 flex-shrink-0">
             <span className="text-xs text-blue-600 font-medium whitespace-nowrap">📍 {rayon} km</span>
             <input
-              type="range"
-              min="5"
-              max="200"
-              step="5"
-              value={rayon}
+              type="range" min="5" max="200" step="5" value={rayon}
               onChange={(e) => setRayon(Number(e.target.value))}
               className="w-24"
             />
-            <button
-              onClick={desactiverGeolocalisation}
-              className="text-gray-400 hover:text-gray-600 text-lg"
-            >
-              ✕
-            </button>
+            <button onClick={desactiverGeolocalisation} className="text-gray-400 hover:text-gray-600 text-lg">✕</button>
           </div>
         )}
       </section>
@@ -260,34 +257,23 @@ export default function Home() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {evenementsFiltres.map((e) => (
                   <div key={e.id} onClick={() => router.push(`/evenement/${e.id}`)} className="bg-white rounded-xl shadow p-4 hover:shadow-md transition-shadow cursor-pointer relative">
-                    <button
-                      onClick={(ev) => toggleFavori(ev, e.id)}
-                      className="absolute top-6 right-6 text-xl z-10 hover:scale-110 transition-transform"
-                    >
+                    <button onClick={(ev) => toggleFavori(ev, e.id)} className="absolute top-6 right-6 text-xl z-10 hover:scale-110 transition-transform">
                       {favoris.includes(e.id) ? "❤️" : "🤍"}
                     </button>
                     <div className="rounded-lg h-32 mb-3 overflow-hidden">
                       {e.image_url ? (
                         <img src={e.image_url} alt={e.titre} className="w-full h-full object-cover"/>
                       ) : (
-                        <div className={`${e.couleur} w-full h-full flex items-center justify-center text-4xl`}>
-                          {e.emoji}
-                        </div>
+                        <div className={`${e.couleur} w-full h-full flex items-center justify-center text-4xl`}>{e.emoji}</div>
                       )}
                     </div>
-                    <span className="text-xs bg-purple-100 text-purple-600 px-2 py-1 rounded-full font-medium">
-                      {e.categorie}
-                    </span>
+                    <span className="text-xs bg-purple-100 text-purple-600 px-2 py-1 rounded-full font-medium">{e.categorie}</span>
                     <h4 className="font-bold text-gray-800 mt-2">{e.titre}</h4>
                     <p className="text-gray-500 text-sm">{e.ville} • {e.quand}</p>
                     {filtreProximite && position && e.lat && e.lng && (
-                      <p className="text-blue-500 text-xs mt-1">
-                        📍 {Math.round(getDistance(position.lat, position.lng, e.lat, e.lng))} km
-                      </p>
+                      <p className="text-blue-500 text-xs mt-1">📍 {Math.round(getDistance(position.lat, position.lng, e.lat, e.lng))} km</p>
                     )}
-                    <p className={`font-medium text-sm mt-1 ${e.prix === "Gratuit" ? "text-green-600" : "text-gray-800"}`}>
-                      {e.prix}
-                    </p>
+                    <p className={`font-medium text-sm mt-1 ${e.prix === "Gratuit" ? "text-green-600" : "text-gray-800"}`}>{e.prix}</p>
                   </div>
                 ))}
               </div>
