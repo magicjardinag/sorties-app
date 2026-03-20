@@ -33,6 +33,8 @@ export default function Publier() {
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState("")
   const [uploadingImage, setUploadingImage] = useState(false)
+  const [analysingImage, setAnalysingImage] = useState(false)
+  const [analysisMessage, setAnalysisMessage] = useState("")
 
   const categories = ["Musique", "Sport", "Culture", "Food", "Nature", "Autre"]
 
@@ -45,20 +47,77 @@ export default function Publier() {
     if (!file) return
     setImageFile(file)
     setImagePreview(URL.createObjectURL(file))
+    analyserAffiche(file)
+  }
+
+  const analyserAffiche = async (file: File) => {
+    setAnalysingImage(true)
+    setAnalysisMessage("🤖 Analyse de l'affiche en cours...")
+    try {
+      const base64 = await new Promise<string>((res, rej) => {
+        const r = new FileReader()
+        r.onload = () => res((r.result as string).split(",")[1])
+        r.onerror = () => rej(new Error("Read failed"))
+        r.readAsDataURL(file)
+      })
+
+      const response = await fetch("/api/analyser-affiche", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          image_base64: base64,
+          media_type: file.type,
+        }),
+      })
+
+      const result = await response.json()
+
+      if (result.success && result.data) {
+        const data = result.data
+        setForm((prev) => ({
+          ...prev,
+          titre: data.titre || prev.titre,
+          categorie: data.categorie || prev.categorie,
+          date: data.date || prev.date,
+          heure: data.heure || prev.heure,
+          prix: data.prix || prev.prix,
+          description: data.description || prev.description,
+        }))
+
+        if (data.ville) {
+          const res = await fetch(`https://geo.api.gouv.fr/communes?nom=${data.ville}&fields=nom,codesPostaux,centre&limit=1`)
+          const communes = await res.json()
+          if (communes.length > 0) {
+            const c = communes[0]
+            setVilleInput(`${c.nom} (${c.codesPostaux?.[0] || ""})`)
+            setForm((prev) => ({
+              ...prev,
+              ville: c.nom,
+              codePostal: c.codesPostaux?.[0] || "",
+              lat: c.centre?.coordinates?.[1] || 0,
+              lng: c.centre?.coordinates?.[0] || 0,
+            }))
+            setVilleValidee(true)
+          }
+        }
+
+        setAnalysisMessage("✅ Informations extraites automatiquement ! Vérifie et corrige si besoin.")
+      } else {
+        setAnalysisMessage("⚠️ Impossible d'extraire les infos. Remplis le formulaire manuellement.")
+      }
+    } catch (err) {
+      console.error(err)
+      setAnalysisMessage("⚠️ Erreur lors de l'analyse. Remplis le formulaire manuellement.")
+    }
+    setAnalysingImage(false)
   }
 
   const uploadImage = async () => {
     if (!imageFile) return ""
     setUploadingImage(true)
     const fileName = `${Date.now()}-${imageFile.name}`
-    const { data, error } = await supabase.storage
-      .from("evenements")
-      .upload(fileName, imageFile)
-    if (error) {
-      console.error(error)
-      setUploadingImage(false)
-      return ""
-    }
+    const { data, error } = await supabase.storage.from("evenements").upload(fileName, imageFile)
+    if (error) { console.error(error); setUploadingImage(false); return "" }
     const { data: urlData } = supabase.storage.from("evenements").getPublicUrl(fileName)
     setUploadingImage(false)
     return urlData.publicUrl
@@ -67,10 +126,7 @@ export default function Publier() {
   const searchVille = async (query: string) => {
     setVilleInput(query)
     setVilleValidee(false)
-    if (query.length < 2) {
-      setSuggestions([])
-      return
-    }
+    if (query.length < 2) { setSuggestions([]); return }
     const isCodePostal = /^\d+$/.test(query)
     try {
       let results: VilleSuggestion[] = []
@@ -80,26 +136,14 @@ export default function Publier() {
           fetch(`https://geo.api.gouv.fr/communes?nom=${query}&fields=nom,codesPostaux,centre&limit=5`).then(r => r.json()),
         ])
         const all = [...(Array.isArray(byCP) ? byCP : []), ...(Array.isArray(byNom) ? byNom : [])]
-        results = all.map((item: any) => ({
-          nom: item.nom,
-          codePostal: item.codesPostaux?.[0] || "",
-          lat: item.centre?.coordinates?.[1] || 0,
-          lng: item.centre?.coordinates?.[0] || 0,
-        }))
+        results = all.map((item: any) => ({ nom: item.nom, codePostal: item.codesPostaux?.[0] || "", lat: item.centre?.coordinates?.[1] || 0, lng: item.centre?.coordinates?.[0] || 0 }))
       } else {
         const res = await fetch(`https://geo.api.gouv.fr/communes?nom=${query}&fields=nom,codesPostaux,centre&limit=5`)
         const data = await res.json()
-        results = data.map((item: any) => ({
-          nom: item.nom,
-          codePostal: item.codesPostaux?.[0] || "",
-          lat: item.centre?.coordinates?.[1] || 0,
-          lng: item.centre?.coordinates?.[0] || 0,
-        }))
+        results = data.map((item: any) => ({ nom: item.nom, codePostal: item.codesPostaux?.[0] || "", lat: item.centre?.coordinates?.[1] || 0, lng: item.centre?.coordinates?.[0] || 0 }))
       }
       setSuggestions(results)
-    } catch (err) {
-      console.error(err)
-    }
+    } catch (err) { console.error(err) }
   }
 
   const selectVille = (suggestion: VilleSuggestion) => {
@@ -118,7 +162,7 @@ export default function Publier() {
 
       <div className="max-w-2xl mx-auto px-6 py-8">
         <h2 className="text-2xl font-bold text-gray-800 mb-2">Publier un événement</h2>
-        <p className="text-gray-500 mb-8">Remplis le formulaire pour publier ton événement</p>
+        <p className="text-gray-500 mb-8">Remplis le formulaire ou uploade ton affiche pour remplissage automatique ✨</p>
 
         <div className="flex items-center gap-2 mb-8">
           {[1, 2, 3].map((n) => (
@@ -128,12 +172,46 @@ export default function Publier() {
             </div>
           ))}
           <span className="text-sm text-gray-500 ml-2">
-            {etape === 1 ? "Infos générales" : etape === 2 ? "Détails & Photo" : "Confirmation"}
+            {etape === 1 ? "Photo & Infos" : etape === 2 ? "Détails" : "Confirmation"}
           </span>
         </div>
 
         {etape === 1 && (
           <div className="bg-white rounded-xl shadow p-6 flex flex-col gap-4">
+
+            {/* Upload image EN PREMIER */}
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">
+                📸 Affiche de l'événement
+                <span className="text-purple-600 ml-2 font-normal text-xs">— L'IA remplit le formulaire automatiquement !</span>
+              </label>
+              {imagePreview ? (
+                <div className="relative mb-2">
+                  <img src={imagePreview} alt="preview" className="w-full h-48 object-cover rounded-lg"/>
+                  <button onClick={() => { setImagePreview(""); setImageFile(null); setAnalysisMessage("") }} className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm hover:bg-red-600">✕</button>
+                </div>
+              ) : (
+                <label className="w-full h-32 border-2 border-dashed border-purple-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition-colors">
+                  <span className="text-2xl mb-1">🖼️</span>
+                  <span className="text-sm text-gray-500">Uploade ton affiche pour remplissage auto</span>
+                  <span className="text-xs text-gray-400">JPG, PNG — max 5MB</span>
+                  <input type="file" accept="image/*" onChange={handleImageChange} className="hidden"/>
+                </label>
+              )}
+
+              {analysingImage && (
+                <div className="bg-purple-50 border border-purple-200 rounded-lg px-4 py-3 text-sm text-purple-700 flex items-center gap-2">
+                  <span className="animate-spin">⏳</span>
+                  {analysisMessage}
+                </div>
+              )}
+              {!analysingImage && analysisMessage && (
+                <div className={`rounded-lg px-4 py-3 text-sm ${analysisMessage.includes("✅") ? "bg-green-50 text-green-700 border border-green-200" : "bg-amber-50 text-amber-700 border border-amber-200"}`}>
+                  {analysisMessage}
+                </div>
+              )}
+            </div>
+
             <div>
               <label className="text-sm font-medium text-gray-700 mb-1 block">Titre de l'événement</label>
               <input name="titre" value={form.titre} onChange={handleChange} placeholder="Ex: Concert Jazz au Parc" className="w-full border border-gray-200 rounded-lg px-4 py-3 text-gray-800 outline-none focus:border-purple-400"/>
@@ -165,7 +243,7 @@ export default function Publier() {
                 </div>
               )}
             </div>
-            <button onClick={() => setEtape(2)} disabled={!form.titre || !form.categorie || !villeValidee} className="w-full bg-purple-600 text-white py-3 rounded-full font-bold hover:bg-purple-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+            <button onClick={() => setEtape(2)} disabled={!form.titre || !form.categorie || !villeValidee || analysingImage} className="w-full bg-purple-600 text-white py-3 rounded-full font-bold hover:bg-purple-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
               Suivant →
             </button>
           </div>
@@ -191,25 +269,6 @@ export default function Publier() {
               <label className="text-sm font-medium text-gray-700 mb-1 block">Description</label>
               <textarea name="description" value={form.description} onChange={handleChange} placeholder="Décris ton événement..." rows={4} className="w-full border border-gray-200 rounded-lg px-4 py-3 text-gray-800 outline-none focus:border-purple-400 resize-none"/>
             </div>
-
-            {/* Upload image */}
-            <div>
-              <label className="text-sm font-medium text-gray-700 mb-1 block">Photo de l'événement</label>
-              {imagePreview ? (
-                <div className="relative">
-                  <img src={imagePreview} alt="preview" className="w-full h-48 object-cover rounded-lg"/>
-                  <button onClick={() => { setImagePreview(""); setImageFile(null) }} className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm hover:bg-red-600">✕</button>
-                </div>
-              ) : (
-                <label className="w-full h-32 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition-colors">
-                  <span className="text-2xl mb-1">📸</span>
-                  <span className="text-sm text-gray-500">Clique pour ajouter une photo</span>
-                  <span className="text-xs text-gray-400">JPG, PNG — max 5MB</span>
-                  <input type="file" accept="image/*" onChange={handleImageChange} className="hidden"/>
-                </label>
-              )}
-            </div>
-
             <div className="flex gap-3">
               <button onClick={() => setEtape(1)} className="w-full border border-gray-200 text-gray-600 py-3 rounded-full font-bold hover:bg-gray-50 transition-colors">← Retour</button>
               <button onClick={() => setEtape(3)} disabled={!form.date || !form.heure} className="w-full bg-purple-600 text-white py-3 rounded-full font-bold hover:bg-purple-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">Suivant →</button>
@@ -248,9 +307,7 @@ export default function Publier() {
                     })
                     const { url } = await res.json()
                     window.location.href = url
-                  } catch (err) {
-                    console.error(err)
-                  }
+                  } catch (err) { console.error(err) }
                 }}
                 disabled={uploadingImage}
                 className="w-full bg-purple-600 text-white py-3 rounded-full font-bold hover:bg-purple-700 transition-colors disabled:opacity-40"
