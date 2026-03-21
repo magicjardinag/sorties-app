@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import dynamic from "next/dynamic"
@@ -29,7 +29,7 @@ function getDistance(lat1: number, lng1: number, lat2: number, lng2: number) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
 }
 
-export default function Carte() {
+function CarteContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [evenements, setEvenements] = useState<Evenement[]>([])
@@ -127,5 +127,13 @@ export default function Carte() {
       </header>
       <MapWithNoSSR evenements={evenementsFiltres} position={position} rayon={rayon}/>
     </main>
+  )
+}
+
+export default function Carte() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-screen text-gray-400">Chargement...</div>}>
+      <CarteContent />
+    </Suspense>
   )
 }
