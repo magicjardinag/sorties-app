@@ -183,6 +183,9 @@ export default function Home() {
           >
             🗺️ Carte
           </button>
+          <button onClick={() => router.push("/tarifs")} className="border border-gray-300 text-gray-600 px-4 py-2 rounded-full text-sm font-medium hover:bg-gray-50">
+            💎 Tarifs
+          </button>
           {user ? (
             <button onClick={() => router.push("/dashboard")} className="border border-purple-600 text-purple-600 px-4 py-2 rounded-full text-sm font-medium hover:bg-purple-50">
               Mon espace
@@ -337,6 +340,7 @@ export default function Home() {
                 <button onClick={() => router.push("/")} className="text-gray-500 text-sm text-left hover:text-purple-600">Accueil</button>
                 <button onClick={() => router.push("/carte")} className="text-gray-500 text-sm text-left hover:text-purple-600">Carte des événements</button>
                 <button onClick={() => router.push("/publier")} className="text-gray-500 text-sm text-left hover:text-purple-600">Publier un événement</button>
+                <button onClick={() => router.push("/tarifs")} className="text-gray-500 text-sm text-left hover:text-purple-600">Nos tarifs</button>
               </div>
             </div>
             <div>
