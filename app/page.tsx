@@ -66,19 +66,19 @@ function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })
 }
 
-function getJoursSemaine() {
-  const jours = []
+function getFiltreDates() {
   const today = new Date(); today.setHours(0,0,0,0)
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(today)
-    d.setDate(today.getDate() + i)
-    jours.push({
-      label: i === 0 ? "Auj." : i === 1 ? "Dem." : ["Dim","Lun","Mar","Mer","Jeu","Ven","Sam"][d.getDay()],
-      date: d.toISOString().split("T")[0],
-      num: d.getDate(),
-    })
+  const demain = new Date(today); demain.setDate(today.getDate() + 1)
+  const jourSemaine = today.getDay()
+  const joursSamedi = jourSemaine === 6 ? 0 : (6 - jourSemaine)
+  const samedi = new Date(today); samedi.setDate(today.getDate() + joursSamedi)
+  const dimanche = new Date(samedi); dimanche.setDate(samedi.getDate() + 1)
+  return {
+    today: today.toISOString().split("T")[0],
+    demain: demain.toISOString().split("T")[0],
+    samedi: samedi.toISOString().split("T")[0],
+    dimanche: dimanche.toISOString().split("T")[0],
   }
-  return jours
 }
 
 function MiniCalendrier({ evenements, jourActif, setJourActif }: {
@@ -164,7 +164,7 @@ export default function Home() {
   const [showCalendrier, setShowCalendrier] = useState(false)
   const [menuMobileOpen, setMenuMobileOpen] = useState(false)
 
-  const jours = getJoursSemaine()
+  const dates = getFiltreDates()
 
   useEffect(() => {
     const fetchEvenements = async () => {
@@ -248,11 +248,22 @@ export default function Home() {
     const matchProximite = !filtreProximite || !position || !e.lat || !e.lng ||
       getDistance(position.lat, position.lng, e.lat, e.lng) <= rayon
     const matchDate = !e.quand || new Date(e.quand) >= today
-    const matchJour = jourActif === "tout" || e.quand === jourActif
+    const matchJour = jourActif === "tout"
+      ? true
+      : jourActif === "weekend"
+        ? (e.quand === dates.samedi || e.quand === dates.dimanche)
+        : e.quand === jourActif
     return matchCategorie && matchRecherche && matchProximite && matchDate && matchJour
   }).sort((a, b) => new Date(a.quand).getTime() - new Date(b.quand).getTime())
 
   const pubActuel = pubsFiltrees[pubIndex % Math.max(pubsFiltrees.length, 1)]
+
+  const filtresBoutons = [
+    { label: "Tous", value: "tout" },
+    { label: "Aujourd'hui", value: dates.today },
+    { label: "Demain", value: dates.demain },
+    { label: "Ce week-end", value: "weekend" },
+  ]
 
   return (
     <main className="min-h-screen bg-[#F7F6F2]">
@@ -330,7 +341,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* ── CALENDRIER MOBILE — modale plein écran ── */}
+      {/* ── CALENDRIER MOBILE — modale ── */}
       {showCalendrier && (
         <div className="lg:hidden fixed inset-0 bg-black/40 z-50 flex items-center justify-center" onClick={() => setShowCalendrier(false)}>
           <div onClick={(e) => e.stopPropagation()} className="flex flex-col items-center">
@@ -353,22 +364,32 @@ export default function Home() {
             Que faire près de <span className="text-orange-500">chez toi ?</span>
           </h2>
           <p className="text-gray-500 text-sm mb-5">Découvre les événements locaux autour de toi</p>
+
+          {/* Filtres dates */}
           <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 items-center">
-            <button onClick={() => { setJourActif("tout"); setShowCalendrier(false) }} className={`flex-shrink-0 px-4 py-2 rounded-2xl text-sm font-semibold transition-all ${jourActif === "tout" ? "bg-orange-500 text-white shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
-              Tous
-            </button>
-            {jours.map((j) => (
-              <button key={j.date} onClick={() => { setJourActif(j.date); setShowCalendrier(false) }} className={`flex-shrink-0 flex flex-col items-center px-3 py-1.5 rounded-2xl text-sm font-semibold transition-all min-w-[52px] ${jourActif === j.date ? "bg-orange-500 text-white shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
-                <span className="text-[10px] font-medium opacity-80">{j.label}</span>
-                <span className="text-base font-black leading-tight">{j.num}</span>
+            {filtresBoutons.map((f) => (
+              <button
+                key={f.value}
+                onClick={() => { setJourActif(f.value); setShowCalendrier(false) }}
+                className={`flex-shrink-0 px-4 py-2 rounded-2xl text-sm font-semibold transition-all whitespace-nowrap ${jourActif === f.value ? "bg-orange-500 text-white shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
+              >
+                {f.label}
               </button>
             ))}
             <div className="w-px flex-shrink-0 bg-gray-200 mx-1 self-stretch"/>
             <button
               onClick={() => setShowCalendrier(!showCalendrier)}
-              className={`flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-2xl text-sm font-semibold transition-all ${showCalendrier || (jourActif !== "tout" && !jours.find(j => j.date === jourActif)) ? "bg-orange-500 text-white shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
+              className={`flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-2xl text-sm font-semibold transition-all whitespace-nowrap ${
+                showCalendrier || (jourActif !== "tout" && jourActif !== "weekend" && jourActif !== dates.today && jourActif !== dates.demain)
+                  ? "bg-orange-500 text-white shadow-sm"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
             >
-              📅 <span>{jourActif !== "tout" && !jours.find(j => j.date === jourActif) ? new Date(jourActif).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) : "Agenda"}</span>
+              📅 <span>
+                {jourActif !== "tout" && jourActif !== "weekend" && jourActif !== dates.today && jourActif !== dates.demain
+                  ? new Date(jourActif).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })
+                  : "Agenda"}
+              </span>
             </button>
           </div>
         </div>
@@ -411,7 +432,7 @@ export default function Home() {
               jourActif={jourActif}
               setJourActif={setJourActif}
             />
-            {jourActif !== "tout" && (
+            {jourActif !== "tout" && jourActif !== "weekend" && (
               <div className="mt-3 bg-orange-50 rounded-2xl p-3 border border-orange-100 w-72">
                 <p className="text-xs text-orange-500 font-semibold">
                   📅 {new Date(jourActif).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}
@@ -433,7 +454,8 @@ export default function Home() {
                   <span className="text-orange-500 font-black">{evenementsFiltres.length}</span>
                   {" "}événement{evenementsFiltres.length > 1 ? "s" : ""}
                   {filtreProximite && position && <span className="text-blue-500 ml-1">· {rayon} km</span>}
-                  {jourActif !== "tout" && (
+                  {jourActif === "weekend" && <span className="text-gray-500 font-normal ml-1">· Ce week-end</span>}
+                  {jourActif !== "tout" && jourActif !== "weekend" && jourActif !== dates.today && jourActif !== dates.demain && (
                     <span className="text-gray-500 font-normal ml-1">
                       · {new Date(jourActif).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" })}
                     </span>
