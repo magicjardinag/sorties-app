@@ -81,11 +81,10 @@ function getJoursSemaine() {
   return jours
 }
 
-function MiniCalendrier({ evenements, jourActif, setJourActif, onClose }: {
+function MiniCalendrier({ evenements, jourActif, setJourActif }: {
   evenements: Evenement[]
   jourActif: string
   setJourActif: (d: string) => void
-  onClose: () => void
 }) {
   const today = new Date(); today.setHours(0,0,0,0)
   const [moisActuel, setMoisActuel] = useState(new Date(today.getFullYear(), today.getMonth(), 1))
@@ -164,7 +163,6 @@ export default function Home() {
   const [loadingGeo, setLoadingGeo] = useState(false)
   const [showCalendrier, setShowCalendrier] = useState(false)
   const [menuMobileOpen, setMenuMobileOpen] = useState(false)
-  const calRef = useRef<HTMLDivElement>(null)
 
   const jours = getJoursSemaine()
 
@@ -198,17 +196,6 @@ export default function Home() {
     }, 4000)
     return () => clearInterval(interval)
   }, [pubs, position])
-
-  // Close calendrier on outside click
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (calRef.current && !calRef.current.contains(e.target as Node)) {
-        setShowCalendrier(false)
-      }
-    }
-    if (showCalendrier) document.addEventListener("mousedown", handleClick)
-    return () => document.removeEventListener("mousedown", handleClick)
-  }, [showCalendrier])
 
   const activerGeolocalisation = () => {
     setLoadingGeo(true)
@@ -273,41 +260,16 @@ export default function Home() {
       {/* ── HEADER ── */}
       <header className="bg-white sticky top-0 z-40 border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
-          {/* Logo */}
           <button onClick={() => router.push("/")} className="flex items-center gap-1.5 flex-shrink-0">
             <span className="text-xl font-black tracking-tight text-gray-900">Sorties<span className="text-orange-500">App</span></span>
           </button>
-
-          {/* Search — desktop */}
           <div className="hidden sm:flex flex-1 max-w-md items-center bg-gray-100 rounded-2xl px-4 py-2.5 gap-2">
             <span className="text-gray-400 text-base">🔍</span>
-            <input
-              type="text"
-              placeholder="Événement, ville..."
-              className="bg-transparent flex-1 text-sm text-gray-800 outline-none placeholder-gray-400 font-medium"
-              value={recherche}
-              onChange={(e) => setRecherche(e.target.value)}
-            />
-            {recherche && (
-              <button onClick={() => setRecherche("")} className="text-gray-400 hover:text-gray-600 text-sm">✕</button>
-            )}
+            <input type="text" placeholder="Événement, ville..." className="bg-transparent flex-1 text-sm text-gray-800 outline-none placeholder-gray-400 font-medium" value={recherche} onChange={(e) => setRecherche(e.target.value)}/>
+            {recherche && <button onClick={() => setRecherche("")} className="text-gray-400 hover:text-gray-600 text-sm">✕</button>}
           </div>
-
-          {/* Desktop nav */}
           <div className="hidden sm:flex items-center gap-2">
-            <button
-              onClick={() => {
-                const query = new URLSearchParams()
-                if (filtreProximite && position) {
-                  query.set("lat", position.lat.toString())
-                  query.set("lng", position.lng.toString())
-                  query.set("rayon", rayon.toString())
-                }
-                if (categorieActive !== "Tout") query.set("categorie", categorieActive)
-                router.push(`/carte?${query.toString()}`)
-              }}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors"
-            >
+            <button onClick={() => { const query = new URLSearchParams(); if (filtreProximite && position) { query.set("lat", position.lat.toString()); query.set("lng", position.lng.toString()); query.set("rayon", rayon.toString()) } if (categorieActive !== "Tout") query.set("categorie", categorieActive); router.push(`/carte?${query.toString()}`) }} className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100">
               🗺️ <span className="hidden md:inline">Carte</span>
             </button>
             {user?.email === ADMIN_EMAIL && (
@@ -318,42 +280,20 @@ export default function Home() {
             ) : (
               <button onClick={() => router.push("/auth")} className="px-3 py-2 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100">Se connecter</button>
             )}
-            <button onClick={() => router.push("/publier")} className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-xl text-sm font-bold transition-colors shadow-sm">
-              + Publier
-            </button>
+            <button onClick={() => router.push("/publier")} className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-xl text-sm font-bold transition-colors shadow-sm">+ Publier</button>
           </div>
-
-          {/* Mobile icons */}
           <div className="flex sm:hidden items-center gap-2">
-            <button
-              onClick={() => router.push("/carte")}
-              className="w-9 h-9 flex items-center justify-center rounded-xl bg-gray-100 text-base"
-            >🗺️</button>
-            <button
-              onClick={() => setMenuMobileOpen(!menuMobileOpen)}
-              className="w-9 h-9 flex items-center justify-center rounded-xl bg-gray-100 text-base"
-            >☰</button>
+            <button onClick={() => router.push("/carte")} className="w-9 h-9 flex items-center justify-center rounded-xl bg-gray-100 text-base">🗺️</button>
+            <button onClick={() => setMenuMobileOpen(!menuMobileOpen)} className="w-9 h-9 flex items-center justify-center rounded-xl bg-gray-100 text-base">☰</button>
           </div>
         </div>
-
-        {/* Mobile search bar */}
         <div className="sm:hidden px-4 pb-3">
           <div className="flex items-center bg-gray-100 rounded-2xl px-4 py-2.5 gap-2">
             <span className="text-gray-400 text-base">🔍</span>
-            <input
-              type="text"
-              placeholder="Rechercher un événement, une ville..."
-              className="bg-transparent flex-1 text-sm text-gray-800 outline-none placeholder-gray-400"
-              value={recherche}
-              onChange={(e) => setRecherche(e.target.value)}
-            />
-            {recherche && (
-              <button onClick={() => setRecherche("")} className="text-gray-400 text-sm">✕</button>
-            )}
+            <input type="text" placeholder="Rechercher un événement, une ville..." className="bg-transparent flex-1 text-sm text-gray-800 outline-none placeholder-gray-400" value={recherche} onChange={(e) => setRecherche(e.target.value)}/>
+            {recherche && <button onClick={() => setRecherche("")} className="text-gray-400 text-sm">✕</button>}
           </div>
         </div>
-
-        {/* Mobile menu dropdown */}
         {menuMobileOpen && (
           <div className="sm:hidden bg-white border-t border-gray-100 px-4 py-3 flex flex-col gap-2">
             {user ? (
@@ -397,61 +337,23 @@ export default function Home() {
             Que faire près de <span className="text-orange-500">chez toi ?</span>
           </h2>
           <p className="text-gray-500 text-sm mb-5">Découvre les événements locaux autour de toi</p>
-
-          {/* Jours de la semaine */}
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
-            <button
-              onClick={() => { setJourActif("tout"); setShowCalendrier(false) }}
-              className={`flex-shrink-0 px-4 py-2 rounded-2xl text-sm font-semibold transition-all ${
-                jourActif === "tout"
-                  ? "bg-orange-500 text-white shadow-sm"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              }`}
-            >
+          <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 items-center">
+            <button onClick={() => { setJourActif("tout"); setShowCalendrier(false) }} className={`flex-shrink-0 px-4 py-2 rounded-2xl text-sm font-semibold transition-all ${jourActif === "tout" ? "bg-orange-500 text-white shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
               Tous
             </button>
             {jours.map((j) => (
-              <button
-                key={j.date}
-                onClick={() => { setJourActif(j.date); setShowCalendrier(false) }}
-                className={`flex-shrink-0 flex flex-col items-center px-3 py-1.5 rounded-2xl text-sm font-semibold transition-all min-w-[52px] ${
-                  jourActif === j.date
-                    ? "bg-orange-500 text-white shadow-sm"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                }`}
-              >
+              <button key={j.date} onClick={() => { setJourActif(j.date); setShowCalendrier(false) }} className={`flex-shrink-0 flex flex-col items-center px-3 py-1.5 rounded-2xl text-sm font-semibold transition-all min-w-[52px] ${jourActif === j.date ? "bg-orange-500 text-white shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
                 <span className="text-[10px] font-medium opacity-80">{j.label}</span>
                 <span className="text-base font-black leading-tight">{j.num}</span>
               </button>
             ))}
             <div className="w-px flex-shrink-0 bg-gray-200 mx-1 self-stretch"/>
-            <div className="relative flex-shrink-0" ref={calRef}>
-              <button
-                onClick={() => setShowCalendrier(!showCalendrier)}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-2xl text-sm font-semibold transition-all ${
-                  showCalendrier || (jourActif !== "tout" && !jours.find(j => j.date === jourActif))
-                    ? "bg-orange-500 text-white shadow-sm"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                }`}
-              >
-                📅
-                <span className="hidden sm:inline">
-                  {jourActif !== "tout" && !jours.find(j => j.date === jourActif)
-                    ? new Date(jourActif).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })
-                    : "Agenda"}
-                </span>
-              </button>
-              {showCalendrier && (
-                <div className="absolute top-full left-0 mt-2 z-50">
-                  <MiniCalendrier
-                    evenements={evenements.filter(e => new Date(e.quand) >= today)}
-                    jourActif={jourActif}
-                    setJourActif={setJourActif}
-                    onClose={() => setShowCalendrier(false)}
-                  />
-                </div>
-              )}
-            </div>
+            <button
+              onClick={() => setShowCalendrier(!showCalendrier)}
+              className={`flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-2xl text-sm font-semibold transition-all ${showCalendrier || (jourActif !== "tout" && !jours.find(j => j.date === jourActif)) ? "bg-orange-500 text-white shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
+            >
+              📅 <span className="hidden sm:inline">{jourActif !== "tout" && !jours.find(j => j.date === jourActif) ? new Date(jourActif).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) : "Agenda"}</span>
+            </button>
           </div>
         </div>
       </section>
@@ -459,28 +361,16 @@ export default function Home() {
       {/* ── CATÉGORIES ── */}
       <section className="bg-white border-t border-gray-100 px-4 sm:px-6 py-3">
         <div className="max-w-7xl mx-auto">
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1 items-center">
+          <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 items-center">
             {categories.map((cat) => (
-              <button
-                key={cat.label}
-                onClick={() => setCategorieActive(cat.label)}
-                className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-2xl text-sm font-semibold whitespace-nowrap transition-all ${
-                  categorieActive === cat.label
-                    ? "bg-orange-500 text-white shadow-sm"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                }`}
-              >
+              <button key={cat.label} onClick={() => setCategorieActive(cat.label)} className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-2xl text-sm font-semibold whitespace-nowrap transition-all ${categorieActive === cat.label ? "bg-orange-500 text-white shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
                 <span className="text-base leading-none">{cat.emoji}</span>
                 <span>{cat.label}</span>
               </button>
             ))}
             <div className="w-px h-6 bg-gray-200 mx-1 flex-shrink-0"/>
             {!filtreProximite ? (
-              <button
-                onClick={activerGeolocalisation}
-                disabled={loadingGeo}
-                className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-2xl text-sm font-semibold bg-blue-50 text-blue-600 hover:bg-blue-100 transition-all disabled:opacity-50"
-              >
+              <button onClick={activerGeolocalisation} disabled={loadingGeo} className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-2xl text-sm font-semibold bg-blue-50 text-blue-600 hover:bg-blue-100 transition-all disabled:opacity-50">
                 {loadingGeo ? "⏳" : "📍"} <span>Près de moi</span>
               </button>
             ) : (
@@ -494,113 +384,108 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── EVENTS GRID ── */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+      {/* ── LAYOUT PRINCIPAL : calendrier gauche + events ── */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex gap-6 items-start">
 
-        {/* Count + filters summary */}
-        <div className="flex items-center justify-between mb-4 gap-2">
-          <p className="text-sm font-semibold text-gray-700">
-            {loading ? "Chargement..." : (
-              <>
-                <span className="text-orange-500 font-black">{evenementsFiltres.length}</span>
-                {" "}événement{evenementsFiltres.length > 1 ? "s" : ""}
-                {filtreProximite && position && <span className="text-blue-500 ml-1">· {rayon} km</span>}
-                {jourActif !== "tout" && (
-                  <span className="text-gray-500 font-normal ml-1">
-                    · {new Date(jourActif).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" })}
-                  </span>
-                )}
-              </>
-            )}
-          </p>
-        </div>
-
-        {loading ? (
-          /* Skeleton */
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="bg-white rounded-2xl overflow-hidden animate-pulse">
-                <div className="h-36 bg-gray-100"/>
-                <div className="p-3 space-y-2">
-                  <div className="h-3 bg-gray-100 rounded-full w-1/2"/>
-                  <div className="h-4 bg-gray-100 rounded-full w-3/4"/>
-                  <div className="h-3 bg-gray-100 rounded-full w-1/2"/>
-                </div>
+        {/* Calendrier côté gauche — visible sur lg uniquement si showCalendrier */}
+        {showCalendrier && (
+          <div className="hidden lg:block flex-shrink-0 sticky top-24">
+            <MiniCalendrier
+              evenements={evenements.filter(e => new Date(e.quand) >= today)}
+              jourActif={jourActif}
+              setJourActif={setJourActif}
+            />
+            {jourActif !== "tout" && (
+              <div className="mt-3 bg-orange-50 rounded-2xl p-3 border border-orange-100 w-72">
+                <p className="text-xs text-orange-500 font-semibold">
+                  📅 {new Date(jourActif).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}
+                </p>
+                <p className="text-xs text-orange-400 mt-1">
+                  {evenementsFiltres.length} événement{evenementsFiltres.length > 1 ? "s" : ""}
+                </p>
               </div>
-            ))}
-          </div>
-        ) : evenementsFiltres.length === 0 ? (
-          <div className="text-center py-20 text-gray-400">
-            <p className="text-5xl mb-4">😕</p>
-            <p className="text-lg font-semibold text-gray-600 mb-1">Aucun événement trouvé</p>
-            <p className="text-sm text-gray-400 mb-4">Essaie de modifier tes filtres</p>
-            {filtreProximite && (
-              <button
-                onClick={() => setRayon(r => Math.min(r + 25, 200))}
-                className="mt-2 px-4 py-2 bg-orange-500 text-white rounded-xl text-sm font-semibold hover:bg-orange-600"
-              >
-                Élargir la zone → {rayon + 25} km
-              </button>
             )}
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-            {evenementsFiltres.map((e) => (
-              <div
-                key={e.id}
-                onClick={() => router.push(`/evenement/${e.id}`)}
-                className="bg-white rounded-2xl overflow-hidden cursor-pointer group hover:shadow-md transition-all duration-200 active:scale-[0.98]"
-              >
-                {/* Image / couleur */}
-                <div className="relative h-36 overflow-hidden">
-                  {e.image_url ? (
-                    <img
-                      src={e.image_url}
-                      alt={e.titre}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                  ) : (
-                    <div className={`${e.couleur} w-full h-full flex items-center justify-center text-5xl`}>{e.emoji}</div>
-                  )}
-                  {/* Favori */}
-                  <button
-                    onClick={(ev) => toggleFavori(ev, e.id)}
-                    className="absolute top-2.5 right-2.5 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center text-base shadow-sm hover:scale-110 transition-transform z-10"
-                  >
-                    {favoris.includes(e.id) ? "❤️" : "🤍"}
-                  </button>
-                  {/* Prix badge */}
-                  <div className={`absolute bottom-2.5 left-2.5 px-2 py-0.5 rounded-full text-xs font-bold ${
-                    e.prix === "Gratuit"
-                      ? "bg-green-500 text-white"
-                      : "bg-white/90 text-gray-800"
-                  }`}>
-                    {e.prix === "Gratuit" ? "Gratuit" : e.prix}
-                  </div>
-                </div>
-
-                {/* Infos */}
-                <div className="p-3">
-                  <span className="inline-block text-[10px] font-bold text-orange-500 bg-orange-50 px-2 py-0.5 rounded-full mb-1.5">
-                    {e.categorie}
-                  </span>
-                  <h4 className="font-bold text-gray-900 text-sm leading-tight line-clamp-2 mb-1">{e.titre}</h4>
-                  <p className="text-gray-400 text-xs truncate">
-                    {e.ville}
-                    {e.quand && <> · <span className="text-orange-400 font-medium">{formatDate(e.quand)}</span></>}
-                    {e.heure && <> · {e.heure}</>}
-                  </p>
-                  {filtreProximite && position && e.lat && e.lng && (
-                    <p className="text-blue-400 text-xs mt-1 font-medium">
-                      📍 {Math.round(getDistance(position.lat, position.lng, e.lat, e.lng))} km
-                    </p>
-                  )}
-                </div>
-              </div>
-            ))}
           </div>
         )}
-      </section>
+
+        {/* Événements */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between mb-4 gap-2">
+            <p className="text-sm font-semibold text-gray-700">
+              {loading ? "Chargement..." : (
+                <>
+                  <span className="text-orange-500 font-black">{evenementsFiltres.length}</span>
+                  {" "}événement{evenementsFiltres.length > 1 ? "s" : ""}
+                  {filtreProximite && position && <span className="text-blue-500 ml-1">· {rayon} km</span>}
+                  {jourActif !== "tout" && (
+                    <span className="text-gray-500 font-normal ml-1">
+                      · {new Date(jourActif).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" })}
+                    </span>
+                  )}
+                </>
+              )}
+            </p>
+          </div>
+
+          {loading ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="bg-white rounded-2xl overflow-hidden animate-pulse">
+                  <div className="h-36 bg-gray-100"/>
+                  <div className="p-3 space-y-2">
+                    <div className="h-3 bg-gray-100 rounded-full w-1/2"/>
+                    <div className="h-4 bg-gray-100 rounded-full w-3/4"/>
+                    <div className="h-3 bg-gray-100 rounded-full w-1/2"/>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : evenementsFiltres.length === 0 ? (
+            <div className="text-center py-20 text-gray-400">
+              <p className="text-5xl mb-4">😕</p>
+              <p className="text-lg font-semibold text-gray-600 mb-1">Aucun événement trouvé</p>
+              <p className="text-sm text-gray-400 mb-4">Essaie de modifier tes filtres</p>
+              {filtreProximite && (
+                <button onClick={() => setRayon(r => Math.min(r + 25, 200))} className="mt-2 px-4 py-2 bg-orange-500 text-white rounded-xl text-sm font-semibold hover:bg-orange-600">
+                  Élargir la zone → {rayon + 25} km
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+              {evenementsFiltres.map((e) => (
+                <div key={e.id} onClick={() => router.push(`/evenement/${e.id}`)} className="bg-white rounded-2xl overflow-hidden cursor-pointer group hover:shadow-md transition-all duration-200 active:scale-[0.98]">
+                  <div className="relative h-36 overflow-hidden">
+                    {e.image_url ? (
+                      <img src={e.image_url} alt={e.titre} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"/>
+                    ) : (
+                      <div className={`${e.couleur} w-full h-full flex items-center justify-center text-5xl`}>{e.emoji}</div>
+                    )}
+                    <button onClick={(ev) => toggleFavori(ev, e.id)} className="absolute top-2.5 right-2.5 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center text-base shadow-sm hover:scale-110 transition-transform z-10">
+                      {favoris.includes(e.id) ? "❤️" : "🤍"}
+                    </button>
+                    <div className={`absolute bottom-2.5 left-2.5 px-2 py-0.5 rounded-full text-xs font-bold ${e.prix === "Gratuit" ? "bg-green-500 text-white" : "bg-white/90 text-gray-800"}`}>
+                      {e.prix === "Gratuit" ? "Gratuit" : e.prix}
+                    </div>
+                  </div>
+                  <div className="p-3">
+                    <span className="inline-block text-[10px] font-bold text-orange-500 bg-orange-50 px-2 py-0.5 rounded-full mb-1.5">{e.categorie}</span>
+                    <h4 className="font-bold text-gray-900 text-sm leading-tight line-clamp-2 mb-1">{e.titre}</h4>
+                    <p className="text-gray-400 text-xs truncate">
+                      {e.ville}
+                      {e.quand && <> · <span className="text-orange-400 font-medium">{formatDate(e.quand)}</span></>}
+                      {e.heure && <> · {e.heure}</>}
+                    </p>
+                    {filtreProximite && position && e.lat && e.lng && (
+                      <p className="text-blue-400 text-xs mt-1 font-medium">📍 {Math.round(getDistance(position.lat, position.lng, e.lat, e.lng))} km</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* ── FOOTER ── */}
       <footer className="bg-white border-t border-gray-100 mt-8 py-10 px-4 sm:px-6">
@@ -613,78 +498,65 @@ export default function Home() {
             <div>
               <h4 className="font-bold text-gray-800 text-sm mb-3">Navigation</h4>
               <div className="flex flex-col gap-2">
-                <button onClick={() => router.push("/")} className="text-gray-400 text-sm text-left hover:text-orange-500 transition-colors">Accueil</button>
-                <button onClick={() => router.push("/carte")} className="text-gray-400 text-sm text-left hover:text-orange-500 transition-colors">Carte</button>
-                <button onClick={() => router.push("/publier")} className="text-gray-400 text-sm text-left hover:text-orange-500 transition-colors">Publier</button>
-                <button onClick={() => router.push("/tarifs")} className="text-gray-400 text-sm text-left hover:text-orange-500 transition-colors">Tarifs</button>
+                <button onClick={() => router.push("/")} className="text-gray-400 text-sm text-left hover:text-orange-500">Accueil</button>
+                <button onClick={() => router.push("/carte")} className="text-gray-400 text-sm text-left hover:text-orange-500">Carte</button>
+                <button onClick={() => router.push("/publier")} className="text-gray-400 text-sm text-left hover:text-orange-500">Publier</button>
+                <button onClick={() => router.push("/tarifs")} className="text-gray-400 text-sm text-left hover:text-orange-500">Tarifs</button>
               </div>
             </div>
             <div>
               <h4 className="font-bold text-gray-800 text-sm mb-3">Support</h4>
               <div className="flex flex-col gap-2">
-                <button onClick={() => router.push("/contact")} className="text-gray-400 text-sm text-left hover:text-orange-500 transition-colors">Contact</button>
-                <button onClick={() => router.push("/contact")} className="text-gray-400 text-sm text-left hover:text-orange-500 transition-colors">Remboursement</button>
-                <button onClick={() => router.push("/contact")} className="text-gray-400 text-sm text-left hover:text-orange-500 transition-colors">Signaler</button>
+                <button onClick={() => router.push("/contact")} className="text-gray-400 text-sm text-left hover:text-orange-500">Contact</button>
+                <button onClick={() => router.push("/contact")} className="text-gray-400 text-sm text-left hover:text-orange-500">Remboursement</button>
+                <button onClick={() => router.push("/contact")} className="text-gray-400 text-sm text-left hover:text-orange-500">Signaler</button>
               </div>
             </div>
             <div>
               <h4 className="font-bold text-gray-800 text-sm mb-3">Partenaires</h4>
               <div className="flex flex-col gap-2">
-                <button onClick={() => router.push("/contact")} className="text-gray-400 text-sm text-left hover:text-orange-500 transition-colors">Partenariat local</button>
-                <button onClick={() => router.push("/contact")} className="text-gray-400 text-sm text-left hover:text-orange-500 transition-colors">Affiliation</button>
-                <button onClick={() => router.push("/contact")} className="text-gray-400 text-sm text-left hover:text-orange-500 transition-colors">Publicité</button>
+                <button onClick={() => router.push("/contact")} className="text-gray-400 text-sm text-left hover:text-orange-500">Partenariat local</button>
+                <button onClick={() => router.push("/contact")} className="text-gray-400 text-sm text-left hover:text-orange-500">Affiliation</button>
+                <button onClick={() => router.push("/contact")} className="text-gray-400 text-sm text-left hover:text-orange-500">Publicité</button>
               </div>
             </div>
           </div>
           <div className="border-t border-gray-100 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
             <p className="text-gray-300 text-xs">© 2026 SortiesApp. Tous droits réservés.</p>
             <div className="flex gap-4">
-              <button onClick={() => router.push("/mentions-legales")} className="text-gray-300 text-xs hover:text-orange-500 transition-colors">Mentions légales</button>
-              <button onClick={() => router.push("/cgu")} className="text-gray-300 text-xs hover:text-orange-500 transition-colors">CGU</button>
-              <button onClick={() => router.push("/contact")} className="text-gray-300 text-xs hover:text-orange-500 transition-colors">Contact</button>
+              <button onClick={() => router.push("/mentions-legales")} className="text-gray-300 text-xs hover:text-orange-500">Mentions légales</button>
+              <button onClick={() => router.push("/cgu")} className="text-gray-300 text-xs hover:text-orange-500">CGU</button>
+              <button onClick={() => router.push("/contact")} className="text-gray-300 text-xs hover:text-orange-500">Contact</button>
             </div>
           </div>
         </div>
       </footer>
 
       {/* ── MOBILE BOTTOM NAV ── */}
-      <nav className="sm:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 z-40 pb-safe">
+      <nav className="sm:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 z-40">
         <div className="flex items-center justify-around px-2 py-2">
           <button onClick={() => router.push("/")} className="flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-xl">
             <span className="text-xl">🏠</span>
             <span className="text-[10px] font-semibold text-orange-500">Accueil</span>
           </button>
-          <button
-            onClick={() => router.push("/carte")}
-            className="flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-xl"
-          >
+          <button onClick={() => router.push("/carte")} className="flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-xl">
             <span className="text-xl">🗺️</span>
             <span className="text-[10px] font-semibold text-gray-400">Carte</span>
           </button>
-          <button
-            onClick={() => router.push("/publier")}
-            className="flex flex-col items-center gap-0.5 -mt-5"
-          >
+          <button onClick={() => router.push("/publier")} className="flex flex-col items-center gap-0.5 -mt-5">
             <span className="w-14 h-14 bg-orange-500 rounded-2xl flex items-center justify-center text-white text-2xl font-black shadow-lg shadow-orange-200">+</span>
           </button>
-          <button
-            onClick={() => user ? router.push("/dashboard") : router.push("/auth")}
-            className="flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-xl"
-          >
+          <button onClick={() => user ? router.push("/dashboard") : router.push("/auth")} className="flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-xl">
             <span className="text-xl">❤️</span>
             <span className="text-[10px] font-semibold text-gray-400">Favoris</span>
           </button>
-          <button
-            onClick={() => user ? router.push("/dashboard") : router.push("/auth")}
-            className="flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-xl"
-          >
+          <button onClick={() => user ? router.push("/dashboard") : router.push("/auth")} className="flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-xl">
             <span className="text-xl">👤</span>
             <span className="text-[10px] font-semibold text-gray-400">{user ? "Moi" : "Connexion"}</span>
           </button>
         </div>
       </nav>
 
-      {/* Spacer for bottom nav on mobile */}
       <div className="sm:hidden h-20"/>
     </main>
   )
