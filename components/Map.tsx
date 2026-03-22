@@ -30,7 +30,16 @@ export default function Map({ evenements = [], position, rayon }: { evenements: 
         </>
       )}
       {evenements.map((e) => e.lat && e.lng ? (
-        <Marker key={e.id} position={{ lat: e.lat, lng: e.lng }} onClick={() => setSelected(e)} label={{ text: e.emoji, fontSize: "18px" }}/>
+        <Marker
+          key={e.id}
+          position={{ lat: e.lat, lng: e.lng }}
+          onClick={() => setSelected(e)}
+          icon={{
+            url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44"><circle cx="22" cy="22" r="20" fill="white" stroke="#e5e5e5" stroke-width="1.5"/><text x="22" y="28" text-anchor="middle" font-size="20">${e.emoji}</text></svg>`)}`,
+            scaledSize: { width: 44, height: 44 } as google.maps.Size,
+            anchor: { x: 22, y: 22 } as google.maps.Point,
+          }}
+        />
       ) : null)}
       {selected && (
         <InfoWindow position={{ lat: selected.lat, lng: selected.lng }} onCloseClick={() => setSelected(null)}>
