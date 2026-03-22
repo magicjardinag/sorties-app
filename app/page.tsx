@@ -330,6 +330,22 @@ export default function Home() {
         </div>
       )}
 
+      {/* ── CALENDRIER MOBILE — modale plein écran ── */}
+      {showCalendrier && (
+        <div className="lg:hidden fixed inset-0 bg-black/40 z-50 flex items-center justify-center" onClick={() => setShowCalendrier(false)}>
+          <div onClick={(e) => e.stopPropagation()} className="flex flex-col items-center">
+            <MiniCalendrier
+              evenements={evenements.filter(e => new Date(e.quand) >= today)}
+              jourActif={jourActif}
+              setJourActif={setJourActif}
+            />
+            <button onClick={() => setShowCalendrier(false)} className="mt-3 w-72 bg-white text-gray-600 py-2.5 rounded-2xl text-sm font-semibold shadow-lg">
+              Fermer ✕
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ── HERO ── */}
       <section className="bg-white px-4 sm:px-6 pt-6 pb-4 sm:pt-8 sm:pb-6">
         <div className="max-w-7xl mx-auto">
@@ -352,7 +368,7 @@ export default function Home() {
               onClick={() => setShowCalendrier(!showCalendrier)}
               className={`flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-2xl text-sm font-semibold transition-all ${showCalendrier || (jourActif !== "tout" && !jours.find(j => j.date === jourActif)) ? "bg-orange-500 text-white shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
             >
-              📅 <span className="hidden sm:inline">{jourActif !== "tout" && !jours.find(j => j.date === jourActif) ? new Date(jourActif).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) : "Agenda"}</span>
+              📅 <span>{jourActif !== "tout" && !jours.find(j => j.date === jourActif) ? new Date(jourActif).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) : "Agenda"}</span>
             </button>
           </div>
         </div>
@@ -384,10 +400,10 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── LAYOUT PRINCIPAL : calendrier gauche + events ── */}
+      {/* ── LAYOUT PRINCIPAL ── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex gap-6 items-start">
 
-        {/* Calendrier côté gauche — visible sur lg uniquement si showCalendrier */}
+        {/* Calendrier desktop — côté gauche */}
         {showCalendrier && (
           <div className="hidden lg:block flex-shrink-0 sticky top-24">
             <MiniCalendrier
