@@ -22,12 +22,14 @@ const categories = [
   { label: "Gratuit", emoji: "🎁" },
 ]
 
-const ROTATING_WORDS = [
-  "chez toi !",
-  "au canapé !",
-  "à rien faire !",
-  "seul(e) !",
-  "en mode Netflix !",
+const SLIDES = [
+  { categorie: "Musique",        emoji: "🎵", bg: "#FF5722", slogan: "La musique, c'est la vie." },
+  { categorie: "Sport",          emoji: "🏃", bg: "#7C3AED", slogan: "Ton canapé t'attend pas." },
+  { categorie: "Nature & Rando", emoji: "🌿", bg: "#059669", slogan: "L'air frais, ça change tout." },
+  { categorie: "Culture",        emoji: "🎨", bg: "#D97706", slogan: "Cultive-toi, ça coûte rien." },
+  { categorie: "Food",           emoji: "🍕", bg: "#E11D48", slogan: "On mange bien par ici." },
+  { categorie: "Danse",          emoji: "💃", bg: "#DB2777", slogan: "Tes pieds ont envie de bouger." },
+  { categorie: "Bar & Nuit",     emoji: "🍸", bg: "#1D4ED8", slogan: "La nuit commence ici." },
 ]
 
 type Evenement = {
@@ -89,23 +91,6 @@ function getFiltreDates() {
   }
 }
 
-function RotatingWord() {
-  const [index, setIndex] = useState(0)
-  const [exiting, setExiting] = useState(false)
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setExiting(true)
-      setTimeout(() => { setIndex(i => (i + 1) % ROTATING_WORDS.length); setExiting(false) }, 280)
-    }, 2500)
-    return () => clearInterval(interval)
-  }, [])
-  return (
-    <span className="inline-block transition-all duration-280" style={{ color: "#FF4D00", opacity: exiting ? 0 : 1, transform: exiting ? "translateY(-14px)" : "translateY(0)" }}>
-      {ROTATING_WORDS[index]}
-    </span>
-  )
-}
-
 function MiniCalendrier({ evenements, jourActif, setJourActif }: {
   evenements: Evenement[]
   jourActif: string
@@ -153,6 +138,173 @@ function MiniCalendrier({ evenements, jourActif, setJourActif }: {
         <button onClick={() => setJourActif("tout")} className="mt-3 w-full text-xs text-orange-500 hover:underline text-center">Voir tous les événements ×</button>
       )}
     </div>
+  )
+}
+
+// ── HERO avec carrousel intégré ──
+function Hero({ evenements, onCategorieChange, recherche, setRecherche, loading }: {
+  evenements: Evenement[]
+  onCategorieChange: (cat: string) => void
+  recherche: string
+  setRecherche: (v: string) => void
+  loading: boolean
+}) {
+  const [cur, setCur] = useState(0)
+  const [sloganOut, setSloganOut] = useState(false)
+  const autoRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const dragRef = useRef<number | null>(null)
+  const N = SLIDES.length
+  const today = new Date(); today.setHours(0,0,0,0)
+
+  const slideEvents = evenements
+    .filter(e => e.categorie === SLIDES[cur].categorie && new Date(e.quand) >= today)
+    .sort((a, b) => new Date(a.quand).getTime() - new Date(b.quand).getTime())
+    .slice(0, 3)
+
+  function goTo(idx: number) {
+    const next = ((idx % N) + N) % N
+    setSloganOut(true)
+    setTimeout(() => {
+      setCur(next)
+      onCategorieChange(SLIDES[next].categorie)
+      setSloganOut(false)
+    }, 300)
+  }
+
+  function startAuto() {
+    if (autoRef.current) clearInterval(autoRef.current)
+    autoRef.current = setInterval(() => setCur(c => {
+      const next = (c + 1) % N
+      setSloganOut(true)
+      setTimeout(() => { setCur(next); onCategorieChange(SLIDES[next].categorie); setSloganOut(false) }, 300)
+      return c
+    }), 3500)
+  }
+
+  useEffect(() => { startAuto(); return () => { if (autoRef.current) clearInterval(autoRef.current) } }, [])
+
+  function onDragStart(x: number) { dragRef.current = x; if (autoRef.current) clearInterval(autoRef.current) }
+  function onDragEnd(x: number) {
+    if (dragRef.current === null) return
+    const diff = x - dragRef.current; dragRef.current = null
+    if (Math.abs(diff) > 40) goTo(diff < 0 ? cur + 1 : cur - 1)
+    startAuto()
+  }
+
+  const slide = SLIDES[cur]
+  const prevSlide = SLIDES[((cur - 1) + N) % N]
+  const nextSlide = SLIDES[(cur + 1) % N]
+
+  return (
+    <section style={{ background: slide.bg, transition: "background 0.6s ease" }} className="relative overflow-hidden">
+      {/* Fond décoratif */}
+      <div className="absolute inset-0 opacity-10" style={{ backgroundImage: `radial-gradient(circle at 20% 50%, white 0%, transparent 60%), radial-gradient(circle at 80% 20%, white 0%, transparent 50%)` }}/>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10 sm:py-16 relative z-10">
+        <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-12">
+
+          {/* ── GAUCHE : carrousel ── */}
+          <div
+            className="flex-shrink-0 flex items-center gap-3 select-none"
+            style={{ cursor: "grab" }}
+            onMouseDown={e => onDragStart(e.clientX)}
+            onMouseUp={e => onDragEnd(e.clientX)}
+            onTouchStart={e => onDragStart(e.touches[0].clientX)}
+            onTouchEnd={e => onDragEnd(e.changedTouches[0].clientX)}
+          >
+            {/* Carte précédente (ghost) */}
+            <div className="hidden sm:block opacity-30 scale-90 transition-all duration-500 cursor-pointer" onClick={() => goTo(cur - 1)}>
+              <div className="w-20 h-28 rounded-2xl flex flex-col items-center justify-center gap-2 border-2 border-white/30" style={{ background: "rgba(255,255,255,0.15)" }}>
+                <span style={{ fontSize: 28 }}>{prevSlide.emoji}</span>
+                <span className="text-white text-[10px] font-bold text-center px-1">{prevSlide.categorie}</span>
+              </div>
+            </div>
+
+            {/* Carte active */}
+            <div className="relative w-44 h-56 sm:w-52 sm:h-64 rounded-3xl overflow-hidden border-4 border-white/40 shadow-2xl transition-all duration-500"
+              style={{ background: "rgba(255,255,255,0.2)" }}>
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-4">
+                <span style={{ fontSize: 72, filter: "drop-shadow(0 8px 16px rgba(0,0,0,0.3))", lineHeight: 1 }}>{slide.emoji}</span>
+                <p className="text-white font-black text-xl text-center" style={{ textShadow: "0 2px 8px rgba(0,0,0,0.3)" }}>{slide.categorie}</p>
+                <div className="flex gap-1 mt-1">
+                  {SLIDES.map((_, i) => (
+                    <button key={i} onClick={(e) => { e.stopPropagation(); goTo(i) }}
+                      style={{ width: i === cur ? 20 : 6, height: 6, borderRadius: 3, background: i === cur ? "white" : "rgba(255,255,255,0.4)", border: "none", cursor: "pointer", transition: "all .3s" }}/>
+                  ))}
+                </div>
+              </div>
+              {/* Flèches */}
+              <button onClick={e => { e.stopPropagation(); goTo(cur - 1) }} className="absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center text-white text-sm" style={{ background: "rgba(0,0,0,0.2)" }}>‹</button>
+              <button onClick={e => { e.stopPropagation(); goTo(cur + 1) }} className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center text-white text-sm" style={{ background: "rgba(0,0,0,0.2)" }}>›</button>
+            </div>
+
+            {/* Carte suivante (ghost) */}
+            <div className="hidden sm:block opacity-30 scale-90 transition-all duration-500 cursor-pointer" onClick={() => goTo(cur + 1)}>
+              <div className="w-20 h-28 rounded-2xl flex flex-col items-center justify-center gap-2 border-2 border-white/30" style={{ background: "rgba(255,255,255,0.15)" }}>
+                <span style={{ fontSize: 28 }}>{nextSlide.emoji}</span>
+                <span className="text-white text-[10px] font-bold text-center px-1">{nextSlide.categorie}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* ── DROITE : slogan + events + search ── */}
+          <div className="flex-1 min-w-0 text-white">
+
+            {/* Slogan animé */}
+            <div className="mb-6 overflow-hidden">
+              <p className="text-xs font-bold tracking-widest uppercase mb-2" style={{ color: "rgba(255,255,255,0.7)" }}>
+                {slide.categorie} · en ce moment
+              </p>
+              <h1
+                className="font-black leading-tight transition-all duration-300"
+                style={{
+                  fontSize: "clamp(28px, 4.5vw, 52px)",
+                  letterSpacing: "-1.5px",
+                  opacity: sloganOut ? 0 : 1,
+                  transform: sloganOut ? "translateY(-12px)" : "translateY(0)",
+                  textShadow: "0 2px 16px rgba(0,0,0,0.2)",
+                }}
+              >
+                {slide.slogan}
+              </h1>
+            </div>
+
+            {/* Événements de la catégorie */}
+            {slideEvents.length > 0 && (
+              <div className="flex flex-col gap-2 mb-6">
+                {slideEvents.map(e => (
+                  <div key={e.id} className="flex items-center gap-3 rounded-2xl px-3 py-2.5 cursor-pointer transition-all hover:scale-[1.02]"
+                    style={{ background: "rgba(255,255,255,0.15)", backdropFilter: "blur(8px)" }}>
+                    <span className="text-xl flex-shrink-0">{e.emoji || slide.emoji}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-sm text-white truncate">{e.titre}</p>
+                      <p className="text-xs" style={{ color: "rgba(255,255,255,0.75)" }}>{e.ville} · {formatDate(e.quand)}{e.heure ? ` · ${e.heure}` : ""}</p>
+                    </div>
+                    <span className="text-xs font-bold px-2.5 py-1 rounded-full flex-shrink-0"
+                      style={{ background: e.prix === "Gratuit" ? "rgba(74,222,128,0.3)" : "rgba(255,255,255,0.2)", color: "white" }}>
+                      {e.prix === "Gratuit" ? "Gratuit" : e.prix}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {slideEvents.length === 0 && !loading && (
+              <div className="mb-6 rounded-2xl px-4 py-3" style={{ background: "rgba(255,255,255,0.15)" }}>
+                <p className="text-sm text-white/80">Pas encore d'événements dans cette catégorie — <span className="font-bold text-white">sois le premier à en publier !</span></p>
+              </div>
+            )}
+
+            {/* Barre de recherche */}
+            <div className="flex items-center bg-white rounded-full px-4 py-2 gap-3 max-w-lg shadow-lg">
+              <span className="text-gray-400">🔍</span>
+              <input type="text" placeholder="Un concert, une rando, une soirée..." className="bg-transparent flex-1 text-sm text-gray-800 outline-none placeholder-gray-400 py-1" value={recherche} onChange={(e) => setRecherche(e.target.value)}/>
+              <button className="flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-bold text-white" style={{ background: slide.bg }}>Go →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
   )
 }
 
@@ -210,7 +362,6 @@ export default function Home() {
       () => { alert("Impossible d'accéder à ta position."); setLoadingGeo(false) }
     )
   }
-
   const desactiverGeolocalisation = () => { setFiltreProximite(false); setPosition(null) }
 
   const toggleFavori = async (e: React.MouseEvent, evenementId: string) => {
@@ -242,6 +393,7 @@ export default function Home() {
   }).sort((a, b) => new Date(a.quand).getTime() - new Date(b.quand).getTime())
 
   const pubActuel = pubsFiltrees[pubIndex % Math.max(pubsFiltrees.length, 1)]
+  const isAgendaActif = showCalendrier || (jourActif !== "tout" && jourActif !== "weekend" && jourActif !== dates.today && jourActif !== dates.demain)
 
   const filtresBoutons = [
     { label: "Tous", value: "tout" },
@@ -250,22 +402,10 @@ export default function Home() {
     { label: "Ce week-end", value: "weekend" },
   ]
 
-  const prochains = evenements.filter(e => e.quand && new Date(e.quand) >= today).sort((a, b) => new Date(a.quand).getTime() - new Date(b.quand).getTime()).slice(0, 3)
-  const FALLBACK_CARDS = [
-    { emoji: "🥾", titre: "Randonnée des gorges", ville: "Sisteron", heure: "08:00", tag: "Gratuit", tagStyle: { background: "#DCFCE7", color: "#166534", borderColor: "#22c55e" } },
-    { emoji: "🎸", titre: "Festival musiques du monde", ville: "Figeac", heure: "17:00", tag: "Demain", tagStyle: { background: "#FEE2E2", color: "#991b1b", borderColor: "#ef4444" } },
-    { emoji: "🏃", titre: "Tournoi de pétanque", ville: "Apt", heure: "14:00", tag: "Aujourd'hui", tagStyle: { background: "#FFF3C4", color: "#854d0e", borderColor: "#f59e0b" } },
-  ]
-  const heroCards = prochains.length > 0
-    ? prochains.map(e => ({ emoji: e.emoji || "🎉", titre: e.titre, ville: e.ville, heure: e.heure, tag: e.prix === "Gratuit" ? "Gratuit" : formatDate(e.quand), tagStyle: e.prix === "Gratuit" ? { background: "#DCFCE7", color: "#166534", borderColor: "#22c55e" } : formatDate(e.quand) === "Aujourd'hui" ? { background: "#FFF3C4", color: "#854d0e", borderColor: "#f59e0b" } : { background: "#FEE2E2", color: "#991b1b", borderColor: "#ef4444" }, id: e.id }))
-    : FALLBACK_CARDS
-
-  const isAgendaActif = showCalendrier || (jourActif !== "tout" && jourActif !== "weekend" && jourActif !== dates.today && jourActif !== dates.demain)
-
   return (
     <main className="min-h-screen" style={{ background: "#F7F6F2" }}>
 
-      {/* HEADER — bordure douce */}
+      {/* HEADER */}
       <header className="bg-white sticky top-0 z-40 border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-3">
           <button onClick={() => router.push("/")} className="flex-shrink-0 font-black text-xl tracking-tight text-gray-900">
@@ -321,52 +461,14 @@ export default function Home() {
         </div>
       )}
 
-      {/* HERO — sans ombres en relief */}
-      <section className="bg-white border-b border-gray-100 px-4 sm:px-8 py-10 sm:py-14">
-        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-start lg:items-center justify-between gap-10">
-          <div className="flex-1 max-w-xl">
-            <div className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-semibold text-amber-700 mb-5" style={{ background: "#FEF3C7" }}>
-              <span>🌞</span>
-              <span>{loading ? "..." : evenementsFiltres.length} événements près de toi</span>
-            </div>
-            <h1 className="font-black leading-none mb-4" style={{ fontSize: "clamp(32px, 5vw, 52px)", letterSpacing: "-1.5px", color: "#1a1a1a" }}>
-              Fini de rester<br /><RotatingWord />
-            </h1>
-            <p className="text-gray-500 text-base mb-7 leading-relaxed">Découvre les meilleures sorties, concerts, randos<br className="hidden sm:block" /> et événements locaux autour de toi.</p>
-            <div className="flex items-center bg-white border border-gray-200 rounded-full px-4 py-1.5 gap-3 max-w-lg shadow-sm">
-              <span className="text-gray-400">🔍</span>
-              <input type="text" placeholder="Un concert à Lyon, une rando ce week-end..." className="bg-transparent flex-1 text-sm text-gray-700 outline-none placeholder-gray-400 py-2" value={recherche} onChange={(e) => setRecherche(e.target.value)}/>
-              <button className="flex-shrink-0 px-5 py-2 rounded-full text-sm font-bold text-white" style={{ background: "#FF4D00" }}>Chercher →</button>
-            </div>
-            <div className="flex items-center gap-5 mt-6 flex-wrap">
-              {[
-                { num: loading ? "..." : String(evenements.filter(e => e.quand === dates.today).length || 0), label: "aujourd'hui" },
-                { num: loading ? "..." : `${evenements.length}+`, label: "événements" },
-                { num: "14", label: "catégories" },
-                { num: "Gratuit", label: "à utiliser" },
-              ].map((s, i) => (
-                <div key={i} className="flex flex-col">
-                  <span className="font-black text-2xl text-gray-900 leading-none">{s.num}</span>
-                  <span className="text-xs text-gray-400 font-medium mt-0.5">{s.label}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-          {/* Cartes hero — sans ombres épaisses */}
-          <div className="hidden lg:flex flex-col gap-3 flex-shrink-0">
-            {heroCards.map((card, i) => (
-              <div key={i} onClick={() => (card as any).id && router.push(`/evenement/${(card as any).id}`)} className="bg-white border border-gray-200 rounded-2xl p-3 flex items-center gap-3 min-w-[264px] cursor-pointer transition-all hover:-translate-y-1 hover:shadow-md shadow-sm">
-                <div className="w-11 h-11 rounded-xl bg-gray-100 flex items-center justify-center text-2xl flex-shrink-0">{card.emoji}</div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-gray-900 text-sm truncate">{card.titre}</div>
-                  <div className="text-xs text-gray-400 mt-0.5">{card.ville} · {card.heure}</div>
-                </div>
-                <span className="text-xs font-semibold px-2.5 py-1 rounded-full border flex-shrink-0" style={card.tagStyle}>{card.tag}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* HERO */}
+      <Hero
+        evenements={evenements}
+        onCategorieChange={setCategorieActive}
+        recherche={recherche}
+        setRecherche={setRecherche}
+        loading={loading}
+      />
 
       {/* CALENDRIER MOBILE */}
       {showCalendrier && (
@@ -378,8 +480,8 @@ export default function Home() {
         </div>
       )}
 
-      {/* FILTRES — bordures douces */}
-      <section className="bg-white border-b border-gray-100 px-4 sm:px-6 pt-4 pb-3">
+      {/* FILTRES */}
+      <section id="grille-evenements" className="bg-white border-b border-gray-100 px-4 sm:px-6 pt-4 pb-3">
         <div className="max-w-7xl mx-auto space-y-3">
           <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 items-center" style={{ scrollbarWidth: "none" }}>
             {filtresBoutons.map((f) => (
@@ -418,7 +520,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* LAYOUT PRINCIPAL — cartes douces */}
+      {/* LAYOUT PRINCIPAL */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex gap-6 items-start">
         {showCalendrier && (
           <div className="hidden lg:block flex-shrink-0 sticky top-24">
@@ -485,7 +587,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* FOOTER — bleu nuit doux */}
+      {/* FOOTER */}
       <footer className="mt-8 py-10 px-4 sm:px-6" style={{ background: "#1E2A3A" }}>
         <div className="max-w-5xl mx-auto">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-8 mb-8">
@@ -499,8 +601,7 @@ export default function Home() {
                 {[{ l: "Accueil", p: "/" }, { l: "Carte", p: "/carte" }, { l: "Publier", p: "/publier" }, { l: "Tarifs", p: "/tarifs" }].map(x => (
                   <button key={x.l} onClick={() => router.push(x.p)} className="text-sm text-left transition-colors" style={{ color: "#94A3B8" }}
                     onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#FF4D00"}
-                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#94A3B8"}
-                  >{x.l}</button>
+                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#94A3B8"}>{x.l}</button>
                 ))}
               </div>
             </div>
@@ -510,8 +611,7 @@ export default function Home() {
                 {[{ l: "Contact", p: "/contact" }, { l: "Remboursement", p: "/contact" }, { l: "Signaler", p: "/contact" }].map(x => (
                   <button key={x.l} onClick={() => router.push(x.p)} className="text-sm text-left transition-colors" style={{ color: "#94A3B8" }}
                     onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#FF4D00"}
-                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#94A3B8"}
-                  >{x.l}</button>
+                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#94A3B8"}>{x.l}</button>
                 ))}
               </div>
             </div>
@@ -521,8 +621,7 @@ export default function Home() {
                 {[{ l: "Partenariat local", p: "/contact" }, { l: "Affiliation", p: "/contact" }, { l: "Publicité", p: "/contact" }].map(x => (
                   <button key={x.l} onClick={() => router.push(x.p)} className="text-sm text-left transition-colors" style={{ color: "#94A3B8" }}
                     onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#FF4D00"}
-                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#94A3B8"}
-                  >{x.l}</button>
+                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#94A3B8"}>{x.l}</button>
                 ))}
               </div>
             </div>
@@ -533,15 +632,14 @@ export default function Home() {
               {[{ l: "Mentions légales", p: "/mentions-legales" }, { l: "CGU", p: "/cgu" }, { l: "Contact", p: "/contact" }].map(x => (
                 <button key={x.l} onClick={() => router.push(x.p)} className="text-xs transition-colors" style={{ color: "#475569" }}
                   onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#FF4D00"}
-                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#475569"}
-                >{x.l}</button>
+                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#475569"}>{x.l}</button>
               ))}
             </div>
           </div>
         </div>
       </footer>
 
-      {/* MOBILE BOTTOM NAV — doux */}
+      {/* MOBILE BOTTOM NAV */}
       <nav className="sm:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40 shadow-lg">
         <div className="flex items-center justify-around px-2 py-2">
           <button onClick={() => router.push("/")} className="flex flex-col items-center gap-0.5 px-4 py-1.5">
