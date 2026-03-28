@@ -22,15 +22,127 @@ const categories = [
   { label: "Gratuit", emoji: "🎁" },
 ]
 
-const SLIDES = [
-  { categorie: "Musique",        emoji: "🎵", bg: "#FF5722", slogan: "La musique, c'est la vie." },
-  { categorie: "Sport",          emoji: "🏃", bg: "#7C3AED", slogan: "Ton canapé t'attend pas." },
-  { categorie: "Nature & Rando", emoji: "🌿", bg: "#059669", slogan: "L'air frais, ça change tout." },
-  { categorie: "Culture",        emoji: "🎨", bg: "#D97706", slogan: "Cultive-toi, ça coûte rien." },
-  { categorie: "Food",           emoji: "🍕", bg: "#E11D48", slogan: "On mange bien par ici." },
-  { categorie: "Danse",          emoji: "💃", bg: "#DB2777", slogan: "Tes pieds ont envie de bouger." },
-  { categorie: "Bar & Nuit",     emoji: "🍸", bg: "#1D4ED8", slogan: "La nuit commence ici." },
+// Config des slides du carrousel hero — couleurs vives, slogans humoristiques
+const HERO_SLIDES = [
+  {
+    categorie: "Musique",
+    emoji: "🎵",
+    bg: "#7C3AED",
+    accent: "#FCD34D",
+    phrase: "Tes oreilles méritent mieux que Spotify.",
+    sub: "Musique · en ce moment",
+  },
+  {
+    categorie: "Sport",
+    emoji: "🏃",
+    bg: "#059669",
+    accent: "#FCD34D",
+    phrase: "Ton canapé survivra sans toi ce soir.",
+    sub: "Sport · en ce moment",
+  },
+  {
+    categorie: "Nature & Rando",
+    emoji: "🌿",
+    bg: "#0891B2",
+    accent: "#FCD34D",
+    phrase: "La nature existe aussi en vrai, paraît-il.",
+    sub: "Nature & Rando · en ce moment",
+  },
+  {
+    categorie: "Culture",
+    emoji: "🎨",
+    bg: "#D97706",
+    accent: "#FEF3C7",
+    phrase: "Sors, t'auras l'air cultivé au bureau lundi.",
+    sub: "Culture · en ce moment",
+  },
+  {
+    categorie: "Food",
+    emoji: "🍕",
+    bg: "#DC2626",
+    accent: "#FCD34D",
+    phrase: "Tu peux pas manger pareil chez toi. Promis.",
+    sub: "Food · en ce moment",
+  },
+  {
+    categorie: "Danse",
+    emoji: "💃",
+    bg: "#DB2777",
+    accent: "#FCD34D",
+    phrase: "Personne juge. Enfin presque.",
+    sub: "Danse · en ce moment",
+  },
+  {
+    categorie: "Bar & Nuit",
+    emoji: "🍸",
+    bg: "#1D4ED8",
+    accent: "#FCD34D",
+    phrase: "Un verre dehors, ça compte comme du social.",
+    sub: "Bar & Nuit · en ce moment",
+  },
+  {
+    categorie: "Atelier",
+    emoji: "🛠️",
+    bg: "#B45309",
+    accent: "#FEF3C7",
+    phrase: "Crée un truc. Même raté c'est sympa.",
+    sub: "Atelier · en ce moment",
+  },
+  {
+    categorie: "Enfants",
+    emoji: "🧒",
+    bg: "#0EA5E9",
+    accent: "#FCD34D",
+    phrase: "Épuise-les dehors. Dors mieux ce soir.",
+    sub: "Enfants · en ce moment",
+  },
+  {
+    categorie: "Animaux",
+    emoji: "🐾",
+    bg: "#16A34A",
+    accent: "#FCD34D",
+    phrase: "Ton chien a besoin de toi. (C'est lui qui le dit.)",
+    sub: "Animaux · en ce moment",
+  },
+  {
+    categorie: "Brocante",
+    emoji: "🏺",
+    bg: "#92400E",
+    accent: "#FEF3C7",
+    phrase: "Achète des trucs dont t'as pas besoin. Avec style.",
+    sub: "Brocante · en ce moment",
+  },
+  {
+    categorie: "Loto",
+    emoji: "🎰",
+    bg: "#BE185D",
+    accent: "#FCD34D",
+    phrase: "Ce soir c'est peut-être toi. (C'est pas toi.)",
+    sub: "Loto · en ce moment",
+  },
 ]
+
+// Photos Unsplash par catégorie (fallback quand pas d'image uploadée)
+const FALLBACK_PHOTOS: Record<string, string> = {
+  "Musique":        "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600&q=80",
+  "Sport":          "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&q=80",
+  "Danse":          "https://images.unsplash.com/photo-1504609813442-a8924e83f76e?w=600&q=80",
+  "Culture":        "https://images.unsplash.com/photo-1518998053901-5348d3961a04?w=600&q=80",
+  "Atelier":        "https://images.unsplash.com/photo-1452860606245-08befc0ff44b?w=600&q=80",
+  "Food":           "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=600&q=80",
+  "Nature & Rando": "https://images.unsplash.com/photo-1551632811-561732d1e306?w=600&q=80",
+  "Animaux":        "https://images.unsplash.com/photo-1425082661705-1834bfd09dca?w=600&q=80",
+  "Brocante":       "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80",
+  "Bar & Nuit":     "https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?w=600&q=80",
+  "Loto":           "https://images.unsplash.com/photo-1642543492481-44e81e3914a7?w=600&q=80",
+  "Enfants":        "https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=600&q=80",
+  "Gratuit":        "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=600&q=80",
+}
+
+function getFallbackPhoto(categorie: string): string {
+  return FALLBACK_PHOTOS[categorie] || "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=600&q=80"
+}
+
 
 type Evenement = {
   id: string
@@ -53,10 +165,10 @@ function getDistance(lat1: number, lng1: number, lat2: number, lng2: number) {
   const R = 6371
   const dLat = (lat2 - lat1) * Math.PI / 180
   const dLng = (lng2 - lng1) * Math.PI / 180
-  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLng/2) * Math.sin(dLng/2)
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
+    Math.sin(dLng / 2) * Math.sin(dLng / 2)
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 }
 
 function formatDate(dateStr: string): string {
@@ -77,7 +189,7 @@ function formatDate(dateStr: string): string {
 }
 
 function getFiltreDates() {
-  const today = new Date(); today.setHours(0,0,0,0)
+  const today = new Date(); today.setHours(0, 0, 0, 0)
   const demain = new Date(today); demain.setDate(today.getDate() + 1)
   const jourSemaine = today.getDay()
   const joursSamedi = jourSemaine === 6 ? 0 : (6 - jourSemaine)
@@ -96,7 +208,7 @@ function MiniCalendrier({ evenements, jourActif, setJourActif }: {
   jourActif: string
   setJourActif: (d: string) => void
 }) {
-  const today = new Date(); today.setHours(0,0,0,0)
+  const today = new Date(); today.setHours(0, 0, 0, 0)
   const [moisActuel, setMoisActuel] = useState(new Date(today.getFullYear(), today.getMonth(), 1))
   const annee = moisActuel.getFullYear()
   const mois = moisActuel.getMonth()
@@ -105,7 +217,7 @@ function MiniCalendrier({ evenements, jourActif, setJourActif }: {
   const offset = premierJour === 0 ? 6 : premierJour - 1
   const datesAvecEvenements = new Set(evenements.map(e => e.quand))
   const joursNoms = ["Lu", "Ma", "Me", "Je", "Ve", "Sa", "Di"]
-  const moisNoms = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"]
+  const moisNoms = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"]
   return (
     <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-4 w-72">
       <div className="flex items-center justify-between mb-3">
@@ -117,7 +229,7 @@ function MiniCalendrier({ evenements, jourActif, setJourActif }: {
         {joursNoms.map(j => <p key={j} className="text-center text-xs text-gray-400 font-medium py-1">{j}</p>)}
       </div>
       <div className="grid grid-cols-7 gap-0.5">
-        {Array.from({ length: offset }).map((_, i) => <div key={`e-${i}`}/>)}
+        {Array.from({ length: offset }).map((_, i) => <div key={`e-${i}`} />)}
         {Array.from({ length: nbJours }).map((_, i) => {
           const jour = i + 1
           const dateStr = `${annee}-${String(mois + 1).padStart(2, "0")}-${String(jour).padStart(2, "0")}`
@@ -127,9 +239,11 @@ function MiniCalendrier({ evenements, jourActif, setJourActif }: {
           const isPast = new Date(dateStr) < today
           return (
             <button key={dateStr} onClick={() => setJourActif(isSelected ? "tout" : dateStr)} disabled={isPast && !hasEvent}
-              className={`relative flex flex-col items-center justify-center rounded-xl py-1.5 text-xs font-medium transition-all ${isSelected ? "bg-orange-500 text-white" : isToday ? "bg-orange-100 text-orange-600 font-bold" : isPast ? "text-gray-300 cursor-not-allowed" : hasEvent ? "text-gray-800 hover:bg-orange-50 cursor-pointer" : "text-gray-400 hover:bg-gray-50 cursor-pointer"}`}>
+              className={`relative flex flex-col items-center justify-center rounded-xl py-1.5 text-xs font-medium transition-all
+                ${isSelected ? "bg-orange-500 text-white" : isToday ? "bg-orange-100 text-orange-600 font-bold" :
+                  isPast ? "text-gray-300 cursor-not-allowed" : hasEvent ? "text-gray-800 hover:bg-orange-50 cursor-pointer" : "text-gray-400 hover:bg-gray-50 cursor-pointer"}`}>
               {jour}
-              {hasEvent && !isSelected && <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-orange-400"/>}
+              {hasEvent && !isSelected && <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-orange-400" />}
             </button>
           )
         })}
@@ -141,172 +255,220 @@ function MiniCalendrier({ evenements, jourActif, setJourActif }: {
   )
 }
 
-// ── HERO avec carrousel intégré ──
-function Hero({ evenements, onCategorieChange, recherche, setRecherche, loading }: {
+// ── HERO CARROUSEL ──────────────────────────────────────────────────────
+function HeroCarousel({
+  evenements,
+  recherche,
+  setRecherche,
+  onCategorieChange,
+}: {
   evenements: Evenement[]
-  onCategorieChange: (cat: string) => void
   recherche: string
   setRecherche: (v: string) => void
-  loading: boolean
+  onCategorieChange: (cat: string) => void
 }) {
   const [cur, setCur] = useState(0)
-  const [sloganOut, setSloganOut] = useState(false)
+  const [transitioning, setTransitioning] = useState(false)
+  const [phraseVisible, setPhraseVisible] = useState(true)
+  const [slideEvents, setSlideEvents] = useState<Evenement[]>([])
   const autoRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const dragRef = useRef<number | null>(null)
-  const N = SLIDES.length
-  const today = new Date(); today.setHours(0,0,0,0)
+  const today = new Date(); today.setHours(0, 0, 0, 0)
 
-  const slideEvents = evenements
-    .filter(e => e.categorie === SLIDES[cur].categorie && new Date(e.quand) >= today)
-    .sort((a, b) => new Date(a.quand).getTime() - new Date(b.quand).getTime())
-    .slice(0, 3)
+  const N = HERO_SLIDES.length
+
+  useEffect(() => {
+    const pool = evenements.filter(
+      e => e.categorie === HERO_SLIDES[cur].categorie && new Date(e.quand) >= today
+    )
+    const shuffled = [...pool].sort(() => Math.random() - 0.5)
+    const count = Math.min(shuffled.length, Math.floor(Math.random() * 3) + 1)
+    setSlideEvents(shuffled.slice(0, Math.max(count, 1)))
+  }, [evenements, cur])
 
   function goTo(idx: number) {
-    const next = ((idx % N) + N) % N
-    setSloganOut(true)
+    if (transitioning) return
+    setTransitioning(true)
+    setPhraseVisible(false)
     setTimeout(() => {
+      const next = ((idx % N) + N) % N
       setCur(next)
-      onCategorieChange(SLIDES[next].categorie)
-      setSloganOut(false)
-    }, 300)
+      setPhraseVisible(true)
+      setTransitioning(false)
+    }, 320)
   }
 
   function startAuto() {
     if (autoRef.current) clearInterval(autoRef.current)
-    autoRef.current = setInterval(() => setCur(c => {
-      const next = (c + 1) % N
-      setSloganOut(true)
-      setTimeout(() => { setCur(next); onCategorieChange(SLIDES[next].categorie); setSloganOut(false) }, 300)
-      return c
-    }), 3500)
+    autoRef.current = setInterval(() => goTo(cur + 1), 4500)
   }
 
-  useEffect(() => { startAuto(); return () => { if (autoRef.current) clearInterval(autoRef.current) } }, [])
-
-  function onDragStart(x: number) { dragRef.current = x; if (autoRef.current) clearInterval(autoRef.current) }
-  function onDragEnd(x: number) {
-    if (dragRef.current === null) return
-    const diff = x - dragRef.current; dragRef.current = null
-    if (Math.abs(diff) > 40) goTo(diff < 0 ? cur + 1 : cur - 1)
+  useEffect(() => {
     startAuto()
-  }
+    return () => { if (autoRef.current) clearInterval(autoRef.current) }
+  }, [cur])
 
-  const slide = SLIDES[cur]
-  const prevSlide = SLIDES[((cur - 1) + N) % N]
-  const nextSlide = SLIDES[(cur + 1) % N]
+  const slide = HERO_SLIDES[cur]
+
+  // Indices des cartes voisines visibles
+  const prevIdx = ((cur - 1) + N) % N
+  const nextIdx = (cur + 1) % N
 
   return (
-    <section style={{ background: slide.bg, transition: "background 0.6s ease" }} className="relative overflow-hidden">
-      {/* Fond décoratif */}
-      <div className="absolute inset-0 opacity-10" style={{ backgroundImage: `radial-gradient(circle at 20% 50%, white 0%, transparent 60%), radial-gradient(circle at 80% 20%, white 0%, transparent 50%)` }}/>
+    <section
+      className="relative w-full overflow-hidden transition-colors duration-700"
+      style={{ background: slide.bg, minHeight: 320 }}
+    >
+      <div className="max-w-7xl mx-auto px-6 py-10 flex items-center gap-8">
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10 sm:py-16 relative z-10">
-        <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-12">
+        {/* ── Carrousel de catégories (gauche) ── */}
+        <div className="flex items-center gap-3 flex-shrink-0">
 
-          {/* ── GAUCHE : carrousel ── */}
-          <div
-            className="flex-shrink-0 flex items-center gap-3 select-none"
-            style={{ cursor: "grab" }}
-            onMouseDown={e => onDragStart(e.clientX)}
-            onMouseUp={e => onDragEnd(e.clientX)}
-            onTouchStart={e => onDragStart(e.touches[0].clientX)}
-            onTouchEnd={e => onDragEnd(e.changedTouches[0].clientX)}
+          {/* Carte précédente — petite, à gauche */}
+          <button
+            onClick={() => { goTo(cur - 1); if (autoRef.current) clearInterval(autoRef.current); startAuto() }}
+            className="flex flex-col items-center gap-2 px-4 py-4 rounded-2xl cursor-pointer transition-all opacity-50 hover:opacity-75 flex-shrink-0"
+            style={{ background: "rgba(255,255,255,0.1)", minWidth: 80 }}
           >
-            {/* Carte précédente (ghost) */}
-            <div className="hidden sm:block opacity-30 scale-90 transition-all duration-500 cursor-pointer" onClick={() => goTo(cur - 1)}>
-              <div className="w-20 h-28 rounded-2xl flex flex-col items-center justify-center gap-2 border-2 border-white/30" style={{ background: "rgba(255,255,255,0.15)" }}>
-                <span style={{ fontSize: 28 }}>{prevSlide.emoji}</span>
-                <span className="text-white text-[10px] font-bold text-center px-1">{prevSlide.categorie}</span>
-              </div>
-            </div>
+            <span style={{ fontSize: 28 }}>{HERO_SLIDES[prevIdx].emoji}</span>
+            <span className="text-white text-xs font-medium text-center leading-tight" style={{ fontSize: 11 }}>
+              {HERO_SLIDES[prevIdx].categorie.replace(" & Rando", "")}
+            </span>
+          </button>
 
-            {/* Carte active */}
-            <div className="relative w-44 h-56 sm:w-52 sm:h-64 rounded-3xl overflow-hidden border-4 border-white/40 shadow-2xl transition-all duration-500"
-              style={{ background: "rgba(255,255,255,0.2)" }}>
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-4">
-                <span style={{ fontSize: 72, filter: "drop-shadow(0 8px 16px rgba(0,0,0,0.3))", lineHeight: 1 }}>{slide.emoji}</span>
-                <p className="text-white font-black text-xl text-center" style={{ textShadow: "0 2px 8px rgba(0,0,0,0.3)" }}>{slide.categorie}</p>
-                <div className="flex gap-1 mt-1">
-                  {SLIDES.map((_, i) => (
-                    <button key={i} onClick={(e) => { e.stopPropagation(); goTo(i) }}
-                      style={{ width: i === cur ? 20 : 6, height: 6, borderRadius: 3, background: i === cur ? "white" : "rgba(255,255,255,0.4)", border: "none", cursor: "pointer", transition: "all .3s" }}/>
-                  ))}
-                </div>
-              </div>
-              {/* Flèches */}
-              <button onClick={e => { e.stopPropagation(); goTo(cur - 1) }} className="absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center text-white text-sm" style={{ background: "rgba(0,0,0,0.2)" }}>‹</button>
-              <button onClick={e => { e.stopPropagation(); goTo(cur + 1) }} className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center text-white text-sm" style={{ background: "rgba(0,0,0,0.2)" }}>›</button>
-            </div>
+          {/* Flèche gauche */}
+          <button
+            onClick={() => { goTo(cur - 1); if (autoRef.current) clearInterval(autoRef.current); startAuto() }}
+            className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0"
+            style={{ background: "rgba(255,255,255,0.2)", fontSize: 18 }}
+          >‹</button>
 
-            {/* Carte suivante (ghost) */}
-            <div className="hidden sm:block opacity-30 scale-90 transition-all duration-500 cursor-pointer" onClick={() => goTo(cur + 1)}>
-              <div className="w-20 h-28 rounded-2xl flex flex-col items-center justify-center gap-2 border-2 border-white/30" style={{ background: "rgba(255,255,255,0.15)" }}>
-                <span style={{ fontSize: 28 }}>{nextSlide.emoji}</span>
-                <span className="text-white text-[10px] font-bold text-center px-1">{nextSlide.categorie}</span>
-              </div>
+          {/* Carte active — grande, centrale */}
+          <div
+            className="flex flex-col items-center gap-3 rounded-2xl transition-all flex-shrink-0"
+            style={{ background: "rgba(255,255,255,0.18)", padding: "24px 20px", minWidth: 130 }}
+          >
+            <span style={{ fontSize: 52 }}>{slide.emoji}</span>
+            <span className="text-white font-black text-center leading-tight" style={{ fontSize: 15, fontFamily: "'Syne', sans-serif" }}>
+              {slide.categorie}
+            </span>
+            {/* Dots */}
+            <div className="flex gap-1.5 mt-1">
+              {HERO_SLIDES.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => { goTo(i); if (autoRef.current) clearInterval(autoRef.current); startAuto() }}
+                  className="rounded-full border-none cursor-pointer transition-all"
+                  style={{
+                    width: i === cur ? 16 : 6,
+                    height: 6,
+                    background: i === cur ? "#fff" : "rgba(255,255,255,0.35)",
+                  }}
+                />
+              ))}
             </div>
           </div>
 
-          {/* ── DROITE : slogan + events + search ── */}
-          <div className="flex-1 min-w-0 text-white">
+          {/* Flèche droite */}
+          <button
+            onClick={() => { goTo(cur + 1); if (autoRef.current) clearInterval(autoRef.current); startAuto() }}
+            className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0"
+            style={{ background: "rgba(255,255,255,0.2)", fontSize: 18 }}
+          >›</button>
 
-            {/* Slogan animé */}
-            <div className="mb-6 overflow-hidden">
-              <p className="text-xs font-bold tracking-widest uppercase mb-2" style={{ color: "rgba(255,255,255,0.7)" }}>
-                {slide.categorie} · en ce moment
-              </p>
-              <h1
-                className="font-black leading-tight transition-all duration-300"
-                style={{
-                  fontSize: "clamp(28px, 4.5vw, 52px)",
-                  letterSpacing: "-1.5px",
-                  opacity: sloganOut ? 0 : 1,
-                  transform: sloganOut ? "translateY(-12px)" : "translateY(0)",
-                  textShadow: "0 2px 16px rgba(0,0,0,0.2)",
-                }}
+          {/* Carte suivante — petite, à droite */}
+          <button
+            onClick={() => { goTo(cur + 1); if (autoRef.current) clearInterval(autoRef.current); startAuto() }}
+            className="flex flex-col items-center gap-2 px-4 py-4 rounded-2xl cursor-pointer transition-all opacity-50 hover:opacity-75 flex-shrink-0"
+            style={{ background: "rgba(255,255,255,0.1)", minWidth: 80 }}
+          >
+            <span style={{ fontSize: 28 }}>{HERO_SLIDES[nextIdx].emoji}</span>
+            <span className="text-white text-xs font-medium text-center leading-tight" style={{ fontSize: 11 }}>
+              {HERO_SLIDES[nextIdx].categorie.replace(" & Rando", "")}
+            </span>
+          </button>
+        </div>
+
+        {/* ── Contenu droit ── */}
+        <div className="flex-1 min-w-0">
+          {/* Label catégorie */}
+          <p className="text-xs font-bold tracking-widest uppercase mb-3 transition-all" style={{ color: slide.accent }}>
+            {slide.sub}
+          </p>
+
+          {/* Phrase forte */}
+          <h2
+            className="font-black mb-5 transition-all duration-300"
+            style={{
+              fontFamily: "'Syne', sans-serif",
+              fontSize: "clamp(28px, 4vw, 52px)",
+              letterSpacing: "-1.5px",
+              color: "#fff",
+              lineHeight: 1.05,
+              opacity: phraseVisible ? 1 : 0,
+              transform: phraseVisible ? "translateY(0)" : "translateY(-12px)",
+              transition: "opacity .3s ease, transform .3s ease",
+            }}
+          >
+            {slide.phrase}
+          </h2>
+
+          {/* Événements de la catégorie */}
+          <div className="flex flex-col gap-2 mb-5">
+            {slideEvents.length > 0 ? slideEvents.map((e) => (
+              <div
+                key={e.id}
+                className="flex items-center justify-between rounded-xl px-4 py-3 cursor-pointer transition-all hover:opacity-90"
+                style={{ background: "rgba(255,255,255,0.12)" }}
               >
-                {slide.slogan}
-              </h1>
-            </div>
-
-            {/* Événements de la catégorie */}
-            {slideEvents.length > 0 && (
-              <div className="flex flex-col gap-2 mb-6">
-                {slideEvents.map(e => (
-                  <div key={e.id} className="flex items-center gap-3 rounded-2xl px-3 py-2.5 cursor-pointer transition-all hover:scale-[1.02]"
-                    style={{ background: "rgba(255,255,255,0.15)", backdropFilter: "blur(8px)" }}>
-                    <span className="text-xl flex-shrink-0">{e.emoji || slide.emoji}</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-bold text-sm text-white truncate">{e.titre}</p>
-                      <p className="text-xs" style={{ color: "rgba(255,255,255,0.75)" }}>{e.ville} · {formatDate(e.quand)}{e.heure ? ` · ${e.heure}` : ""}</p>
-                    </div>
-                    <span className="text-xs font-bold px-2.5 py-1 rounded-full flex-shrink-0"
-                      style={{ background: e.prix === "Gratuit" ? "rgba(74,222,128,0.3)" : "rgba(255,255,255,0.2)", color: "white" }}>
-                      {e.prix === "Gratuit" ? "Gratuit" : e.prix}
-                    </span>
+                <div className="flex items-center gap-3 min-w-0">
+                  <span style={{ fontSize: 20 }}>{e.emoji || slide.emoji}</span>
+                  <div className="min-w-0">
+                    <p className="text-white font-semibold text-sm truncate">{e.titre}</p>
+                    <p className="text-xs" style={{ color: "rgba(255,255,255,0.6)" }}>
+                      {e.ville} · {formatDate(e.quand)}{e.heure ? ` · ${e.heure}` : ""}
+                    </p>
                   </div>
-                ))}
+                </div>
+                <span
+                  className="text-xs font-bold px-3 py-1 rounded-full flex-shrink-0 ml-3"
+                  style={{
+                    background: e.prix === "Gratuit" ? "#22c55e" : "rgba(255,255,255,0.2)",
+                    color: "#fff",
+                  }}
+                >
+                  {e.prix}
+                </span>
+              </div>
+            )) : (
+              <div className="rounded-xl px-4 py-3" style={{ background: "rgba(255,255,255,0.08)" }}>
+                <p className="text-sm" style={{ color: "rgba(255,255,255,0.5)" }}>Aucun événement pour le moment</p>
               </div>
             )}
+          </div>
 
-            {slideEvents.length === 0 && !loading && (
-              <div className="mb-6 rounded-2xl px-4 py-3" style={{ background: "rgba(255,255,255,0.15)" }}>
-                <p className="text-sm text-white/80">Pas encore d'événements dans cette catégorie — <span className="font-bold text-white">sois le premier à en publier !</span></p>
-              </div>
-            )}
-
-            {/* Barre de recherche */}
-            <div className="flex items-center bg-white rounded-full px-4 py-2 gap-3 max-w-lg shadow-lg">
-              <span className="text-gray-400">🔍</span>
-              <input type="text" placeholder="Un concert, une rando, une soirée..." className="bg-transparent flex-1 text-sm text-gray-800 outline-none placeholder-gray-400 py-1" value={recherche} onChange={(e) => setRecherche(e.target.value)}/>
-              <button className="flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-bold text-white" style={{ background: slide.bg }}>Go →</button>
-            </div>
+          {/* Barre de recherche */}
+          <div className="flex items-center bg-white rounded-full px-4 py-2 gap-3 max-w-md" style={{ boxShadow: "0 4px 20px rgba(0,0,0,0.2)" }}>
+            <span className="text-gray-400">🔍</span>
+            <input
+              type="text"
+              placeholder="Un concert, une rando, une soirée..."
+              className="bg-transparent flex-1 text-sm text-gray-800 outline-none placeholder-gray-400 py-1"
+              value={recherche}
+              onChange={(e) => setRecherche(e.target.value)}
+            />
+            <button
+              className="flex-shrink-0 px-5 py-2 rounded-full text-sm font-bold text-white transition-colors"
+              style={{ background: slide.accent }}
+            >
+              Go →
+            </button>
           </div>
         </div>
       </div>
     </section>
   )
 }
+// ─────────────────────────────────────────────────────────────────────────
 
 export default function Home() {
   const router = useRouter()
@@ -319,12 +481,13 @@ export default function Home() {
   const [pubs, setPubs] = useState<any[]>([])
   const [pubIndex, setPubIndex] = useState(0)
   const [favoris, setFavoris] = useState<string[]>([])
-  const [position, setPosition] = useState<{lat: number, lng: number} | null>(null)
+  const [position, setPosition] = useState<{ lat: number; lng: number } | null>(null)
   const [rayon, setRayon] = useState(50)
   const [filtreProximite, setFiltreProximite] = useState(false)
   const [loadingGeo, setLoadingGeo] = useState(false)
   const [showCalendrier, setShowCalendrier] = useState(false)
   const [menuMobileOpen, setMenuMobileOpen] = useState(false)
+  const [showGeoModal, setShowGeoModal] = useState(false)
 
   const dates = getFiltreDates()
 
@@ -347,6 +510,11 @@ export default function Home() {
       setPubs(data || [])
     }
     fetchEvenements(); fetchUser(); fetchPubs()
+    // Propose géoloc si jamais refusé avant
+    const hasSeenGeo = localStorage.getItem("geo_asked")
+    if (!hasSeenGeo) {
+      setTimeout(() => setShowGeoModal(true), 1800)
+    }
   }, [])
 
   useEffect(() => {
@@ -393,7 +561,6 @@ export default function Home() {
   }).sort((a, b) => new Date(a.quand).getTime() - new Date(b.quand).getTime())
 
   const pubActuel = pubsFiltrees[pubIndex % Math.max(pubsFiltrees.length, 1)]
-  const isAgendaActif = showCalendrier || (jourActif !== "tout" && jourActif !== "weekend" && jourActif !== dates.today && jourActif !== dates.demain)
 
   const filtresBoutons = [
     { label: "Tous", value: "tout" },
@@ -402,10 +569,12 @@ export default function Home() {
     { label: "Ce week-end", value: "weekend" },
   ]
 
+  const isAgendaActif = showCalendrier || (jourActif !== "tout" && jourActif !== "weekend" && jourActif !== dates.today && jourActif !== dates.demain)
+
   return (
     <main className="min-h-screen" style={{ background: "#F7F6F2" }}>
 
-      {/* HEADER */}
+      {/* ── HEADER ── */}
       <header className="bg-white sticky top-0 z-40 border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-3">
           <button onClick={() => router.push("/")} className="flex-shrink-0 font-black text-xl tracking-tight text-gray-900">
@@ -413,7 +582,7 @@ export default function Home() {
           </button>
           <div className="hidden sm:flex flex-1 max-w-md items-center bg-gray-100 rounded-full px-4 py-2.5 gap-2">
             <span className="text-gray-400 text-sm">🔍</span>
-            <input type="text" placeholder="Événement, ville..." className="bg-transparent flex-1 text-sm text-gray-800 outline-none placeholder-gray-400 font-medium" value={recherche} onChange={(e) => setRecherche(e.target.value)}/>
+            <input type="text" placeholder="Événement, ville..." className="bg-transparent flex-1 text-sm text-gray-800 outline-none placeholder-gray-400 font-medium" value={recherche} onChange={(e) => setRecherche(e.target.value)} />
             {recherche && <button onClick={() => setRecherche("")} className="text-gray-400 text-sm">✕</button>}
           </div>
           <div className="hidden sm:flex items-center gap-2">
@@ -431,7 +600,7 @@ export default function Home() {
         <div className="sm:hidden px-4 pb-3">
           <div className="flex items-center bg-gray-100 rounded-full px-4 py-2.5 gap-2">
             <span className="text-gray-400 text-sm">🔍</span>
-            <input type="text" placeholder="Rechercher..." className="bg-transparent flex-1 text-sm text-gray-800 outline-none placeholder-gray-400" value={recherche} onChange={(e) => setRecherche(e.target.value)}/>
+            <input type="text" placeholder="Rechercher..." className="bg-transparent flex-1 text-sm text-gray-800 outline-none placeholder-gray-400" value={recherche} onChange={(e) => setRecherche(e.target.value)} />
             {recherche && <button onClick={() => setRecherche("")} className="text-gray-400 text-sm">✕</button>}
           </div>
         </div>
@@ -446,7 +615,7 @@ export default function Home() {
         )}
       </header>
 
-      {/* PUB */}
+      {/* ── PUB ── */}
       {pubsFiltrees.length > 0 && pubActuel && (
         <div className="border-b border-amber-100 px-4 py-2.5 flex items-center justify-between gap-3" style={{ background: "#FFFBEB" }}>
           <div className="flex items-center gap-2 min-w-0">
@@ -456,75 +625,118 @@ export default function Home() {
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <a href={pubActuel.lien} target="_blank" className="text-xs font-semibold hover:underline whitespace-nowrap" style={{ color: "#FF4D00" }}>Voir →</a>
-            <div className="flex gap-1">{pubsFiltrees.map((_, i) => <div key={i} className={`w-1.5 h-1.5 rounded-full ${i === pubIndex % pubsFiltrees.length ? "bg-amber-500" : "bg-amber-200"}`}/>)}</div>
+            <div className="flex gap-1">{pubsFiltrees.map((_, i) => <div key={i} className={`w-1.5 h-1.5 rounded-full ${i === pubIndex % pubsFiltrees.length ? "bg-amber-500" : "bg-amber-200"}`} />)}</div>
           </div>
         </div>
       )}
 
-      {/* HERO */}
-      <Hero
+      {/* ── HERO CARROUSEL ── */}
+      <HeroCarousel
         evenements={evenements}
-        onCategorieChange={setCategorieActive}
         recherche={recherche}
         setRecherche={setRecherche}
-        loading={loading}
+        onCategorieChange={() => {}}
       />
 
-      {/* CALENDRIER MOBILE */}
+      {/* ── MODALE GÉOLOC ── */}
+      {showGeoModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4"
+          onClick={() => { setShowGeoModal(false); localStorage.setItem("geo_asked", "1") }}>
+          <div onClick={e => e.stopPropagation()}
+            className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl">
+            <div className="text-center mb-4">
+              <div className="text-5xl mb-3">📍</div>
+              <h3 className="font-black text-xl text-gray-900 mb-1">Autour de toi ?</h3>
+              <p className="text-gray-500 text-sm leading-relaxed">
+                Dis-nous où tu es et on te montre les événements à portée de main.
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                setShowGeoModal(false)
+                localStorage.setItem("geo_asked", "1")
+                activerGeolocalisation()
+              }}
+              className="w-full py-3 rounded-2xl font-bold text-white text-sm mb-3 transition-all active:scale-[0.98]"
+              style={{ background: "#FF4D00" }}>
+              📍 Oui, trouve des events près de moi
+            </button>
+            <button
+              onClick={() => { setShowGeoModal(false); localStorage.setItem("geo_asked", "1") }}
+              className="w-full py-2.5 rounded-2xl font-semibold text-gray-400 text-sm hover:text-gray-600 transition-colors">
+              Non merci, je cherche ailleurs
+            </button>
+          </div>
+        </div>
+      )}
+
+
+      {/* ── CALENDRIER MOBILE ── */}
       {showCalendrier && (
         <div className="lg:hidden fixed inset-0 bg-black/40 z-50 flex items-center justify-center" onClick={() => setShowCalendrier(false)}>
           <div onClick={(e) => e.stopPropagation()} className="flex flex-col items-center">
-            <MiniCalendrier evenements={evenements.filter(e => new Date(e.quand) >= today)} jourActif={jourActif} setJourActif={setJourActif}/>
+            <MiniCalendrier evenements={evenements.filter(e => new Date(e.quand) >= today)} jourActif={jourActif} setJourActif={setJourActif} />
             <button onClick={() => setShowCalendrier(false)} className="mt-3 w-72 bg-white text-gray-600 py-2.5 rounded-2xl text-sm font-semibold shadow-lg">Fermer ✕</button>
           </div>
         </div>
       )}
 
-      {/* FILTRES */}
-      <section id="grille-evenements" className="bg-white border-b border-gray-100 px-4 sm:px-6 pt-4 pb-3">
+      {/* ── FILTRES ── */}
+      <section id="grille" className="bg-white border-b border-gray-100 px-4 sm:px-6 pt-4 pb-3">
         <div className="max-w-7xl mx-auto space-y-3">
+
+          {/* Ligne 1 : dates + Agenda + géoloc côte à côte */}
           <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 items-center" style={{ scrollbarWidth: "none" }}>
             {filtresBoutons.map((f) => (
-              <button key={f.value} onClick={() => { setJourActif(f.value); setShowCalendrier(false) }} className="flex-shrink-0 px-4 py-2 rounded-full text-sm font-semibold transition-all whitespace-nowrap border"
+              <button key={f.value} onClick={() => { setJourActif(f.value); setShowCalendrier(false) }}
+                className="flex-shrink-0 px-4 py-2 rounded-full text-sm font-semibold transition-all whitespace-nowrap border"
                 style={{ background: jourActif === f.value ? "#FF4D00" : "#fff", color: jourActif === f.value ? "#fff" : "#555", borderColor: jourActif === f.value ? "#FF4D00" : "#e5e5e5" }}>
                 {f.label}
               </button>
             ))}
-            <div className="w-px flex-shrink-0 bg-gray-200 mx-1 self-stretch"/>
-            <button onClick={() => setShowCalendrier(!showCalendrier)} className="flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-all whitespace-nowrap border"
+            <div className="w-px flex-shrink-0 bg-gray-200 mx-1 self-stretch" />
+            {/* Agenda */}
+            <button onClick={() => setShowCalendrier(!showCalendrier)}
+              className="flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-all whitespace-nowrap border"
               style={{ background: isAgendaActif ? "#FF4D00" : "#fff", color: isAgendaActif ? "#fff" : "#555", borderColor: isAgendaActif ? "#FF4D00" : "#e5e5e5" }}>
               📅 <span>{jourActif !== "tout" && jourActif !== "weekend" && jourActif !== dates.today && jourActif !== dates.demain ? new Date(jourActif).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) : "Agenda"}</span>
             </button>
+            {/* Géoloc — juste à côté d'Agenda */}
+            {!filtreProximite ? (
+              <button onClick={activerGeolocalisation} disabled={loadingGeo}
+                className="flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold border transition-all disabled:opacity-50 whitespace-nowrap"
+                style={{ background: "#EFF6FF", color: "#1e40af", borderColor: "#bfdbfe" }}>
+                {loadingGeo ? "⏳" : "📍"} Près de moi
+              </button>
+            ) : (
+              <div className="flex items-center gap-2 flex-shrink-0 rounded-full px-3 py-2 border whitespace-nowrap" style={{ background: "#EFF6FF", borderColor: "#bfdbfe" }}>
+                <span className="text-xs font-semibold text-blue-800">📍 {rayon} km</span>
+                <input type="range" min="5" max="200" step="5" value={rayon} onChange={(e) => setRayon(Number(e.target.value))} className="w-20" />
+                <button onClick={desactiverGeolocalisation} className="text-blue-400 hover:text-blue-700 text-sm">✕</button>
+              </div>
+            )}
           </div>
+
+          {/* Ligne 2 : catégories */}
           <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 items-center" style={{ scrollbarWidth: "none" }}>
             {categories.map((cat) => (
-              <button key={cat.label} onClick={() => setCategorieActive(cat.label)} className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all border"
+              <button key={cat.label} onClick={() => setCategorieActive(cat.label)}
+                className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all border"
                 style={{ background: categorieActive === cat.label ? "#FF4D00" : "#fff", color: categorieActive === cat.label ? "#fff" : "#555", borderColor: categorieActive === cat.label ? "#FF4D00" : "#e5e5e5" }}>
                 <span className="text-base leading-none">{cat.emoji}</span>
                 <span>{cat.label}</span>
               </button>
             ))}
-            <div className="w-px h-6 bg-gray-200 mx-1 flex-shrink-0"/>
-            {!filtreProximite ? (
-              <button onClick={activerGeolocalisation} disabled={loadingGeo} className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-semibold border transition-all disabled:opacity-50" style={{ background: "#EFF6FF", color: "#1e40af", borderColor: "#bfdbfe" }}>
-                {loadingGeo ? "⏳" : "📍"} Près de moi
-              </button>
-            ) : (
-              <div className="flex items-center gap-2 flex-shrink-0 rounded-full px-3 py-2 border" style={{ background: "#EFF6FF", borderColor: "#bfdbfe" }}>
-                <span className="text-xs font-semibold text-blue-800 whitespace-nowrap">📍 {rayon} km</span>
-                <input type="range" min="5" max="200" step="5" value={rayon} onChange={(e) => setRayon(Number(e.target.value))} className="w-20"/>
-                <button onClick={desactiverGeolocalisation} className="text-blue-400 hover:text-blue-700 text-sm">✕</button>
-              </div>
-            )}
           </div>
+
         </div>
       </section>
 
-      {/* LAYOUT PRINCIPAL */}
+      {/* ── LAYOUT PRINCIPAL ── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex gap-6 items-start">
         {showCalendrier && (
           <div className="hidden lg:block flex-shrink-0 sticky top-24">
-            <MiniCalendrier evenements={evenements.filter(e => new Date(e.quand) >= today)} jourActif={jourActif} setJourActif={setJourActif}/>
+            <MiniCalendrier evenements={evenements.filter(e => new Date(e.quand) >= today)} jourActif={jourActif} setJourActif={setJourActif} />
             {jourActif !== "tout" && jourActif !== "weekend" && (
               <div className="mt-3 rounded-2xl p-3 border border-orange-100 w-72" style={{ background: "#FFF7ED" }}>
                 <p className="text-xs font-semibold" style={{ color: "#FF4D00" }}>📅 {new Date(jourActif).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}</p>
@@ -547,8 +759,8 @@ export default function Home() {
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
               {Array.from({ length: 8 }).map((_, i) => (
                 <div key={i} className="bg-white rounded-2xl overflow-hidden animate-pulse border border-gray-100">
-                  <div className="h-36 bg-gray-100"/>
-                  <div className="p-3 space-y-2"><div className="h-3 bg-gray-100 rounded-full w-1/2"/><div className="h-4 bg-gray-100 rounded-full w-3/4"/><div className="h-3 bg-gray-100 rounded-full w-1/2"/></div>
+                  <div className="h-36 bg-gray-100" />
+                  <div className="p-3 space-y-2"><div className="h-3 bg-gray-100 rounded-full w-1/2" /><div className="h-4 bg-gray-100 rounded-full w-3/4" /><div className="h-3 bg-gray-100 rounded-full w-1/2" /></div>
                 </div>
               ))}
             </div>
@@ -561,33 +773,87 @@ export default function Home() {
             </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-              {evenementsFiltres.map((e) => (
-                <div key={e.id} onClick={() => router.push(`/evenement/${e.id}`)} className="bg-white rounded-2xl overflow-hidden cursor-pointer group transition-all duration-200 hover:-translate-y-1 hover:shadow-md active:scale-[0.98] border border-gray-200 shadow-sm">
-                  <div className="relative h-36 overflow-hidden">
-                    {e.image_url ? <img src={e.image_url} alt={e.titre} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"/> : <div className={`${e.couleur} w-full h-full flex items-center justify-center text-5xl`}>{e.emoji}</div>}
-                    <button onClick={(ev) => toggleFavori(ev, e.id)} className="absolute top-2.5 right-2.5 w-8 h-8 bg-white/90 rounded-full flex items-center justify-center text-sm hover:scale-110 transition-transform z-10 shadow-sm">
-                      {favoris.includes(e.id) ? "❤️" : "🤍"}
-                    </button>
-                    <div className={`absolute bottom-2.5 left-2.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${e.prix === "Gratuit" ? "bg-green-500 text-white" : "bg-white/90 text-gray-800"}`}>
-                      {e.prix === "Gratuit" ? "Gratuit" : e.prix}
+              {evenementsFiltres.map((e) => {
+                const dateLabel = formatDate(e.quand)
+                const isToday = dateLabel === "Aujourd'hui"
+                const isTomorrow = dateLabel === "Demain"
+                const photoSrc = e.image_url || getFallbackPhoto(e.categorie)
+                return (
+                  <div key={e.id} onClick={() => router.push(`/evenement/${e.id}`)}
+                    className="bg-white rounded-2xl overflow-hidden cursor-pointer group transition-all duration-200 hover:-translate-y-1 hover:shadow-lg active:scale-[0.98] border border-gray-100 shadow-sm">
+                    <div className="relative h-40 overflow-hidden">
+                      {/* Photo — fallback Unsplash si pas d'image */}
+                      <img
+                        src={photoSrc}
+                        alt={e.titre}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        onError={(ev) => {
+                          (ev.target as HTMLImageElement).src = getFallbackPhoto(e.categorie)
+                        }}
+                      />
+                      {/* Overlay dégradé bas */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+
+                      {/* Badge urgence en haut à gauche */}
+                      {isToday && (
+                        <div className="absolute top-2.5 left-2.5 flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold text-white z-10"
+                          style={{ background: "#FF4D00" }}>
+                          <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse inline-block" />
+                          Aujourd'hui
+                        </div>
+                      )}
+                      {isTomorrow && (
+                        <div className="absolute top-2.5 left-2.5 px-2 py-1 rounded-full text-xs font-bold z-10"
+                          style={{ background: "#FCD34D", color: "#92400e" }}>
+                          Demain
+                        </div>
+                      )}
+
+                      {/* Favori */}
+                      <button onClick={(ev) => toggleFavori(ev, e.id)}
+                        className="absolute top-2.5 right-2.5 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center text-sm hover:scale-110 transition-transform z-10 shadow-sm">
+                        {favoris.includes(e.id) ? "❤️" : "🤍"}
+                      </button>
+
+                      {/* Prix en bas à gauche sur l'image */}
+                      <div className={`absolute bottom-2.5 left-2.5 px-2.5 py-0.5 rounded-full text-xs font-bold z-10 ${
+                        e.prix === "Gratuit" ? "bg-green-500 text-white" : "bg-white/90 text-gray-900"
+                      }`}>
+                        {e.prix === "Gratuit" ? "🎁 Gratuit" : e.prix}
+                      </div>
+                    </div>
+
+                    <div className="p-3">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                          style={{ background: "#FEF3C7", color: "#92400e" }}>
+                          {e.categorie}
+                        </span>
+                        {!isToday && !isTomorrow && e.quand && (
+                          <span className="text-[10px] font-semibold" style={{ color: "#FF4D00" }}>
+                            {dateLabel}
+                          </span>
+                        )}
+                      </div>
+                      <h4 className="font-bold text-sm text-gray-900 leading-tight line-clamp-2 mb-1">{e.titre}</h4>
+                      <p className="text-gray-400 text-xs truncate">
+                        📍 {e.ville}{e.heure && <> · {e.heure}</>}
+                      </p>
+                      {filtreProximite && position && e.lat && e.lng && (
+                        <p className="text-blue-400 text-xs mt-1 font-medium">
+                          {Math.round(getDistance(position.lat, position.lng, e.lat, e.lng))} km
+                        </p>
+                      )}
                     </div>
                   </div>
-                  <div className="p-3">
-                    <span className="inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full mb-1.5" style={{ background: "#FEF3C7", color: "#92400e" }}>{e.categorie}</span>
-                    <h4 className="font-bold text-sm text-gray-900 leading-tight line-clamp-2 mb-1">{e.titre}</h4>
-                    <p className="text-gray-400 text-xs truncate">
-                      {e.ville}{e.quand && <> · <span style={{ color: "#FF4D00", fontWeight: 600 }}>{formatDate(e.quand)}</span></>}{e.heure && <> · {e.heure}</>}
-                    </p>
-                    {filtreProximite && position && e.lat && e.lng && <p className="text-blue-400 text-xs mt-1 font-medium">📍 {Math.round(getDistance(position.lat, position.lng, e.lat, e.lng))} km</p>}
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </div>
       </div>
 
-      {/* FOOTER */}
+      {/* ── FOOTER ── */}
       <footer className="mt-8 py-10 px-4 sm:px-6" style={{ background: "#1E2A3A" }}>
         <div className="max-w-5xl mx-auto">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-8 mb-8">
@@ -639,7 +905,7 @@ export default function Home() {
         </div>
       </footer>
 
-      {/* MOBILE BOTTOM NAV */}
+      {/* ── MOBILE BOTTOM NAV ── */}
       <nav className="sm:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40 shadow-lg">
         <div className="flex items-center justify-around px-2 py-2">
           <button onClick={() => router.push("/")} className="flex flex-col items-center gap-0.5 px-4 py-1.5">
@@ -663,7 +929,7 @@ export default function Home() {
           </button>
         </div>
       </nav>
-      <div className="sm:hidden h-20"/>
+      <div className="sm:hidden h-20" />
     </main>
   )
 }
