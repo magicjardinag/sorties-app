@@ -1,10 +1,148 @@
 "use client"
-
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 
 const ADMIN_EMAIL = "a.giraudon@astem.fr"
+
+const categories = [
+  { label: "Tout", emoji: "✨" },
+  { label: "Musique", emoji: "🎵" },
+  { label: "Sport", emoji: "🏃" },
+  { label: "Danse", emoji: "💃" },
+  { label: "Culture", emoji: "🎨" },
+  { label: "Atelier", emoji: "🛠️" },
+  { label: "Food", emoji: "🍕" },
+  { label: "Nature & Rando", emoji: "🌿" },
+  { label: "Animaux", emoji: "🐾" },
+  { label: "Brocante", emoji: "🏺" },
+  { label: "Bar & Nuit", emoji: "🍸" },
+  { label: "Loto", emoji: "🎰" },
+  { label: "Enfants", emoji: "🧒" },
+  { label: "Gratuit", emoji: "🎁" },
+]
+
+// Config des slides du carrousel hero — couleurs vives, slogans humoristiques
+const HERO_SLIDES = [
+  {
+    categorie: "Musique",
+    emoji: "🎵",
+    bg: "#7C3AED",
+    accent: "#FCD34D",
+    phrase: "Tes oreilles méritent mieux que Spotify.",
+    sub: "Musique · en ce moment",
+  },
+  {
+    categorie: "Sport",
+    emoji: "🏃",
+    bg: "#059669",
+    accent: "#FCD34D",
+    phrase: "Ton canapé survivra sans toi ce soir.",
+    sub: "Sport · en ce moment",
+  },
+  {
+    categorie: "Nature & Rando",
+    emoji: "🌿",
+    bg: "#0891B2",
+    accent: "#FCD34D",
+    phrase: "La nature existe aussi en vrai, paraît-il.",
+    sub: "Nature & Rando · en ce moment",
+  },
+  {
+    categorie: "Culture",
+    emoji: "🎨",
+    bg: "#D97706",
+    accent: "#FEF3C7",
+    phrase: "Sors, t'auras l'air cultivé au bureau lundi.",
+    sub: "Culture · en ce moment",
+  },
+  {
+    categorie: "Food",
+    emoji: "🍕",
+    bg: "#DC2626",
+    accent: "#FCD34D",
+    phrase: "Tu peux pas manger pareil chez toi. Promis.",
+    sub: "Food · en ce moment",
+  },
+  {
+    categorie: "Danse",
+    emoji: "💃",
+    bg: "#DB2777",
+    accent: "#FCD34D",
+    phrase: "Personne juge. Enfin presque.",
+    sub: "Danse · en ce moment",
+  },
+  {
+    categorie: "Bar & Nuit",
+    emoji: "🍸",
+    bg: "#1D4ED8",
+    accent: "#FCD34D",
+    phrase: "Un verre dehors, ça compte comme du social.",
+    sub: "Bar & Nuit · en ce moment",
+  },
+  {
+    categorie: "Atelier",
+    emoji: "🛠️",
+    bg: "#B45309",
+    accent: "#FEF3C7",
+    phrase: "Crée un truc. Même raté c'est sympa.",
+    sub: "Atelier · en ce moment",
+  },
+  {
+    categorie: "Enfants",
+    emoji: "🧒",
+    bg: "#0EA5E9",
+    accent: "#FCD34D",
+    phrase: "Épuise-les dehors. Dors mieux ce soir.",
+    sub: "Enfants · en ce moment",
+  },
+  {
+    categorie: "Animaux",
+    emoji: "🐾",
+    bg: "#16A34A",
+    accent: "#FCD34D",
+    phrase: "Ton chien a besoin de toi. (C'est lui qui le dit.)",
+    sub: "Animaux · en ce moment",
+  },
+  {
+    categorie: "Brocante",
+    emoji: "🏺",
+    bg: "#92400E",
+    accent: "#FEF3C7",
+    phrase: "Achète des trucs dont t'as pas besoin. Avec style.",
+    sub: "Brocante · en ce moment",
+  },
+  {
+    categorie: "Loto",
+    emoji: "🎰",
+    bg: "#BE185D",
+    accent: "#FCD34D",
+    phrase: "Ce soir c'est peut-être toi. (C'est pas toi.)",
+    sub: "Loto · en ce moment",
+  },
+]
+
+// Photos Unsplash par catégorie (fallback quand pas d'image uploadée)
+const FALLBACK_PHOTOS: Record<string, string> = {
+  "Musique":        "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600&q=80",
+  "Sport":          "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&q=80",
+  "Danse":          "https://images.unsplash.com/photo-1504609813442-a8924e83f76e?w=600&q=80",
+  "Culture":        "https://images.unsplash.com/photo-1518998053901-5348d3961a04?w=600&q=80",
+  "Atelier":        "https://images.unsplash.com/photo-1452860606245-08befc0ff44b?w=600&q=80",
+  "Food":           "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=600&q=80",
+  "Nature & Rando": "https://images.unsplash.com/photo-1551632811-561732d1e306?w=600&q=80",
+  "Animaux":        "https://images.unsplash.com/photo-1425082661705-1834bfd09dca?w=600&q=80",
+  "Brocante":       "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80",
+  "Bar & Nuit":     "https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?w=600&q=80",
+  "Loto":           "https://images.unsplash.com/photo-1642543492481-44e81e3914a7?w=600&q=80",
+  "Enfants":        "https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=600&q=80",
+  "Gratuit":        "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=600&q=80",
+}
+
+function getFallbackPhoto(categorie: string): string {
+  return FALLBACK_PHOTOS[categorie] || "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=600&q=80"
+}
+
 
 type Evenement = {
   id: string
@@ -17,1012 +155,781 @@ type Evenement = {
   emoji: string
   couleur: string
   organisateur: string
-  statut: string
   description: string
   image_url: string
-  backup: any
-}
-
-type Pub = {
-  id: string
-  nom_commerce: string
-  description: string
-  image_url: string
-  lien: string
-  ville: string
-  actif: boolean
   lat: number
   lng: number
-  rayon: number
 }
 
-const ALL_CATEGORIES = ["Musique","Sport","Danse","Culture","Atelier","Food","Nature & Rando","Animaux","Brocante","Bar & Nuit","Loto","Enfants","Autre"]
-
-const HERO_SLOGANS_DEFAULT: Record<string, string> = {
-  "Musique": "Tes oreilles méritent mieux que Spotify.",
-  "Sport": "Ton canapé survivra sans toi ce soir.",
-  "Nature & Rando": "La nature existe aussi en vrai, paraît-il.",
-  "Culture": "Sors, t'auras l'air cultivé au bureau lundi.",
-  "Food": "Tu peux pas manger pareil chez toi. Promis.",
-  "Danse": "Personne juge. Enfin presque.",
-  "Bar & Nuit": "Un verre dehors, ça compte comme du social.",
-  "Atelier": "Crée un truc. Même raté c'est sympa.",
-  "Enfants": "Épuise-les dehors. Dors mieux ce soir.",
-  "Animaux": "Ton chien a besoin de toi. (C'est lui qui le dit.)",
-  "Brocante": "Achète des trucs dont t'as pas besoin. Avec style.",
-  "Loto": "Ce soir c'est peut-être toi. (C'est pas toi.)",
+function getDistance(lat1: number, lng1: number, lat2: number, lng2: number) {
+  const R = 6371
+  const dLat = (lat2 - lat1) * Math.PI / 180
+  const dLng = (lng2 - lng1) * Math.PI / 180
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLng / 2) * Math.sin(dLng / 2)
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 }
 
 function formatDate(dateStr: string): string {
   if (!dateStr) return ""
-  const today = new Date(); today.setHours(0,0,0,0)
-  const eventDate = new Date(dateStr); eventDate.setHours(0,0,0,0)
-  const diffDays = Math.round((eventDate.getTime()-today.getTime())/(1000*60*60*24))
-  if (diffDays < 0) return "⚠️ Passé"
+  const today = new Date()
+  const eventDate = new Date(dateStr)
+  today.setHours(0, 0, 0, 0)
+  eventDate.setHours(0, 0, 0, 0)
+  const diffDays = Math.round((eventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+  if (diffDays < 0) return "passé"
   if (diffDays === 0) return "Aujourd'hui"
   if (diffDays === 1) return "Demain"
-  return new Date(dateStr).toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"})
+  if (diffDays <= 6) {
+    const jours = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"]
+    return jours[new Date(dateStr).getDay()]
+  }
+  return new Date(dateStr).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })
 }
 
-function isPasse(dateStr: string): boolean {
-  if (!dateStr) return false
-  const today = new Date(); today.setHours(0,0,0,0)
-  return new Date(dateStr) < today
+function getFiltreDates() {
+  const today = new Date(); today.setHours(0, 0, 0, 0)
+  const demain = new Date(today); demain.setDate(today.getDate() + 1)
+  const jourSemaine = today.getDay()
+  const joursSamedi = jourSemaine === 6 ? 0 : (6 - jourSemaine)
+  const samedi = new Date(today); samedi.setDate(today.getDate() + joursSamedi)
+  const dimanche = new Date(samedi); dimanche.setDate(samedi.getDate() + 1)
+  return {
+    today: today.toISOString().split("T")[0],
+    demain: demain.toISOString().split("T")[0],
+    samedi: samedi.toISOString().split("T")[0],
+    dimanche: dimanche.toISOString().split("T")[0],
+  }
 }
 
-// ── Composant stat card ──
-function StatCard({ label, value, color, icon, onClick, active }: { label: string; value: number | string; color: string; icon: string; onClick?: () => void; active?: boolean }) {
+function MiniCalendrier({ evenements, jourActif, setJourActif }: {
+  evenements: Evenement[]
+  jourActif: string
+  setJourActif: (d: string) => void
+}) {
+  const today = new Date(); today.setHours(0, 0, 0, 0)
+  const [moisActuel, setMoisActuel] = useState(new Date(today.getFullYear(), today.getMonth(), 1))
+  const annee = moisActuel.getFullYear()
+  const mois = moisActuel.getMonth()
+  const premierJour = new Date(annee, mois, 1).getDay()
+  const nbJours = new Date(annee, mois + 1, 0).getDate()
+  const offset = premierJour === 0 ? 6 : premierJour - 1
+  const datesAvecEvenements = new Set(evenements.map(e => e.quand))
+  const joursNoms = ["Lu", "Ma", "Me", "Je", "Ve", "Sa", "Di"]
+  const moisNoms = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"]
   return (
-    <div
-      onClick={onClick}
-      className={`bg-white rounded-2xl p-4 border transition-all ${onClick ? "cursor-pointer hover:shadow-md" : ""} ${active ? "border-orange-400 shadow-md" : "border-gray-100"}`}
-    >
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-2xl">{icon}</span>
-        <span className={`text-2xl font-black ${color}`} style={{ fontFamily: "'Syne', sans-serif" }}>{value}</span>
+    <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-4 w-72">
+      <div className="flex items-center justify-between mb-3">
+        <button onClick={() => setMoisActuel(new Date(annee, mois - 1, 1))} className="text-gray-400 hover:text-orange-500 text-lg px-1">‹</button>
+        <p className="font-bold text-gray-800 text-sm">{moisNoms[mois]} {annee}</p>
+        <button onClick={() => setMoisActuel(new Date(annee, mois + 1, 1))} className="text-gray-400 hover:text-orange-500 text-lg px-1">›</button>
       </div>
-      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{label}</p>
+      <div className="grid grid-cols-7 gap-0.5 mb-1">
+        {joursNoms.map(j => <p key={j} className="text-center text-xs text-gray-400 font-medium py-1">{j}</p>)}
+      </div>
+      <div className="grid grid-cols-7 gap-0.5">
+        {Array.from({ length: offset }).map((_, i) => <div key={`e-${i}`} />)}
+        {Array.from({ length: nbJours }).map((_, i) => {
+          const jour = i + 1
+          const dateStr = `${annee}-${String(mois + 1).padStart(2, "0")}-${String(jour).padStart(2, "0")}`
+          const hasEvent = datesAvecEvenements.has(dateStr)
+          const isToday = dateStr === today.toISOString().split("T")[0]
+          const isSelected = jourActif === dateStr
+          const isPast = new Date(dateStr) < today
+          return (
+            <button key={dateStr} onClick={() => setJourActif(isSelected ? "tout" : dateStr)} disabled={isPast && !hasEvent}
+              className={`relative flex flex-col items-center justify-center rounded-xl py-1.5 text-xs font-medium transition-all
+                ${isSelected ? "bg-orange-500 text-white" : isToday ? "bg-orange-100 text-orange-600 font-bold" :
+                  isPast ? "text-gray-300 cursor-not-allowed" : hasEvent ? "text-gray-800 hover:bg-orange-50 cursor-pointer" : "text-gray-400 hover:bg-gray-50 cursor-pointer"}`}>
+              {jour}
+              {hasEvent && !isSelected && <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-orange-400" />}
+            </button>
+          )
+        })}
+      </div>
+      {jourActif !== "tout" && (
+        <button onClick={() => setJourActif("tout")} className="mt-3 w-full text-xs text-orange-500 hover:underline text-center">Voir tous les événements ×</button>
+      )}
     </div>
   )
 }
 
-// ── Composant nav item sidebar ──
-function NavItem({ icon, label, active, onClick, badge }: { icon: string; label: string; active: boolean; onClick: () => void; badge?: number }) {
+// ── HERO CARROUSEL ──────────────────────────────────────────────────────
+function HeroCarousel({
+  evenements,
+  recherche,
+  setRecherche,
+  onCategorieChange,
+}: {
+  evenements: Evenement[]
+  recherche: string
+  setRecherche: (v: string) => void
+  onCategorieChange: (cat: string) => void
+}) {
+  const [cur, setCur] = useState(0)
+  const [transitioning, setTransitioning] = useState(false)
+  const [phraseVisible, setPhraseVisible] = useState(true)
+  const [slideEvents, setSlideEvents] = useState<Evenement[]>([])
+  const autoRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const today = new Date(); today.setHours(0, 0, 0, 0)
+
+  const N = HERO_SLIDES.length
+
+  useEffect(() => {
+    const pool = evenements.filter(
+      e => e.categorie === HERO_SLIDES[cur].categorie && new Date(e.quand) >= today
+    )
+    const shuffled = [...pool].sort(() => Math.random() - 0.5)
+    const count = Math.min(shuffled.length, Math.floor(Math.random() * 3) + 1)
+    setSlideEvents(shuffled.slice(0, Math.max(count, 1)))
+  }, [evenements, cur])
+
+  function goTo(idx: number) {
+    if (transitioning) return
+    setTransitioning(true)
+    setPhraseVisible(false)
+    setTimeout(() => {
+      const next = ((idx % N) + N) % N
+      setCur(next)
+      setPhraseVisible(true)
+      setTransitioning(false)
+    }, 320)
+  }
+
+  function startAuto() {
+    if (autoRef.current) clearInterval(autoRef.current)
+    autoRef.current = setInterval(() => goTo(cur + 1), 4500)
+  }
+
+  useEffect(() => {
+    startAuto()
+    return () => { if (autoRef.current) clearInterval(autoRef.current) }
+  }, [cur])
+
+  const slide = HERO_SLIDES[cur]
+
+  // Indices des cartes voisines visibles
+  const prevIdx = ((cur - 1) + N) % N
+  const nextIdx = (cur + 1) % N
+
   return (
-    <button
-      onClick={onClick}
-      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all text-left ${active ? "text-white" : "text-gray-500 hover:bg-gray-100 hover:text-gray-800"}`}
-      style={active ? { background: "linear-gradient(135deg,#FF4D00,#FF8C42)" } : {}}
+    <section
+      className="relative w-full overflow-hidden transition-colors duration-700"
+      style={{ background: slide.bg, minHeight: "auto" }}
     >
-      <span style={{ fontSize: 16 }}>{icon}</span>
-      <span className="flex-1">{label}</span>
-      {badge !== undefined && badge > 0 && (
-        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${active ? "bg-white/30 text-white" : "bg-orange-100 text-orange-600"}`}>{badge}</span>
-      )}
-    </button>
-  )
-}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-10 flex flex-col sm:flex-row items-center gap-6 sm:gap-8">
 
-export default function Admin() {
-  const router = useRouter()
-  const [section, setSection] = useState<"dashboard"|"evenements"|"pubs"|"utilisateurs"|"analytics"|"categories"|"parametres"|"rappels"|"alaune">("dashboard")
+        {/* ── Carrousel de catégories (gauche) ── */}
+        <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
 
-  // ── Événements ──
-  const [evenements, setEvenements] = useState<Evenement[]>([])
-  const [isAuthorized, setIsAuthorized] = useState(false)
-  const [checkingAuth, setCheckingAuth] = useState(true)
-  const [loading, setLoading] = useState(true)
-  const [filtre, setFiltre] = useState("en_attente")
-  const [selected, setSelected] = useState<Evenement | null>(null)
-  const [recherche, setRecherche] = useState("")
-  const [moderationEnCours, setModerationEnCours] = useState(false)
-  const [editing, setEditing] = useState(false)
-  const [editForm, setEditForm] = useState<Partial<Evenement>>({})
-  const [saving, setSaving] = useState(false)
-  const [showBackup, setShowBackup] = useState(false)
+          {/* Carte précédente — cachée sur mobile */}
+          <button
+            onClick={() => { goTo(cur - 1); if (autoRef.current) clearInterval(autoRef.current); startAuto() }}
+            className="hidden sm:flex flex-col items-center gap-2 px-4 py-4 rounded-2xl cursor-pointer transition-all opacity-50 hover:opacity-75 flex-shrink-0"
+            style={{ background: "rgba(255,255,255,0.1)", minWidth: 80 }}
+          >
+            <span style={{ fontSize: 28 }}>{HERO_SLIDES[prevIdx].emoji}</span>
+            <span className="text-white text-xs font-medium text-center leading-tight" style={{ fontSize: 11 }}>
+              {HERO_SLIDES[prevIdx].categorie.replace(" & Rando", "")}
+            </span>
+          </button>
 
-  // ── Pubs ──
-  const [pubs, setPubs] = useState<Pub[]>([])
-  const [selectedPub, setSelectedPub] = useState<Pub | null>(null)
-  const [editingPub, setEditingPub] = useState(false)
-  const [pubForm, setPubForm] = useState<Partial<Pub>>({})
-  const [savingPub, setSavingPub] = useState(false)
-  const [newPub, setNewPub] = useState(false)
+          {/* Flèche gauche */}
+          <button
+            onClick={() => { goTo(cur - 1); if (autoRef.current) clearInterval(autoRef.current); startAuto() }}
+            className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0"
+            style={{ background: "rgba(255,255,255,0.2)", fontSize: 18 }}
+          >‹</button>
 
-  // ── Utilisateurs ──
-  const [users, setUsers] = useState<any[]>([])
-  const [loadingUsers, setLoadingUsers] = useState(false)
-
-  // ── Rappels ──
-  const [rappels, setRappels] = useState<any[]>([])
-
-  // ── Mise en avant ──
-  const [spotlightIds, setSpotlightIds] = useState<string[]>([])
-
-  // ── Paramètres ──
-  const [slogans, setSlogans] = useState<Record<string, string>>(HERO_SLOGANS_DEFAULT)
-  const [savingParams, setSavingParams] = useState(false)
-  const [paramsSaved, setParamsSaved] = useState(false)
-
-  useEffect(() => {
-    const checkAdmin = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user || user.email !== ADMIN_EMAIL) {
-        router.back()
-        return
-      }
-      setIsAuthorized(true)
-      setCheckingAuth(false)
-      fetchEvenements()
-      fetchPubs()
-    }
-    checkAdmin()
-  }, [])
-
-  useEffect(() => {
-    if (section === "utilisateurs" && users.length === 0) fetchUsers()
-    if (section === "rappels" && rappels.length === 0) fetchRappels()
-  }, [section])
-
-  const fetchEvenements = async () => {
-    const { data } = await supabase.from("evenements").select("*").order("quand",{ascending:true})
-    setEvenements(data || [])
-    setLoading(false)
-  }
-
-  const fetchPubs = async () => {
-    const { data } = await supabase.from("publicites").select("*").order("nom_commerce",{ascending:true})
-    setPubs(data || [])
-  }
-
-  const fetchUsers = async () => {
-    setLoadingUsers(true)
-    const { data } = await supabase.from("favoris").select("user_id").limit(100)
-    const uniqueIds = [...new Set((data || []).map((f: any) => f.user_id))]
-    setUsers(uniqueIds.map(id => ({ id, favoris: (data || []).filter((f: any) => f.user_id === id).length })))
-    setLoadingUsers(false)
-  }
-
-  const fetchRappels = async () => {
-    const { data } = await supabase.from("rappels").select("*").order("created_at",{ascending:false}).limit(50)
-    setRappels(data || [])
-  }
-
-  // ── Handlers événements ──
-  const handleStatut = async (id: string, statut: string, organisateur: string, titre: string) => {
-    await fetch("/api/moderation",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id,statut,organisateur,titre})})
-    await fetchEvenements()
-    setSelected(null)
-  }
-
-  const handleDelete = async (id: string) => {
-    if (!confirm("Supprimer cet événement définitivement ?")) return
-    await supabase.from("evenements").delete().eq("id",id)
-    setEvenements(evenements.filter(e => e.id !== id))
-    setSelected(null)
-  }
-
-  const handleSave = async () => {
-    if (!selected) return
-    setSaving(true)
-    const backup = { titre:selected.titre, categorie:selected.categorie, ville:selected.ville, quand:selected.quand, heure:selected.heure, prix:selected.prix, description:selected.description, image_url:selected.image_url, saved_at:new Date().toISOString() }
-    await supabase.from("evenements").update({ titre:editForm.titre, categorie:editForm.categorie, ville:editForm.ville, quand:editForm.quand, heure:editForm.heure, prix:editForm.prix, description:editForm.description, image_url:editForm.image_url, backup }).eq("id",selected.id)
-    await fetchEvenements()
-    setEditing(false); setSaving(false)
-    alert("Événement modifié ✅")
-  }
-
-  const handleRestore = async () => {
-    if (!selected?.backup) return
-    const b = selected.backup
-    if (!confirm(`Restaurer la version du ${new Date(b.saved_at).toLocaleDateString("fr-FR")} ?`)) return
-    await supabase.from("evenements").update({ titre:b.titre, categorie:b.categorie, ville:b.ville, quand:b.quand, heure:b.heure, prix:b.prix, description:b.description, image_url:b.image_url, backup:null }).eq("id",selected.id)
-    await fetchEvenements(); setShowBackup(false); setSelected(null)
-    alert("Backup restauré !")
-  }
-
-  const toutApprouver = async () => {
-    const enAttente = evenements.filter(e => e.statut === "en_attente")
-    if (!confirm(`Approuver les ${enAttente.length} événements en attente ?`)) return
-    setModerationEnCours(true)
-    for (const e of enAttente) await handleStatut(e.id,"approuve",e.organisateur,e.titre)
-    setModerationEnCours(false)
-  }
-
-  const moderationAuto = async () => {
-    const enAttente = evenements.filter(e => e.statut === "en_attente")
-    if (!confirm(`Lancer la modération automatique sur ${enAttente.length} événements ?`)) return
-    setModerationEnCours(true)
-    const motsCles = ["spam","arnaque","promo","soldes","publicité","achetez","cliquez","gratuit gratuit"]
-    for (const e of enAttente) {
-      const contenu = `${e.titre} ${e.description||""}`.toLowerCase()
-      const isSpam = motsCles.some(m => contenu.includes(m))
-      const statut = (isSpam||e.titre.trim().length<5||!e.description||e.description.trim().length<10)?"refuse":"approuve"
-      await handleStatut(e.id,statut,e.organisateur,e.titre)
-    }
-    setModerationEnCours(false)
-    alert("Modération automatique terminée !")
-  }
-
-  // ── Handlers pubs ──
-  const savePub = async () => {
-    setSavingPub(true)
-    const payload = { nom_commerce:pubForm.nom_commerce, description:pubForm.description, image_url:pubForm.image_url||"", lien:pubForm.lien||"", ville:pubForm.ville||"", actif:pubForm.actif??true, lat:pubForm.lat||null, lng:pubForm.lng||null, rayon:pubForm.rayon||50 }
-    if (newPub) await supabase.from("publicites").insert(payload)
-    else if (selectedPub) await supabase.from("publicites").update(payload).eq("id",selectedPub.id)
-    await fetchPubs()
-    setEditingPub(false); setNewPub(false); setSelectedPub(null); setSavingPub(false)
-    alert("Publicité sauvegardée !")
-  }
-
-  const deletePub = async (id: string) => {
-    if (!confirm("Supprimer cette publicité ?")) return
-    await supabase.from("publicites").delete().eq("id",id)
-    setPubs(pubs.filter(p => p.id !== id)); setSelectedPub(null)
-  }
-
-  const toggleActif = async (pub: Pub) => {
-    await supabase.from("publicites").update({actif:!pub.actif}).eq("id",pub.id)
-    await fetchPubs()
-  }
-
-  // ── Filtres événements ──
-  const evenementsFiltres = evenements.filter(e => {
-    const passe = isPasse(e.quand)
-    if (filtre === "passe") return passe
-    if (filtre === "tous") return true
-    return e.statut === filtre && !passe
-  }).filter(e =>
-    e.titre.toLowerCase().includes(recherche.toLowerCase()) ||
-    e.ville.toLowerCase().includes(recherche.toLowerCase()) ||
-    e.organisateur.toLowerCase().includes(recherche.toLowerCase())
-  )
-
-  const nbEnAttente = evenements.filter(e => e.statut==="en_attente"&&!isPasse(e.quand)).length
-  const nbApprouves = evenements.filter(e => e.statut==="approuve"&&!isPasse(e.quand)).length
-  const nbRefuses = evenements.filter(e => e.statut==="refuse").length
-  const nbPasse = evenements.filter(e => isPasse(e.quand)).length
-
-  // ── Stats analytics ──
-  const totalFavoris = users.reduce((acc, u) => acc + u.favoris, 0)
-  const catStats = ALL_CATEGORIES.map(cat => ({
-    cat,
-    count: evenements.filter(e => e.categorie === cat && !isPasse(e.quand)).length
-  })).sort((a,b) => b.count - a.count).slice(0,6)
-
-  const saveParams = async () => {
-    setSavingParams(true)
-    // Stockage des slogans dans localStorage (côté client) ou une table de config
-    // Pour une solution simple on peut utiliser une table "config" dans Supabase
-    // Ici on stocke en localStorage comme exemple
-    localStorage.setItem("admin_slogans", JSON.stringify(slogans))
-    setTimeout(() => { setSavingParams(false); setParamsSaved(true); setTimeout(() => setParamsSaved(false), 2000) }, 600)
-  }
-
-  if (checkingAuth || !isAuthorized) return null
-
-  return (
-    <div className="flex min-h-screen" style={{ background: "#F7F6F2", fontFamily: "'DM Sans', sans-serif" }}>
-
-      {/* ── SIDEBAR ── */}
-      <aside className="w-56 flex-shrink-0 bg-white border-r border-gray-100 flex flex-col sticky top-0 h-screen">
-        {/* Logo */}
-        <div className="px-4 py-5 border-b border-gray-100">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl flex items-center justify-center text-white text-sm font-black" style={{ background: "#FF4D00" }}>S</div>
-            <div>
-              <p className="font-black text-gray-900 text-sm leading-none">SortiesApp</p>
-              <p className="text-[10px] text-orange-500 font-semibold">Admin</p>
+          {/* Carte active — grande, centrale */}
+          <div
+            className="flex flex-col items-center gap-2 sm:gap-3 rounded-2xl transition-all flex-shrink-0"
+            style={{ background: "rgba(255,255,255,0.18)", padding: "16px 16px", minWidth: 110 }}
+          >
+            <span style={{ fontSize: 40 }}>{slide.emoji}</span>
+            <span className="text-white font-black text-center leading-tight" style={{ fontSize: 13, fontFamily: "'Syne', sans-serif" }}>
+              {slide.categorie}
+            </span>
+            {/* Dots */}
+            <div className="flex gap-1.5 mt-1">
+              {HERO_SLIDES.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => { goTo(i); if (autoRef.current) clearInterval(autoRef.current); startAuto() }}
+                  className="rounded-full border-none cursor-pointer transition-all"
+                  style={{
+                    width: i === cur ? 16 : 6,
+                    height: 6,
+                    background: i === cur ? "#fff" : "rgba(255,255,255,0.35)",
+                  }}
+                />
+              ))}
             </div>
           </div>
-        </div>
 
-        {/* Nav */}
-        <nav className="flex-1 px-3 py-4 flex flex-col gap-1 overflow-y-auto">
-          <NavItem icon="📊" label="Dashboard" active={section==="dashboard"} onClick={() => setSection("dashboard")} />
-          <div className="h-px bg-gray-100 my-2" />
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-3 mb-1">Contenu</p>
-          <NavItem icon="📅" label="Événements" active={section==="evenements"} onClick={() => setSection("evenements")} badge={nbEnAttente} />
-          <NavItem icon="📢" label="Publicités" active={section==="pubs"} onClick={() => setSection("pubs")} badge={pubs.filter(p=>p.actif).length} />
-          <NavItem icon="🔥" label="À la une" active={section==="alaune"} onClick={() => setSection("alaune")} />
-          <div className="h-px bg-gray-100 my-2" />
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-3 mb-1">Gestion</p>
-          <NavItem icon="👥" label="Utilisateurs" active={section==="utilisateurs"} onClick={() => setSection("utilisateurs")} />
-          <NavItem icon="🔔" label="Rappels email" active={section==="rappels"} onClick={() => setSection("rappels")} />
-          <NavItem icon="🏷️" label="Catégories" active={section==="categories"} onClick={() => setSection("categories")} />
-          <div className="h-px bg-gray-100 my-2" />
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-3 mb-1">Analyse</p>
-          <NavItem icon="📈" label="Analytics" active={section==="analytics"} onClick={() => setSection("analytics")} />
-          <div className="h-px bg-gray-100 my-2" />
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-3 mb-1">Réglages</p>
-          <NavItem icon="⚙️" label="Paramètres" active={section==="parametres"} onClick={() => setSection("parametres")} />
-        </nav>
+          {/* Flèche droite */}
+          <button
+            onClick={() => { goTo(cur + 1); if (autoRef.current) clearInterval(autoRef.current); startAuto() }}
+            className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0"
+            style={{ background: "rgba(255,255,255,0.2)", fontSize: 18 }}
+          >›</button>
 
-        {/* Footer sidebar */}
-        <div className="px-3 py-4 border-t border-gray-100">
-          <button onClick={() => router.push("/")} className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold text-gray-500 hover:bg-gray-100 transition-colors">
-            <span>←</span> Voir le site
+          {/* Carte suivante — cachée sur mobile */}
+          <button
+            onClick={() => { goTo(cur + 1); if (autoRef.current) clearInterval(autoRef.current); startAuto() }}
+            className="hidden sm:flex flex-col items-center gap-2 px-4 py-4 rounded-2xl cursor-pointer transition-all opacity-50 hover:opacity-75 flex-shrink-0"
+            style={{ background: "rgba(255,255,255,0.1)", minWidth: 80 }}
+          >
+            <span style={{ fontSize: 28 }}>{HERO_SLIDES[nextIdx].emoji}</span>
+            <span className="text-white text-xs font-medium text-center leading-tight" style={{ fontSize: 11 }}>
+              {HERO_SLIDES[nextIdx].categorie.replace(" & Rando", "")}
+            </span>
           </button>
         </div>
-      </aside>
 
-      {/* ── CONTENU PRINCIPAL ── */}
-      <main className="flex-1 overflow-auto">
+        {/* ── Contenu droit ── */}
+        <div className="flex-1 min-w-0 w-full">
+          {/* Label catégorie */}
+          <p className="text-xs font-bold tracking-widest uppercase mb-3 transition-all" style={{ color: slide.accent }}>
+            {slide.sub}
+          </p>
 
-        {/* Header */}
-        <div className="bg-white border-b border-gray-100 px-6 py-4 sticky top-0 z-20">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="font-black text-gray-900 text-lg" style={{ fontFamily: "'Syne', sans-serif" }}>
-                {section === "dashboard" && "Dashboard"}
-                {section === "evenements" && "Événements"}
-                {section === "pubs" && "Publicités"}
-                {section === "utilisateurs" && "Utilisateurs"}
-                {section === "analytics" && "Analytics"}
-                {section === "categories" && "Catégories"}
-                {section === "parametres" && "Paramètres du site"}
-                {section === "rappels" && "Rappels email"}
-                {section === "alaune" && "À la une"}
-              </h1>
-              <p className="text-xs text-gray-400">Admin · {ADMIN_EMAIL}</p>
-            </div>
-            {nbEnAttente > 0 && (
-              <div className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-orange-600" style={{ background: "#FFF7ED" }}>
-                <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse inline-block" />
-                {nbEnAttente} en attente de modération
+          {/* Phrase forte */}
+          <h2
+            className="font-black mb-4 transition-all duration-300"
+            style={{
+              fontFamily: "'Syne', sans-serif",
+              fontSize: "clamp(22px, 5vw, 52px)",
+              letterSpacing: "-1.5px",
+              color: "#fff",
+              lineHeight: 1.05,
+              opacity: phraseVisible ? 1 : 0,
+              transform: phraseVisible ? "translateY(0)" : "translateY(-12px)",
+              transition: "opacity .3s ease, transform .3s ease",
+            }}
+          >
+            {slide.phrase}
+          </h2>
+
+          {/* Événements de la catégorie */}
+          <div className="flex flex-col gap-2 mb-5">
+            {slideEvents.length > 0 ? slideEvents.map((e) => (
+              <div
+                key={e.id}
+                className="flex items-center justify-between rounded-xl px-4 py-3 cursor-pointer transition-all hover:opacity-90"
+                style={{ background: "rgba(255,255,255,0.12)" }}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <span style={{ fontSize: 20 }}>{e.emoji || slide.emoji}</span>
+                  <div className="min-w-0">
+                    <p className="text-white font-semibold text-sm truncate">{e.titre}</p>
+                    <p className="text-xs" style={{ color: "rgba(255,255,255,0.6)" }}>
+                      {e.ville} · {formatDate(e.quand)}{e.heure ? ` · ${e.heure}` : ""}
+                    </p>
+                  </div>
+                </div>
+                <span
+                  className="text-xs font-bold px-3 py-1 rounded-full flex-shrink-0 ml-3"
+                  style={{
+                    background: e.prix === "Gratuit" ? "#22c55e" : "rgba(255,255,255,0.2)",
+                    color: "#fff",
+                  }}
+                >
+                  {e.prix}
+                </span>
+              </div>
+            )) : (
+              <div className="rounded-xl px-4 py-3" style={{ background: "rgba(255,255,255,0.08)" }}>
+                <p className="text-sm" style={{ color: "rgba(255,255,255,0.5)" }}>Aucun événement pour le moment</p>
               </div>
             )}
           </div>
+
+          {/* Barre de recherche */}
+          <div className="flex items-center bg-white rounded-full px-4 py-2 gap-3 w-full sm:max-w-md" style={{ boxShadow: "0 4px 20px rgba(0,0,0,0.2)" }}>
+            <span className="text-gray-400">🔍</span>
+            <input
+              type="text"
+              placeholder="Un concert, une rando, une soirée..."
+              className="bg-transparent flex-1 text-sm text-gray-800 outline-none placeholder-gray-400 py-1"
+              value={recherche}
+              onChange={(e) => setRecherche(e.target.value)}
+            />
+            <button
+              className="flex-shrink-0 px-5 py-2 rounded-full text-sm font-bold text-white transition-colors"
+              style={{ background: slide.accent }}
+            >
+              Go →
+            </button>
+          </div>
         </div>
-
-        <div className="p-6">
-
-          {/* ══ DASHBOARD ══ */}
-          {section === "dashboard" && (
-            <div className="flex flex-col gap-6">
-              {/* Stats principales */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <StatCard label="En attente" value={nbEnAttente} color="text-amber-500" icon="⏳" onClick={() => { setSection("evenements"); setFiltre("en_attente") }} active={false} />
-                <StatCard label="Approuvés" value={nbApprouves} color="text-green-500" icon="✅" onClick={() => { setSection("evenements"); setFiltre("approuve") }} />
-                <StatCard label="Publicités actives" value={pubs.filter(p=>p.actif).length} color="text-blue-500" icon="📢" onClick={() => setSection("pubs")} />
-                <StatCard label="Événements total" value={evenements.length} color="text-orange-500" icon="📅" onClick={() => { setSection("evenements"); setFiltre("tous") }} />
-              </div>
-
-              {/* Actions rapides */}
-              <div className="bg-white rounded-2xl border border-gray-100 p-5">
-                <h2 className="font-black text-gray-900 mb-4" style={{ fontFamily: "'Syne', sans-serif" }}>Actions rapides</h2>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {[
-                    { icon: "✅", label: `Tout approuver (${nbEnAttente})`, color: "#22c55e", bg: "#DCFCE7", onClick: toutApprouver, disabled: nbEnAttente === 0 },
-                    { icon: "🤖", label: "Modération auto", color: "#7C3AED", bg: "#EDE9FE", onClick: moderationAuto, disabled: nbEnAttente === 0 },
-                    { icon: "➕", label: "Nouvelle pub", color: "#FF4D00", bg: "#FEF3C7", onClick: () => { setSection("pubs"); setNewPub(true); setEditingPub(true); setPubForm({ actif: true, rayon: 50 }) } },
-                    { icon: "⚙️", label: "Paramètres", color: "#0891B2", bg: "#E0F2FE", onClick: () => setSection("parametres") },
-                  ].map((a, i) => (
-                    <button key={i} onClick={a.onClick} disabled={a.disabled}
-                      className="flex flex-col items-center gap-2 p-4 rounded-2xl text-sm font-bold transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40"
-                      style={{ background: a.bg, color: a.color }}>
-                      <span style={{ fontSize: 24 }}>{a.icon}</span>
-                      {a.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Derniers événements en attente */}
-              {nbEnAttente > 0 && (
-                <div className="bg-white rounded-2xl border border-gray-100 p-5">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="font-black text-gray-900" style={{ fontFamily: "'Syne', sans-serif" }}>En attente de modération</h2>
-                    <button onClick={() => setSection("evenements")} className="text-xs font-bold" style={{ color: "#FF4D00" }}>Voir tout →</button>
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    {evenements.filter(e => e.statut==="en_attente"&&!isPasse(e.quand)).slice(0,5).map(e => (
-                      <div key={e.id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors"
-                        onClick={() => { setSection("evenements"); setSelected(e); setFiltre("en_attente") }}>
-                        <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0">
-                          {e.image_url ? <img src={e.image_url} alt={e.titre} className="w-full h-full object-cover"/> : <div className={`${e.couleur} w-full h-full flex items-center justify-center text-lg`}>{e.emoji}</div>}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-bold text-gray-900 text-sm truncate">{e.titre}</p>
-                          <p className="text-xs text-gray-400">{e.ville} · {formatDate(e.quand)}</p>
-                        </div>
-                        <div className="flex gap-2">
-                          <button onClick={ev => { ev.stopPropagation(); handleStatut(e.id,"approuve",e.organisateur,e.titre) }}
-                            className="w-7 h-7 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-sm font-bold hover:bg-green-200">✓</button>
-                          <button onClick={ev => { ev.stopPropagation(); handleStatut(e.id,"refuse",e.organisateur,e.titre) }}
-                            className="w-7 h-7 rounded-full bg-red-100 text-red-500 flex items-center justify-center text-sm font-bold hover:bg-red-200">✗</button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Top catégories */}
-              <div className="bg-white rounded-2xl border border-gray-100 p-5">
-                <h2 className="font-black text-gray-900 mb-4" style={{ fontFamily: "'Syne', sans-serif" }}>Répartition par catégorie</h2>
-                <div className="flex flex-col gap-3">
-                  {catStats.map(({ cat, count }) => (
-                    <div key={cat} className="flex items-center gap-3">
-                      <span className="text-sm font-semibold text-gray-700 w-32 flex-shrink-0">{cat}</span>
-                      <div className="flex-1 bg-gray-100 rounded-full h-2">
-                        <div className="h-2 rounded-full transition-all" style={{ width: `${catStats[0].count ? (count/catStats[0].count)*100 : 0}%`, background: "linear-gradient(90deg,#FF4D00,#FF8C42)" }} />
-                      </div>
-                      <span className="text-sm font-bold text-gray-500 w-6 text-right">{count}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ══ ÉVÉNEMENTS ══ */}
-          {section === "evenements" && (
-            <div className="flex gap-6">
-              <div className="flex-1">
-                {/* Stats */}
-                <div className="grid grid-cols-5 gap-3 mb-5">
-                  {[
-                    { label: "En attente", value: nbEnAttente, color: "text-amber-500", key: "en_attente" },
-                    { label: "Approuvés", value: nbApprouves, color: "text-green-500", key: "approuve" },
-                    { label: "Refusés", value: nbRefuses, color: "text-red-500", key: "refuse" },
-                    { label: "Passés", value: nbPasse, color: "text-gray-400", key: "passe" },
-                    { label: "Total", value: evenements.length, color: "text-orange-500", key: "tous" },
-                  ].map(s => (
-                    <div key={s.key} onClick={() => setFiltre(s.key)}
-                      className={`bg-white rounded-2xl p-3 text-center cursor-pointer border transition-all hover:shadow-sm ${filtre===s.key?"border-orange-400":"border-gray-100"}`}>
-                      <p className={`text-2xl font-black ${s.color}`}>{s.value}</p>
-                      <p className="text-gray-400 text-xs">{s.label}</p>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Actions */}
-                {nbEnAttente > 0 && (
-                  <div className="flex gap-2 mb-4">
-                    <button onClick={toutApprouver} disabled={moderationEnCours}
-                      className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold text-white disabled:opacity-50"
-                      style={{ background: "#22c55e" }}>
-                      ✅ Tout approuver ({nbEnAttente})
-                    </button>
-                    <button onClick={moderationAuto} disabled={moderationEnCours}
-                      className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold text-white disabled:opacity-50"
-                      style={{ background: "#7C3AED" }}>
-                      {moderationEnCours ? "⏳ En cours..." : `🤖 Auto (${nbEnAttente})`}
-                    </button>
-                  </div>
-                )}
-
-                {/* Search + filtres */}
-                <input value={recherche} onChange={e => setRecherche(e.target.value)}
-                  placeholder="🔍 Rechercher par titre, ville, organisateur..."
-                  className="w-full bg-white border border-gray-200 rounded-2xl px-4 py-3 text-sm outline-none mb-3 focus:border-orange-400" />
-                <div className="flex gap-2 mb-4 flex-wrap">
-                  {[{key:"en_attente",label:"⏳ En attente"},{key:"approuve",label:"✅ Approuvés"},{key:"refuse",label:"❌ Refusés"},{key:"passe",label:"🕰️ Passés"},{key:"tous",label:"🗂️ Tous"}].map(s => (
-                    <button key={s.key} onClick={() => setFiltre(s.key)}
-                      className={`px-3 py-1.5 rounded-full text-sm font-semibold transition-colors ${filtre===s.key?"text-white":"border border-gray-200 text-gray-600 hover:bg-gray-50"}`}
-                      style={filtre===s.key?{background:"#FF4D00"}:{}}>{s.label}</button>
-                  ))}
-                </div>
-
-                {/* Liste */}
-                {loading ? <div className="text-center py-12 text-gray-400">⏳ Chargement...</div>
-                : evenementsFiltres.length === 0 ? <div className="text-center py-12 bg-white rounded-2xl border border-gray-100 text-gray-400">📭 Aucun événement</div>
-                : (
-                  <div className="flex flex-col gap-2">
-                    {evenementsFiltres.map(e => (
-                      <div key={e.id} onClick={() => { setSelected(e); setEditing(false); setShowBackup(false) }}
-                        className={`bg-white rounded-2xl border p-4 cursor-pointer hover:shadow-sm transition-all ${selected?.id===e.id?"border-orange-400":"border-gray-100"} ${isPasse(e.quand)?"opacity-60":""}`}>
-                        <div className="flex items-center gap-3">
-                          <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0">
-                            {e.image_url ? <img src={e.image_url} alt={e.titre} className="w-full h-full object-cover"/> : <div className={`${e.couleur} w-full h-full flex items-center justify-center text-2xl`}>{e.emoji}</div>}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-bold text-gray-900 text-sm truncate">{e.titre}</p>
-                            <p className="text-gray-500 text-xs">{e.ville} · {formatDate(e.quand)}{e.heure?` à ${e.heure}`:""}</p>
-                            <p className="text-gray-400 text-xs">Par {e.organisateur}</p>
-                          </div>
-                          <div className="flex flex-col items-end gap-1">
-                            <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${isPasse(e.quand)?"bg-gray-100 text-gray-400":e.statut==="approuve"?"bg-green-100 text-green-600":e.statut==="refuse"?"bg-red-100 text-red-500":"bg-amber-100 text-amber-600"}`}>
-                              {isPasse(e.quand)?"Passé":e.statut==="en_attente"?"En attente":e.statut==="approuve"?"Approuvé":"Refusé"}
-                            </span>
-                            {e.backup && <span className="text-[10px] text-orange-400">💾 backup</span>}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Panneau détail */}
-              {selected && (
-                <div className="w-72 flex-shrink-0">
-                  <div className="bg-white rounded-2xl border border-gray-100 p-5 sticky top-24 max-h-[calc(100vh-120px)] overflow-y-auto">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="font-black text-gray-900 text-sm">{showBackup?"💾 Backup":editing?"✏️ Modifier":"Détail"}</h3>
-                      <button onClick={() => { setSelected(null); setEditing(false); setShowBackup(false) }} className="text-gray-400 hover:text-gray-600 text-lg leading-none">✕</button>
-                    </div>
-
-                    {showBackup && selected.backup && (
-                      <div className="flex flex-col gap-3">
-                        <div className="bg-orange-50 border border-orange-200 rounded-xl p-3 text-xs text-orange-700">
-                          Backup du {new Date(selected.backup.saved_at).toLocaleDateString("fr-FR")}
-                        </div>
-                        {selected.backup.image_url && <img src={selected.backup.image_url} alt="backup" className="w-full h-28 object-cover rounded-xl"/>}
-                        {[{l:"Titre",v:selected.backup.titre},{l:"Ville",v:selected.backup.ville},{l:"Prix",v:selected.backup.prix||"Gratuit"}].map(item => (
-                          <div key={item.l} className="bg-gray-50 rounded-xl p-3 text-sm">
-                            <p className="text-xs text-gray-400 mb-0.5">{item.l}</p>
-                            <p className="text-gray-700 font-medium">{item.v}</p>
-                          </div>
-                        ))}
-                        <div className="flex gap-2 mt-2">
-                          <button onClick={() => setShowBackup(false)} className="flex-1 border border-gray-200 text-gray-600 py-2 rounded-full font-bold text-xs">← Retour</button>
-                          <button onClick={handleRestore} className="flex-1 text-white py-2 rounded-full font-bold text-xs" style={{ background: "#FF4D00" }}>↩ Restaurer</button>
-                        </div>
-                      </div>
-                    )}
-
-                    {!editing && !showBackup && (
-                      <>
-                        <div className="rounded-xl overflow-hidden h-36 mb-4">
-                          {selected.image_url ? <img src={selected.image_url} alt={selected.titre} className="w-full h-full object-cover"/> : <div className={`${selected.couleur} w-full h-full flex items-center justify-center text-5xl`}>{selected.emoji}</div>}
-                        </div>
-                        <p className="font-black text-gray-900 mb-1">{selected.titre}</p>
-                        <div className="flex flex-col gap-1 mb-3 text-xs text-gray-500">
-                          <span>📍 {selected.ville}</span>
-                          <span>📅 {formatDate(selected.quand)}{selected.heure?` à ${selected.heure}`:""}</span>
-                          <span>🏷️ {selected.categorie}</span>
-                          <span className={selected.prix==="Gratuit"?"text-green-600 font-semibold":"font-semibold text-gray-800"}>💶 {selected.prix}</span>
-                          <span>👤 {selected.organisateur}</span>
-                        </div>
-                        {selected.description && <p className="text-xs text-gray-500 bg-gray-50 rounded-xl p-3 mb-4 leading-relaxed">{selected.description}</p>}
-                        <div className="flex flex-col gap-2">
-                          {selected.statut!=="approuve"&&!isPasse(selected.quand)&&<button onClick={() => handleStatut(selected.id,"approuve",selected.organisateur,selected.titre)} className="w-full text-white py-2 rounded-full font-bold text-xs" style={{ background: "#22c55e" }}>✓ Approuver</button>}
-                          {selected.statut!=="refuse"&&!isPasse(selected.quand)&&<button onClick={() => handleStatut(selected.id,"refuse",selected.organisateur,selected.titre)} className="w-full text-white py-2 rounded-full font-bold text-xs" style={{ background: "#f59e0b" }}>✗ Refuser</button>}
-                          {selected.statut==="refuse"&&<button onClick={() => handleStatut(selected.id,"approuve",selected.organisateur,selected.titre)} className="w-full text-white py-2 rounded-full font-bold text-xs" style={{ background: "#22c55e" }}>↩ Réapprouver</button>}
-                          {selected.backup&&<button onClick={() => setShowBackup(true)} className="w-full border border-orange-300 text-orange-600 py-2 rounded-full font-bold text-xs hover:bg-orange-50">💾 Backup</button>}
-                          <button onClick={() => { setEditing(true); setEditForm({ titre:selected.titre, categorie:selected.categorie, ville:selected.ville, quand:selected.quand, heure:selected.heure, prix:selected.prix, description:selected.description, image_url:selected.image_url }) }} className="w-full border border-blue-200 text-blue-600 py-2 rounded-full font-bold text-xs hover:bg-blue-50">✏️ Modifier</button>
-                          <button onClick={() => router.push(`/evenement/${selected.id}`)} className="w-full border border-gray-200 text-gray-600 py-2 rounded-full font-bold text-xs hover:bg-gray-50">👁️ Voir</button>
-                          <button onClick={() => { setSpotlightIds(ids => ids.includes(selected.id) ? ids.filter(i=>i!==selected.id) : [...ids,selected.id].slice(0,3)) }} className={`w-full border py-2 rounded-full font-bold text-xs ${spotlightIds.includes(selected.id)?"border-orange-300 bg-orange-50 text-orange-600":"border-gray-200 text-gray-600 hover:bg-gray-50"}`}>
-                            {spotlightIds.includes(selected.id)?"🔥 Retiré de la une":"🔥 Mettre à la une"}
-                          </button>
-                          <button onClick={() => handleDelete(selected.id)} className="w-full bg-red-500 text-white py-2 rounded-full font-bold text-xs hover:bg-red-600">🗑️ Supprimer</button>
-                        </div>
-                      </>
-                    )}
-
-                    {editing && !showBackup && (
-                      <div className="flex flex-col gap-3">
-                        {[{label:"Titre",key:"titre"},{label:"Ville",key:"ville"},{label:"Prix",key:"prix",placeholder:"Ex: 10€ ou Gratuit"}].map(field => (
-                          <div key={field.key}>
-                            <label className="text-xs text-gray-500 mb-1 block">{field.label}</label>
-                            <input value={(editForm as any)[field.key]||""} onChange={e => setEditForm({...editForm,[field.key]:e.target.value})} placeholder={field.placeholder} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-orange-400"/>
-                          </div>
-                        ))}
-                        <div>
-                          <label className="text-xs text-gray-500 mb-1 block">Catégorie</label>
-                          <select value={editForm.categorie||""} onChange={e => setEditForm({...editForm,categorie:e.target.value})} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-orange-400">
-                            {ALL_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                          </select>
-                        </div>
-                        <div className="grid grid-cols-2 gap-2">
-                          <div>
-                            <label className="text-xs text-gray-500 mb-1 block">Date</label>
-                            <input type="date" value={editForm.quand||""} onChange={e => setEditForm({...editForm,quand:e.target.value})} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-orange-400"/>
-                          </div>
-                          <div>
-                            <label className="text-xs text-gray-500 mb-1 block">Heure</label>
-                            <input type="time" value={editForm.heure||""} onChange={e => setEditForm({...editForm,heure:e.target.value})} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-orange-400"/>
-                          </div>
-                        </div>
-                        <div>
-                          <label className="text-xs text-gray-500 mb-1 block">Description</label>
-                          <textarea value={editForm.description||""} onChange={e => setEditForm({...editForm,description:e.target.value})} rows={3} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-orange-400 resize-none"/>
-                        </div>
-                        <div>
-                          <label className="text-xs text-gray-500 mb-1 block">Image (URL)</label>
-                          {editForm.image_url ? (
-                            <div className="relative">
-                              <img src={editForm.image_url} alt="preview" className="w-full h-24 object-cover rounded-xl"/>
-                              <button onClick={() => setEditForm({...editForm,image_url:""})} className="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full text-xs flex items-center justify-center">✕</button>
-                            </div>
-                          ) : (
-                            <label className="w-full h-16 border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-orange-400 text-gray-400 text-xs gap-1">
-                              📸 Upload
-                              <input type="file" accept="image/*" className="hidden" onChange={async e => {
-                                const file = e.target.files?.[0]; if (!file) return
-                                const { error } = await supabase.storage.from("evenements").upload(`${Date.now()}-${file.name}`,file)
-                                if (!error) {
-                                  const { data: urlData } = supabase.storage.from("evenements").getPublicUrl(`${Date.now()}-${file.name}`)
-                                  setEditForm({...editForm,image_url:urlData.publicUrl})
-                                }
-                              }}/>
-                            </label>
-                          )}
-                        </div>
-                        <div className="flex gap-2">
-                          <button onClick={() => setEditing(false)} className="flex-1 border border-gray-200 text-gray-600 py-2 rounded-full font-bold text-xs">Annuler</button>
-                          <button onClick={handleSave} disabled={saving} className="flex-1 text-white py-2 rounded-full font-bold text-xs disabled:opacity-50" style={{ background: "#FF4D00" }}>{saving?"⏳":"💾 Sauver"}</button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* ══ PUBLICITÉS ══ */}
-          {section === "pubs" && (
-            <div className="flex gap-6">
-              <div className="flex-1">
-                <div className="flex items-center justify-between mb-5">
-                  <p className="text-sm text-gray-500">{pubs.filter(p=>p.actif).length} active{pubs.filter(p=>p.actif).length>1?"s":""} sur {pubs.length}</p>
-                  <button onClick={() => { setNewPub(true); setEditingPub(true); setSelectedPub(null); setPubForm({actif:true,rayon:50}) }}
-                    className="px-4 py-2 rounded-full text-sm font-bold text-white"
-                    style={{ background: "#FF4D00" }}>+ Nouvelle pub</button>
-                </div>
-                {pubs.length === 0 ? <div className="text-center py-12 bg-white rounded-2xl border border-gray-100 text-gray-400">📢 Aucune publicité</div>
-                : (
-                  <div className="flex flex-col gap-2">
-                    {pubs.map(pub => (
-                      <div key={pub.id} onClick={() => { setSelectedPub(pub); setEditingPub(false); setNewPub(false) }}
-                        className={`bg-white rounded-2xl border p-4 cursor-pointer hover:shadow-sm transition-all ${selectedPub?.id===pub.id?"border-orange-400":"border-gray-100"}`}>
-                        <div className="flex items-center gap-3">
-                          {pub.image_url ? <img src={pub.image_url} alt={pub.nom_commerce} className="w-14 h-14 rounded-xl object-cover flex-shrink-0"/> : <div className="w-14 h-14 rounded-xl bg-amber-100 flex items-center justify-center text-2xl flex-shrink-0">📢</div>}
-                          <div className="flex-1 min-w-0">
-                            <p className="font-bold text-gray-900 text-sm truncate">{pub.nom_commerce}</p>
-                            <p className="text-gray-500 text-xs truncate">{pub.description}</p>
-                            <p className="text-gray-400 text-xs">{pub.ville||"France"} · {pub.rayon||50} km</p>
-                          </div>
-                          <button onClick={e => { e.stopPropagation(); toggleActif(pub) }}
-                            className={`text-xs px-3 py-1 rounded-full font-semibold ${pub.actif?"bg-green-100 text-green-600":"bg-gray-100 text-gray-400"}`}>
-                            {pub.actif?"✅ Active":"⏸ Off"}
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-              {(selectedPub||newPub) && (
-                <div className="w-72 flex-shrink-0">
-                  <div className="bg-white rounded-2xl border border-gray-100 p-5 sticky top-24">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="font-black text-gray-900 text-sm">{newPub?"➕ Nouvelle":editingPub?"✏️ Modifier":"Détail"}</h3>
-                      <button onClick={() => { setSelectedPub(null); setEditingPub(false); setNewPub(false) }} className="text-gray-400 text-lg">✕</button>
-                    </div>
-                    {!editingPub && selectedPub && (
-                      <>
-                        {selectedPub.image_url && <img src={selectedPub.image_url} alt={selectedPub.nom_commerce} className="w-full h-32 object-cover rounded-xl mb-3"/>}
-                        <p className="font-black text-gray-900 mb-1">{selectedPub.nom_commerce}</p>
-                        <p className="text-sm text-gray-500 mb-3">{selectedPub.description}</p>
-                        <div className="bg-gray-50 rounded-xl p-3 mb-4 text-xs flex flex-col gap-1">
-                          <span className="text-gray-500">Ville : <span className="text-gray-800 font-medium">{selectedPub.ville||"France"}</span></span>
-                          <span className="text-gray-500">Rayon : <span className="text-gray-800 font-medium">{selectedPub.rayon||50} km</span></span>
-                          {selectedPub.lien && <a href={selectedPub.lien} target="_blank" className="text-orange-500 font-medium hover:underline truncate">{selectedPub.lien}</a>}
-                        </div>
-                        <div className="flex flex-col gap-2">
-                          <button onClick={() => toggleActif(selectedPub)} className={`w-full py-2 rounded-full font-bold text-xs ${selectedPub.actif?"bg-gray-100 text-gray-600":"text-white"}`} style={!selectedPub.actif?{background:"#22c55e"}:{}}>{selectedPub.actif?"⏸ Désactiver":"✅ Activer"}</button>
-                          <button onClick={() => { setEditingPub(true); setPubForm({...selectedPub}) }} className="w-full border border-blue-200 text-blue-600 py-2 rounded-full font-bold text-xs">✏️ Modifier</button>
-                          <button onClick={() => deletePub(selectedPub.id)} className="w-full bg-red-500 text-white py-2 rounded-full font-bold text-xs">🗑️ Supprimer</button>
-                        </div>
-                      </>
-                    )}
-                    {editingPub && (
-                      <div className="flex flex-col gap-3">
-                        {[{l:"Nom commerce",k:"nom_commerce",p:"Ex: Boulangerie Martin"},{l:"Description",k:"description",p:"Slogan / accroche"},{l:"Lien (URL)",k:"lien",p:"https://"},{l:"Image (URL)",k:"image_url",p:"https://"},{l:"Ville",k:"ville",p:"Lyon"}].map(f => (
-                          <div key={f.k}>
-                            <label className="text-xs text-gray-500 mb-1 block">{f.l}</label>
-                            <input value={(pubForm as any)[f.k]||""} onChange={e => setPubForm({...pubForm,[f.k]:e.target.value})} placeholder={f.p} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-orange-400"/>
-                          </div>
-                        ))}
-                        <div>
-                          <label className="text-xs text-gray-500 mb-1 block">Rayon (km)</label>
-                          <input type="number" value={pubForm.rayon||50} onChange={e => setPubForm({...pubForm,rayon:Number(e.target.value)})} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-orange-400"/>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <input type="checkbox" id="actif" checked={pubForm.actif??true} onChange={e => setPubForm({...pubForm,actif:e.target.checked})} className="w-4 h-4"/>
-                          <label htmlFor="actif" className="text-sm text-gray-700">Active</label>
-                        </div>
-                        <div className="flex gap-2">
-                          <button onClick={() => { setEditingPub(false); setNewPub(false) }} className="flex-1 border border-gray-200 text-gray-600 py-2 rounded-full font-bold text-xs">Annuler</button>
-                          <button onClick={savePub} disabled={savingPub||!pubForm.nom_commerce} className="flex-1 text-white py-2 rounded-full font-bold text-xs disabled:opacity-50" style={{ background: "#FF4D00" }}>{savingPub?"⏳":"💾"}</button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* ══ UTILISATEURS ══ */}
-          {section === "utilisateurs" && (
-            <div className="flex flex-col gap-4 max-w-2xl">
-              <div className="grid grid-cols-3 gap-4">
-                <div className="bg-white rounded-2xl border border-gray-100 p-4 text-center">
-                  <p className="font-black text-2xl text-orange-500">{users.length}</p>
-                  <p className="text-xs text-gray-400">Utilisateurs actifs</p>
-                </div>
-                <div className="bg-white rounded-2xl border border-gray-100 p-4 text-center">
-                  <p className="font-black text-2xl text-purple-500">{totalFavoris}</p>
-                  <p className="text-xs text-gray-400">Total favoris</p>
-                </div>
-                <div className="bg-white rounded-2xl border border-gray-100 p-4 text-center">
-                  <p className="font-black text-2xl text-blue-500">{users.length > 0 ? Math.round(totalFavoris/users.length) : 0}</p>
-                  <p className="text-xs text-gray-400">Moy. favoris/user</p>
-                </div>
-              </div>
-              {loadingUsers ? <div className="text-center py-8 text-gray-400">⏳ Chargement...</div> : (
-                <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-                  <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-                    <p className="font-bold text-gray-900 text-sm">Utilisateurs par favoris</p>
-                    <p className="text-xs text-gray-400">{users.length} comptes</p>
-                  </div>
-                  <div className="divide-y divide-gray-50 max-h-96 overflow-y-auto">
-                    {users.sort((a,b) => b.favoris-a.favoris).map((u,i) => (
-                      <div key={u.id} className="flex items-center gap-3 px-4 py-3">
-                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ background: `hsl(${i*37%360},60%,55%)` }}>
-                          {i+1}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-mono text-gray-500 truncate">{u.id}</p>
-                        </div>
-                        <div className="flex items-center gap-1 text-xs font-bold text-orange-500">
-                          <span>❤️</span> {u.favoris}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* ══ ANALYTICS ══ */}
-          {section === "analytics" && (
-            <div className="flex flex-col gap-5 max-w-3xl">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                {[
-                  { label: "Événements actifs", value: nbApprouves, icon: "✅", color: "text-green-500" },
-                  { label: "En attente", value: nbEnAttente, icon: "⏳", color: "text-amber-500" },
-                  { label: "Passés ce mois", value: nbPasse, icon: "🕰️", color: "text-gray-400" },
-                  { label: "Pubs actives", value: pubs.filter(p=>p.actif).length, icon: "📢", color: "text-blue-500" },
-                ].map((s,i) => (
-                  <div key={i} className="bg-white rounded-2xl border border-gray-100 p-4">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xl">{s.icon}</span>
-                      <span className={`font-black text-2xl ${s.color}`}>{s.value}</span>
-                    </div>
-                    <p className="text-xs text-gray-400">{s.label}</p>
-                  </div>
-                ))}
-              </div>
-
-              {/* Répartition catégories */}
-              <div className="bg-white rounded-2xl border border-gray-100 p-5">
-                <h2 className="font-black text-gray-900 mb-4" style={{ fontFamily: "'Syne', sans-serif" }}>Événements par catégorie</h2>
-                <div className="flex flex-col gap-3">
-                  {ALL_CATEGORIES.map(cat => {
-                    const count = evenements.filter(e => e.categorie===cat&&!isPasse(e.quand)).length
-                    const max = Math.max(...ALL_CATEGORIES.map(c => evenements.filter(e => e.categorie===c&&!isPasse(e.quand)).length))
-                    return (
-                      <div key={cat} className="flex items-center gap-3">
-                        <span className="text-xs font-semibold text-gray-600 w-32 flex-shrink-0">{cat}</span>
-                        <div className="flex-1 bg-gray-100 rounded-full h-2.5">
-                          <div className="h-2.5 rounded-full" style={{ width:`${max?((count/max)*100):0}%`, background:"linear-gradient(90deg,#FF4D00,#FF8C42)" }}/>
-                        </div>
-                        <span className="text-xs font-bold text-gray-500 w-5 text-right">{count}</span>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-
-              {/* Villes top */}
-              <div className="bg-white rounded-2xl border border-gray-100 p-5">
-                <h2 className="font-black text-gray-900 mb-4" style={{ fontFamily: "'Syne', sans-serif" }}>Top villes</h2>
-                <div className="flex flex-col gap-2">
-                  {Object.entries(evenements.filter(e=>!isPasse(e.quand)).reduce((acc,e) => { acc[e.ville]=(acc[e.ville]||0)+1; return acc },{}as Record<string,number>))
-                    .sort((a,b) => b[1]-a[1]).slice(0,8).map(([ville,count],i) => (
-                      <div key={ville} className="flex items-center gap-3">
-                        <span className="text-xs font-black text-gray-400 w-5">{i+1}</span>
-                        <span className="flex-1 text-sm font-semibold text-gray-700">{ville}</span>
-                        <div className="flex items-center gap-1.5">
-                          <div className="h-2 rounded-full bg-orange-100" style={{ width: 60 }}>
-                            <div className="h-2 rounded-full" style={{ width:`${(count as number/evenements.length)*100*3}%`, background:"#FF4D00" }}/>
-                          </div>
-                          <span className="text-xs font-bold text-orange-500">{count as number}</span>
-                        </div>
-                      </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ══ CATÉGORIES ══ */}
-          {section === "categories" && (
-            <div className="max-w-2xl">
-              <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-                <div className="px-5 py-4 border-b border-gray-100">
-                  <p className="font-black text-gray-900" style={{ fontFamily: "'Syne', sans-serif" }}>Catégories actives</p>
-                  <p className="text-xs text-gray-400 mt-0.5">{ALL_CATEGORIES.length} catégories · gestion des événements par catégorie</p>
-                </div>
-                <div className="divide-y divide-gray-50">
-                  {ALL_CATEGORIES.map(cat => {
-                    const count = evenements.filter(e => e.categorie===cat&&!isPasse(e.quand)).length
-                    const total = evenements.filter(e => e.categorie===cat).length
-                    return (
-                      <div key={cat} className="flex items-center gap-4 px-5 py-3.5 hover:bg-gray-50 transition-colors">
-                        <div className="w-9 h-9 rounded-xl bg-orange-50 flex items-center justify-center text-lg flex-shrink-0">
-                          {{"Musique":"🎵","Sport":"🏃","Danse":"💃","Culture":"🎨","Atelier":"🛠️","Food":"🍕","Nature & Rando":"🌿","Animaux":"🐾","Brocante":"🏺","Bar & Nuit":"🍸","Loto":"🎰","Enfants":"🧒","Autre":"✨"}[cat]}
-                        </div>
-                        <div className="flex-1">
-                          <p className="font-bold text-gray-900 text-sm">{cat}</p>
-                          <p className="text-xs text-gray-400">{count} actif{count>1?"s":""} · {total} total</p>
-                        </div>
-                        <button onClick={() => { setSection("evenements"); setFiltre("approuve"); setRecherche(""); setCatFilter(cat) }}
-                          className="text-xs font-bold px-3 py-1.5 rounded-full border border-gray-200 text-gray-500 hover:border-orange-300 hover:text-orange-500 transition-colors">
-                          Voir →
-                        </button>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ══ PARAMÈTRES ══ */}
-          {section === "parametres" && (
-            <div className="max-w-2xl flex flex-col gap-5">
-              {/* Slogans hero */}
-              <div className="bg-white rounded-2xl border border-gray-100 p-5">
-                <h2 className="font-black text-gray-900 mb-1" style={{ fontFamily: "'Syne', sans-serif" }}>Slogans du carrousel</h2>
-                <p className="text-xs text-gray-400 mb-4">Ces phrases s'affichent dans la bannière principale selon la catégorie</p>
-                <div className="flex flex-col gap-3">
-                  {Object.entries(slogans).map(([cat, slogan]) => (
-                    <div key={cat} className="flex items-center gap-3">
-                      <div className="flex items-center gap-1.5 w-32 flex-shrink-0">
-                        <span style={{ fontSize: 14 }}>
-                          {{"Musique":"🎵","Sport":"🏃","Nature & Rando":"🌿","Culture":"🎨","Food":"🍕","Danse":"💃","Bar & Nuit":"🍸","Atelier":"🛠️","Enfants":"🧒","Animaux":"🐾","Brocante":"🏺","Loto":"🎰"}[cat]}
-                        </span>
-                        <span className="text-xs font-semibold text-gray-600">{cat.replace(" & Rando","")}</span>
-                      </div>
-                      <input
-                        value={slogan}
-                        onChange={e => setSlogans(s => ({...s,[cat]:e.target.value}))}
-                        className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-orange-400"
-                      />
-                    </div>
-                  ))}
-                </div>
-                <button onClick={saveParams} disabled={savingParams}
-                  className="mt-4 px-6 py-2.5 rounded-full text-sm font-bold text-white disabled:opacity-50 flex items-center gap-2"
-                  style={{ background: "#FF4D00" }}>
-                  {savingParams ? "⏳ Sauvegarde..." : paramsSaved ? "✅ Sauvegardé !" : "💾 Sauvegarder les slogans"}
-                </button>
-              </div>
-
-              {/* Modération auto */}
-              <div className="bg-white rounded-2xl border border-gray-100 p-5">
-                <h2 className="font-black text-gray-900 mb-1" style={{ fontFamily: "'Syne', sans-serif" }}>Modération automatique</h2>
-                <p className="text-xs text-gray-400 mb-4">Mots clés détectés comme spam lors de la modération auto</p>
-                <div className="flex flex-wrap gap-2">
-                  {["spam","arnaque","promo","soldes","publicité","achetez","cliquez"].map(mot => (
-                    <span key={mot} className="px-3 py-1 rounded-full text-xs font-bold bg-red-50 text-red-500 border border-red-200">{mot}</span>
-                  ))}
-                </div>
-                <p className="text-xs text-gray-400 mt-3">+ Titre {"<"} 5 caractères · Description {"<"} 10 caractères → refusé automatiquement</p>
-              </div>
-
-              {/* Infos site */}
-              <div className="bg-white rounded-2xl border border-gray-100 p-5">
-                <h2 className="font-black text-gray-900 mb-4" style={{ fontFamily: "'Syne', sans-serif" }}>Infos du site</h2>
-                <div className="flex flex-col gap-3">
-                  {[
-                    { label: "Prix publication", value: "9,90€ / événement (Stripe)" },
-                    { label: "Email admin", value: ADMIN_EMAIL },
-                    { label: "Rappel email", value: "J-1 avant l'événement" },
-                    { label: "Statuts events", value: "en_attente → approuve / refuse" },
-                  ].map(item => (
-                    <div key={item.label} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
-                      <span className="text-sm text-gray-500">{item.label}</span>
-                      <span className="text-sm font-semibold text-gray-900">{item.value}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ══ RAPPELS ══ */}
-          {section === "rappels" && (
-            <div className="max-w-2xl">
-              <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-                <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-                  <div>
-                    <p className="font-black text-gray-900" style={{ fontFamily: "'Syne', sans-serif" }}>Rappels email programmés</p>
-                    <p className="text-xs text-gray-400 mt-0.5">{rappels.length} rappel{rappels.length>1?"s":""} enregistré{rappels.length>1?"s":""}</p>
-                  </div>
-                  <span className={`text-xs font-bold px-3 py-1 rounded-full ${rappels.filter(r=>r.envoye).length > 0 ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-400"}`}>
-                    {rappels.filter(r=>r.envoye).length} envoyé{rappels.filter(r=>r.envoye).length>1?"s":""}
-                  </span>
-                </div>
-                {rappels.length === 0 ? (
-                  <div className="text-center py-12 text-gray-400">🔔 Aucun rappel enregistré</div>
-                ) : (
-                  <div className="divide-y divide-gray-50 max-h-[500px] overflow-y-auto">
-                    {rappels.map(r => (
-                      <div key={r.id} className="flex items-center gap-3 px-5 py-3">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm flex-shrink-0 ${r.envoye?"bg-green-100":"bg-orange-100"}`}>
-                          {r.envoye ? "✅" : "🔔"}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-gray-900 truncate">{r.email}</p>
-                          <p className="text-xs text-gray-400">{r.quand} · {new Date(r.created_at).toLocaleDateString("fr-FR")}</p>
-                        </div>
-                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${r.envoye?"bg-green-100 text-green-600":"bg-orange-100 text-orange-600"}`}>
-                          {r.envoye ? "Envoyé" : "En attente"}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* ══ À LA UNE ══ */}
-          {section === "alaune" && (
-            <div className="max-w-2xl flex flex-col gap-4">
-              <div className="bg-white rounded-2xl border border-gray-100 p-5">
-                <h2 className="font-black text-gray-900 mb-1" style={{ fontFamily: "'Syne', sans-serif" }}>Section "À ne pas manquer"</h2>
-                <p className="text-xs text-gray-400 mb-4">Sélectionne jusqu'à 3 événements à mettre en avant sur la page d'accueil</p>
-                <div className="flex flex-col gap-2">
-                  {evenements.filter(e => e.statut==="approuve"&&!isPasse(e.quand)).slice(0,15).map(e => (
-                    <div key={e.id}
-                      onClick={() => setSpotlightIds(ids => ids.includes(e.id) ? ids.filter(i=>i!==e.id) : ids.length < 3 ? [...ids,e.id] : ids)}
-                      className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${spotlightIds.includes(e.id)?"border-orange-400 bg-orange-50":"border-gray-100 hover:border-gray-200"}`}>
-                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${spotlightIds.includes(e.id)?"border-orange-500 bg-orange-500":"border-gray-300"}`}>
-                        {spotlightIds.includes(e.id) && <span className="text-white text-xs">✓</span>}
-                      </div>
-                      <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0">
-                        {e.image_url ? <img src={e.image_url} alt={e.titre} className="w-full h-full object-cover"/> : <div className={`${e.couleur} w-full h-full flex items-center justify-center text-lg`}>{e.emoji}</div>}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-bold text-gray-900 text-sm truncate">{e.titre}</p>
-                        <p className="text-xs text-gray-400">{e.ville} · {formatDate(e.quand)}</p>
-                      </div>
-                      {spotlightIds.includes(e.id) && (
-                        <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-orange-100 text-orange-600 flex-shrink-0">
-                          🔥 {spotlightIds.indexOf(e.id)+1}
-                        </span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-              {spotlightIds.length > 0 && (
-                <div className="bg-orange-50 border border-orange-200 rounded-2xl p-4 flex items-center justify-between">
-                  <p className="text-sm font-semibold text-orange-700">{spotlightIds.length} événement{spotlightIds.length>1?"s":""} sélectionné{spotlightIds.length>1?"s":""}</p>
-                  <button className="px-4 py-2 rounded-full text-sm font-bold text-white" style={{ background: "#FF4D00" }}
-                    onClick={() => alert("Sauvegarde de la mise en avant — à connecter à une table Supabase 'spotlight'")}>
-                    💾 Sauvegarder
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-
-        </div>
-      </main>
-    </div>
+      </div>
+    </section>
   )
 }
+// ─────────────────────────────────────────────────────────────────────────
 
-// Helper pour filtre catégorie depuis analytics
-function setCatFilter(cat: string) {}
+export default function Home() {
+  const router = useRouter()
+  const [categorieActive, setCategorieActive] = useState("Tout")
+  const [jourActif, setJourActif] = useState("tout")
+  const [recherche, setRecherche] = useState("")
+  const [evenements, setEvenements] = useState<Evenement[]>([])
+  const [loading, setLoading] = useState(true)
+  const [user, setUser] = useState<any>(null)
+  const [pubs, setPubs] = useState<any[]>([])
+  const [pubIndex, setPubIndex] = useState(0)
+  const [favoris, setFavoris] = useState<string[]>([])
+  const [position, setPosition] = useState<{ lat: number; lng: number } | null>(null)
+  const [rayon, setRayon] = useState(50)
+  const [filtreProximite, setFiltreProximite] = useState(false)
+  const [loadingGeo, setLoadingGeo] = useState(false)
+  const [showCalendrier, setShowCalendrier] = useState(false)
+  const [menuMobileOpen, setMenuMobileOpen] = useState(false)
+  const [showGeoModal, setShowGeoModal] = useState(false)
+
+  const dates = getFiltreDates()
+
+  useEffect(() => {
+    const fetchEvenements = async () => {
+      const { data, error } = await supabase.from("evenements").select("*").eq("statut", "approuve")
+      if (error) { console.error(error) } else { setEvenements(data || []) }
+      setLoading(false)
+    }
+    const fetchUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      setUser(user)
+      if (user) {
+        const { data } = await supabase.from("favoris").select("evenement_id").eq("user_id", user.id)
+        setFavoris(data?.map((f: any) => f.evenement_id) || [])
+      }
+    }
+    const fetchPubs = async () => {
+      const { data } = await supabase.from("publicites").select("*").eq("actif", true)
+      setPubs(data || [])
+    }
+    fetchEvenements(); fetchUser(); fetchPubs()
+    // Propose géoloc si jamais refusé avant
+    const hasSeenGeo = localStorage.getItem("geo_asked")
+    if (!hasSeenGeo) {
+      setTimeout(() => setShowGeoModal(true), 1800)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (pubsFiltrees.length === 0) return
+    const interval = setInterval(() => setPubIndex((prev) => (prev + 1) % pubsFiltrees.length), 4000)
+    return () => clearInterval(interval)
+  }, [pubs, position])
+
+  const activerGeolocalisation = () => {
+    setLoadingGeo(true)
+    navigator.geolocation.getCurrentPosition(
+      (pos) => { setPosition({ lat: pos.coords.latitude, lng: pos.coords.longitude }); setFiltreProximite(true); setLoadingGeo(false) },
+      () => { alert("Impossible d'accéder à ta position."); setLoadingGeo(false) }
+    )
+  }
+  const desactiverGeolocalisation = () => { setFiltreProximite(false); setPosition(null) }
+
+  const toggleFavori = async (e: React.MouseEvent, evenementId: string) => {
+    e.stopPropagation()
+    if (!user) { router.push("/auth"); return }
+    const isFavori = favoris.includes(evenementId)
+    if (isFavori) {
+      await supabase.from("favoris").delete().eq("user_id", user.id).eq("evenement_id", evenementId)
+      setFavoris(favoris.filter((id) => id !== evenementId))
+    } else {
+      await supabase.from("favoris").insert({ user_id: user.id, evenement_id: evenementId })
+      setFavoris([...favoris, evenementId])
+    }
+  }
+
+  const pubsFiltrees = position
+    ? pubs.filter((pub) => !pub.lat || !pub.lng || getDistance(position.lat, position.lng, pub.lat, pub.lng) <= (pub.rayon || 50))
+    : pubs
+
+  const today = new Date(); today.setHours(0, 0, 0, 0)
+
+  const evenementsFiltres = evenements.filter((e) => {
+    const matchCategorie = categorieActive === "Tout" || (categorieActive === "Gratuit" ? e.prix === "Gratuit" : e.categorie === categorieActive)
+    const matchRecherche = e.titre.toLowerCase().includes(recherche.toLowerCase()) || e.ville.toLowerCase().includes(recherche.toLowerCase())
+    const matchProximite = !filtreProximite || !position || !e.lat || !e.lng || getDistance(position.lat, position.lng, e.lat, e.lng) <= rayon
+    const matchDate = !e.quand || new Date(e.quand) >= today
+    const matchJour = jourActif === "tout" ? true : jourActif === "weekend" ? (e.quand === dates.samedi || e.quand === dates.dimanche) : e.quand === jourActif
+    return matchCategorie && matchRecherche && matchProximite && matchDate && matchJour
+  }).sort((a, b) => new Date(a.quand).getTime() - new Date(b.quand).getTime())
+
+  const pubActuel = pubsFiltrees[pubIndex % Math.max(pubsFiltrees.length, 1)]
+
+  const filtresBoutons = [
+    { label: "Tous", value: "tout" },
+    { label: "Aujourd'hui", value: dates.today },
+    { label: "Demain", value: dates.demain },
+    { label: "Ce week-end", value: "weekend" },
+  ]
+
+  const isAgendaActif = showCalendrier || (jourActif !== "tout" && jourActif !== "weekend" && jourActif !== dates.today && jourActif !== dates.demain)
+
+  return (
+    <main className="min-h-screen" style={{ background: "#F7F6F2" }}>
+
+      {/* ── HEADER ── */}
+      <header className="bg-white sticky top-0 z-40 border-b border-gray-200 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-3">
+          <button onClick={() => router.push("/")} className="flex-shrink-0 font-black text-xl tracking-tight text-gray-900">
+            Sorties<span style={{ color: "#FF4D00" }}>App</span>
+          </button>
+          <div className="hidden sm:flex flex-1 max-w-md items-center bg-gray-100 rounded-full px-4 py-2.5 gap-2">
+            <span className="text-gray-400 text-sm">🔍</span>
+            <input type="text" placeholder="Événement, ville..." className="bg-transparent flex-1 text-sm text-gray-800 outline-none placeholder-gray-400 font-medium" value={recherche} onChange={(e) => setRecherche(e.target.value)} />
+            {recherche && <button onClick={() => setRecherche("")} className="text-gray-400 text-sm">✕</button>}
+          </div>
+          <div className="hidden sm:flex items-center gap-2">
+            <button onClick={() => { const q = new URLSearchParams(); if (filtreProximite && position) { q.set("lat", position.lat.toString()); q.set("lng", position.lng.toString()); q.set("rayon", rayon.toString()) } if (categorieActive !== "Tout") q.set("categorie", categorieActive); router.push(`/carte?${q.toString()}`) }} className="flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium text-gray-600 hover:bg-gray-100">🗺️ <span className="hidden md:inline">Carte</span></button>
+            {user?.email === ADMIN_EMAIL && <button onClick={() => router.push("/admin")} className="px-3 py-2 rounded-full text-sm font-medium text-red-500 hover:bg-red-50">⚙️</button>}
+            {user ? <button onClick={() => router.push("/dashboard")} className="px-3 py-2 rounded-full text-sm font-medium text-gray-600 hover:bg-gray-100">Mon espace</button>
+              : <button onClick={() => router.push("/auth")} className="px-3 py-2 rounded-full text-sm font-medium text-gray-600 hover:bg-gray-100">Se connecter</button>}
+            <button onClick={() => router.push("/publier")} className="px-4 py-2 rounded-full text-sm font-bold text-white shadow-sm" style={{ background: "#FF4D00" }}>+ Publier</button>
+          </div>
+          <div className="flex sm:hidden items-center gap-2">
+            <button onClick={() => router.push("/carte")} className="w-9 h-9 flex items-center justify-center rounded-xl bg-gray-100 text-base">🗺️</button>
+            <button onClick={() => setMenuMobileOpen(!menuMobileOpen)} className="w-9 h-9 flex items-center justify-center rounded-xl bg-gray-100 text-base">☰</button>
+          </div>
+        </div>
+        <div className="sm:hidden px-4 pb-3">
+          <div className="flex items-center bg-gray-100 rounded-full px-4 py-2.5 gap-2">
+            <span className="text-gray-400 text-sm">🔍</span>
+            <input type="text" placeholder="Rechercher..." className="bg-transparent flex-1 text-sm text-gray-800 outline-none placeholder-gray-400" value={recherche} onChange={(e) => setRecherche(e.target.value)} />
+            {recherche && <button onClick={() => setRecherche("")} className="text-gray-400 text-sm">✕</button>}
+          </div>
+        </div>
+        {menuMobileOpen && (
+          <div className="sm:hidden bg-white border-t border-gray-100 px-4 py-3 flex flex-col gap-2">
+            {user ? <button onClick={() => { router.push("/dashboard"); setMenuMobileOpen(false) }} className="text-left px-3 py-2.5 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-100">👤 Mon espace</button>
+              : <button onClick={() => { router.push("/auth"); setMenuMobileOpen(false) }} className="text-left px-3 py-2.5 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-100">Se connecter</button>}
+            <button onClick={() => { router.push("/tarifs"); setMenuMobileOpen(false) }} className="text-left px-3 py-2.5 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-100">💎 Tarifs</button>
+            {user?.email === ADMIN_EMAIL && <button onClick={() => { router.push("/admin"); setMenuMobileOpen(false) }} className="text-left px-3 py-2.5 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50">⚙️ Admin</button>}
+            <button onClick={() => { router.push("/publier"); setMenuMobileOpen(false) }} className="px-4 py-2.5 rounded-xl text-sm font-bold text-white text-center" style={{ background: "#FF4D00" }}>+ Publier un événement</button>
+          </div>
+        )}
+      </header>
+
+      {/* ── PUB ── */}
+      {pubsFiltrees.length > 0 && pubActuel && (
+        <div className="border-b border-amber-100 px-4 py-2.5 flex items-center justify-between gap-3" style={{ background: "#FFFBEB" }}>
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="flex-shrink-0 text-xs px-2 py-0.5 rounded-full font-semibold text-amber-700" style={{ background: "#FDE68A" }}>Pub</span>
+            <span className="text-sm font-semibold text-gray-800 truncate">{pubActuel.nom_commerce}</span>
+            <span className="text-sm text-amber-700 hidden sm:inline truncate">{pubActuel.description}</span>
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <a href={pubActuel.lien} target="_blank" className="text-xs font-semibold hover:underline whitespace-nowrap" style={{ color: "#FF4D00" }}>Voir →</a>
+            <div className="flex gap-1">{pubsFiltrees.map((_, i) => <div key={i} className={`w-1.5 h-1.5 rounded-full ${i === pubIndex % pubsFiltrees.length ? "bg-amber-500" : "bg-amber-200"}`} />)}</div>
+          </div>
+        </div>
+      )}
+
+      {/* ── HERO CARROUSEL ── */}
+      <HeroCarousel
+        evenements={evenements}
+        recherche={recherche}
+        setRecherche={setRecherche}
+        onCategorieChange={() => {}}
+      />
+
+      {/* ── MODALE GÉOLOC ── */}
+      {showGeoModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4"
+          onClick={() => { setShowGeoModal(false); localStorage.setItem("geo_asked", "1") }}>
+          <div onClick={e => e.stopPropagation()}
+            className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl">
+            <div className="text-center mb-4">
+              <div className="text-5xl mb-3">📍</div>
+              <h3 className="font-black text-xl text-gray-900 mb-1">Autour de toi ?</h3>
+              <p className="text-gray-500 text-sm leading-relaxed">
+                Dis-nous où tu es et on te montre les événements à portée de main.
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                setShowGeoModal(false)
+                localStorage.setItem("geo_asked", "1")
+                activerGeolocalisation()
+              }}
+              className="w-full py-3 rounded-2xl font-bold text-white text-sm mb-3 transition-all active:scale-[0.98]"
+              style={{ background: "#FF4D00" }}>
+              📍 Oui, trouve des events près de moi
+            </button>
+            <button
+              onClick={() => { setShowGeoModal(false); localStorage.setItem("geo_asked", "1") }}
+              className="w-full py-2.5 rounded-2xl font-semibold text-gray-400 text-sm hover:text-gray-600 transition-colors">
+              Non merci, je cherche ailleurs
+            </button>
+          </div>
+        </div>
+      )}
+
+
+      {/* ── CALENDRIER MOBILE ── */}
+      {showCalendrier && (
+        <div className="lg:hidden fixed inset-0 bg-black/40 z-50 flex items-center justify-center" onClick={() => setShowCalendrier(false)}>
+          <div onClick={(e) => e.stopPropagation()} className="flex flex-col items-center">
+            <MiniCalendrier evenements={evenements.filter(e => new Date(e.quand) >= today)} jourActif={jourActif} setJourActif={setJourActif} />
+            <button onClick={() => setShowCalendrier(false)} className="mt-3 w-72 bg-white text-gray-600 py-2.5 rounded-2xl text-sm font-semibold shadow-lg">Fermer ✕</button>
+          </div>
+        </div>
+      )}
+
+      {/* ── FILTRES ── */}
+      <section id="grille" className="bg-white border-b border-gray-100 px-4 sm:px-6 pt-4 pb-3">
+        <div className="max-w-7xl mx-auto space-y-3">
+
+          {/* Ligne 1 : dates + Agenda + géoloc côte à côte */}
+          <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 items-center" style={{ scrollbarWidth: "none" }}>
+            {filtresBoutons.map((f) => (
+              <button key={f.value} onClick={() => { setJourActif(f.value); setShowCalendrier(false) }}
+                className="flex-shrink-0 px-4 py-2 rounded-full text-sm font-semibold transition-all whitespace-nowrap border"
+                style={{ background: jourActif === f.value ? "#FF4D00" : "#fff", color: jourActif === f.value ? "#fff" : "#555", borderColor: jourActif === f.value ? "#FF4D00" : "#e5e5e5" }}>
+                {f.label}
+              </button>
+            ))}
+            <div className="w-px flex-shrink-0 bg-gray-200 mx-1 self-stretch" />
+            {/* Agenda */}
+            <button onClick={() => setShowCalendrier(!showCalendrier)}
+              className="flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-all whitespace-nowrap border"
+              style={{ background: isAgendaActif ? "#FF4D00" : "#fff", color: isAgendaActif ? "#fff" : "#555", borderColor: isAgendaActif ? "#FF4D00" : "#e5e5e5" }}>
+              📅 <span>{jourActif !== "tout" && jourActif !== "weekend" && jourActif !== dates.today && jourActif !== dates.demain ? new Date(jourActif).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) : "Agenda"}</span>
+            </button>
+            {/* Géoloc — juste à côté d'Agenda */}
+            {!filtreProximite ? (
+              <button onClick={activerGeolocalisation} disabled={loadingGeo}
+                className="flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold border transition-all disabled:opacity-50 whitespace-nowrap"
+                style={{ background: "#EFF6FF", color: "#1e40af", borderColor: "#bfdbfe" }}>
+                {loadingGeo ? "⏳" : "📍"} Près de moi
+              </button>
+            ) : (
+              <div className="flex items-center gap-2 flex-shrink-0 rounded-full px-3 py-2 border whitespace-nowrap" style={{ background: "#EFF6FF", borderColor: "#bfdbfe" }}>
+                <span className="text-xs font-semibold text-blue-800">📍 {rayon} km</span>
+                <input type="range" min="5" max="200" step="5" value={rayon} onChange={(e) => setRayon(Number(e.target.value))} className="w-20" />
+                <button onClick={desactiverGeolocalisation} className="text-blue-400 hover:text-blue-700 text-sm">✕</button>
+              </div>
+            )}
+          </div>
+
+          {/* Ligne 2 : catégories */}
+          <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 items-center" style={{ scrollbarWidth: "none" }}>
+            {categories.map((cat) => (
+              <button key={cat.label} onClick={() => setCategorieActive(cat.label)}
+                className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all border"
+                style={{ background: categorieActive === cat.label ? "#FF4D00" : "#fff", color: categorieActive === cat.label ? "#fff" : "#555", borderColor: categorieActive === cat.label ? "#FF4D00" : "#e5e5e5" }}>
+                <span className="text-base leading-none">{cat.emoji}</span>
+                <span>{cat.label}</span>
+              </button>
+            ))}
+          </div>
+
+        </div>
+      </section>
+
+      {/* ── LAYOUT PRINCIPAL ── */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex gap-6 items-start">
+        {showCalendrier && (
+          <div className="hidden lg:block flex-shrink-0 sticky top-24">
+            <MiniCalendrier evenements={evenements.filter(e => new Date(e.quand) >= today)} jourActif={jourActif} setJourActif={setJourActif} />
+            {jourActif !== "tout" && jourActif !== "weekend" && (
+              <div className="mt-3 rounded-2xl p-3 border border-orange-100 w-72" style={{ background: "#FFF7ED" }}>
+                <p className="text-xs font-semibold" style={{ color: "#FF4D00" }}>📅 {new Date(jourActif).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}</p>
+                <p className="text-xs text-orange-400 mt-1">{evenementsFiltres.length} événement{evenementsFiltres.length > 1 ? "s" : ""}</p>
+              </div>
+            )}
+          </div>
+        )}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-3 mb-5">
+            <span className="font-black text-2xl text-gray-900 leading-none">{loading ? "..." : evenementsFiltres.length}</span>
+            <span className="text-sm font-medium text-gray-500">
+              événement{evenementsFiltres.length > 1 ? "s" : ""}
+              {filtreProximite && position && <span className="text-blue-500 ml-1">· {rayon} km</span>}
+              {jourActif === "weekend" && <span className="text-gray-400 ml-1">· Ce week-end</span>}
+              {jourActif !== "tout" && jourActif !== "weekend" && jourActif !== dates.today && jourActif !== dates.demain && <span className="text-gray-400 ml-1">· {new Date(jourActif).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" })}</span>}
+            </span>
+          </div>
+          {loading ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="bg-white rounded-2xl overflow-hidden animate-pulse border border-gray-100">
+                  <div className="h-36 bg-gray-100" />
+                  <div className="p-3 space-y-2"><div className="h-3 bg-gray-100 rounded-full w-1/2" /><div className="h-4 bg-gray-100 rounded-full w-3/4" /><div className="h-3 bg-gray-100 rounded-full w-1/2" /></div>
+                </div>
+              ))}
+            </div>
+          ) : evenementsFiltres.length === 0 ? (
+            <div className="text-center py-20">
+              <p className="text-5xl mb-4">😕</p>
+              <p className="text-lg font-bold text-gray-700 mb-1">Aucun événement trouvé</p>
+              <p className="text-sm text-gray-400 mb-4">Essaie de modifier tes filtres</p>
+              {filtreProximite && <button onClick={() => setRayon(r => Math.min(r + 25, 200))} className="mt-2 px-5 py-2.5 text-white rounded-full text-sm font-semibold shadow-sm" style={{ background: "#FF4D00" }}>Élargir → {rayon + 25} km</button>}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+              {evenementsFiltres.map((e) => {
+                const dateLabel = formatDate(e.quand)
+                const isToday = dateLabel === "Aujourd'hui"
+                const isTomorrow = dateLabel === "Demain"
+                const photoSrc = e.image_url || getFallbackPhoto(e.categorie)
+                return (
+                  <div key={e.id} onClick={() => router.push(`/evenement/${e.id}`)}
+                    className="bg-white rounded-2xl overflow-hidden cursor-pointer group transition-all duration-200 hover:-translate-y-1 hover:shadow-lg active:scale-[0.98] border border-gray-100 shadow-sm">
+                    <div className="relative h-40 overflow-hidden">
+                      {/* Photo — fallback Unsplash si pas d'image */}
+                      <img
+                        src={photoSrc}
+                        alt={e.titre}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        onError={(ev) => {
+                          (ev.target as HTMLImageElement).src = getFallbackPhoto(e.categorie)
+                        }}
+                      />
+                      {/* Overlay dégradé bas */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+
+                      {/* Badge urgence en haut à gauche */}
+                      {isToday && (
+                        <div className="absolute top-2.5 left-2.5 flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold text-white z-10"
+                          style={{ background: "#FF4D00" }}>
+                          <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse inline-block" />
+                          Aujourd'hui
+                        </div>
+                      )}
+                      {isTomorrow && (
+                        <div className="absolute top-2.5 left-2.5 px-2 py-1 rounded-full text-xs font-bold z-10"
+                          style={{ background: "#FCD34D", color: "#92400e" }}>
+                          Demain
+                        </div>
+                      )}
+
+                      {/* Favori */}
+                      <button onClick={(ev) => toggleFavori(ev, e.id)}
+                        className="absolute top-2.5 right-2.5 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center text-sm hover:scale-110 transition-transform z-10 shadow-sm">
+                        {favoris.includes(e.id) ? "❤️" : "🤍"}
+                      </button>
+
+                      {/* Prix en bas à gauche sur l'image */}
+                      <div className={`absolute bottom-2.5 left-2.5 px-2.5 py-0.5 rounded-full text-xs font-bold z-10 ${
+                        e.prix === "Gratuit" ? "bg-green-500 text-white" : "bg-white/90 text-gray-900"
+                      }`}>
+                        {e.prix === "Gratuit" ? "🎁 Gratuit" : e.prix}
+                      </div>
+                    </div>
+
+                    <div className="p-3">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                          style={{ background: "#FEF3C7", color: "#92400e" }}>
+                          {e.categorie}
+                        </span>
+                        {!isToday && !isTomorrow && e.quand && (
+                          <span className="text-[10px] font-semibold" style={{ color: "#FF4D00" }}>
+                            {dateLabel}
+                          </span>
+                        )}
+                      </div>
+                      <h4 className="font-bold text-sm text-gray-900 leading-tight line-clamp-2 mb-1">{e.titre}</h4>
+                      <p className="text-gray-400 text-xs truncate">
+                        📍 {e.ville}{e.heure && <> · {e.heure}</>}
+                      </p>
+                      {filtreProximite && position && e.lat && e.lng && (
+                        <p className="text-blue-400 text-xs mt-1 font-medium">
+                          {Math.round(getDistance(position.lat, position.lng, e.lat, e.lng))} km
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── FOOTER ── */}
+      <footer className="mt-8 py-10 px-4 sm:px-6" style={{ background: "#1E2A3A" }}>
+        <div className="max-w-5xl mx-auto">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-8 mb-8">
+            <div className="col-span-2 sm:col-span-1">
+              <h3 className="font-black text-white text-lg mb-2">Sorties<span style={{ color: "#FF4D00" }}>App</span></h3>
+              <p className="text-sm leading-relaxed" style={{ color: "#94A3B8" }}>Trouve des activités et événements près de chez toi. La vie est trop courte pour s'ennuyer.</p>
+            </div>
+            <div>
+              <h4 className="font-semibold text-xs mb-3 tracking-widest uppercase" style={{ color: "#64748B" }}>Navigation</h4>
+              <div className="flex flex-col gap-2">
+                {[{ l: "Accueil", p: "/" }, { l: "Carte", p: "/carte" }, { l: "Publier", p: "/publier" }, { l: "Tarifs", p: "/tarifs" }].map(x => (
+                  <button key={x.l} onClick={() => router.push(x.p)} className="text-sm text-left transition-colors" style={{ color: "#94A3B8" }}
+                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#FF4D00"}
+                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#94A3B8"}>{x.l}</button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <h4 className="font-semibold text-xs mb-3 tracking-widest uppercase" style={{ color: "#64748B" }}>Support</h4>
+              <div className="flex flex-col gap-2">
+                {[{ l: "Contact", p: "/contact" }, { l: "Remboursement", p: "/contact" }, { l: "Signaler", p: "/contact" }].map(x => (
+                  <button key={x.l} onClick={() => router.push(x.p)} className="text-sm text-left transition-colors" style={{ color: "#94A3B8" }}
+                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#FF4D00"}
+                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#94A3B8"}>{x.l}</button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <h4 className="font-semibold text-xs mb-3 tracking-widest uppercase" style={{ color: "#64748B" }}>Partenaires</h4>
+              <div className="flex flex-col gap-2">
+                {[{ l: "Partenariat local", p: "/contact" }, { l: "Affiliation", p: "/contact" }, { l: "Publicité", p: "/contact" }].map(x => (
+                  <button key={x.l} onClick={() => router.push(x.p)} className="text-sm text-left transition-colors" style={{ color: "#94A3B8" }}
+                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#FF4D00"}
+                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#94A3B8"}>{x.l}</button>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-6 border-t border-gray-700">
+            <p className="text-xs" style={{ color: "#475569" }}>© 2026 SortiesApp. Tous droits réservés.</p>
+            <div className="flex gap-4">
+              {[{ l: "Mentions légales", p: "/mentions-legales" }, { l: "CGU", p: "/cgu" }, { l: "Contact", p: "/contact" }].map(x => (
+                <button key={x.l} onClick={() => router.push(x.p)} className="text-xs transition-colors" style={{ color: "#475569" }}
+                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#FF4D00"}
+                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#475569"}>{x.l}</button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </footer>
+
+      {/* ── MOBILE BOTTOM NAV ── */}
+      <nav className="sm:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40 shadow-lg">
+        <div className="flex items-center justify-around px-2 py-2">
+          <button onClick={() => router.push("/")} className="flex flex-col items-center gap-0.5 px-4 py-1.5">
+            <span className="text-xl">🏠</span>
+            <span className="text-[10px] font-bold" style={{ color: "#FF4D00" }}>Accueil</span>
+          </button>
+          <button onClick={() => router.push("/carte")} className="flex flex-col items-center gap-0.5 px-4 py-1.5">
+            <span className="text-xl">🗺️</span>
+            <span className="text-[10px] font-semibold text-gray-400">Carte</span>
+          </button>
+          <button onClick={() => router.push("/publier")} className="flex flex-col items-center gap-0.5 -mt-5">
+            <span className="w-14 h-14 flex items-center justify-center text-white text-2xl font-black rounded-2xl shadow-lg" style={{ background: "#FF4D00" }}>+</span>
+          </button>
+          <button onClick={() => user ? router.push("/dashboard") : router.push("/auth")} className="flex flex-col items-center gap-0.5 px-4 py-1.5">
+            <span className="text-xl">❤️</span>
+            <span className="text-[10px] font-semibold text-gray-400">Favoris</span>
+          </button>
+          <button onClick={() => user ? router.push("/dashboard") : router.push("/auth")} className="flex flex-col items-center gap-0.5 px-4 py-1.5">
+            <span className="text-xl">👤</span>
+            <span className="text-[10px] font-semibold text-gray-400">{user ? "Moi" : "Connexion"}</span>
+          </button>
+        </div>
+      </nav>
+      <div className="sm:hidden h-20" />
+    </main>
+  )
+}
