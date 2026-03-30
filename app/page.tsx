@@ -271,8 +271,16 @@ function HeroCarousel({
   const [transitioning, setTransitioning] = useState(false)
   const [phraseVisible, setPhraseVisible] = useState(true)
   const [slideEvents, setSlideEvents] = useState<Evenement[]>([])
+  const [isMobile, setIsMobile] = useState(false)
   const autoRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const today = new Date(); today.setHours(0, 0, 0, 0)
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640)
+    check()
+    window.addEventListener("resize", check)
+    return () => window.removeEventListener("resize", check)
+  }, [])
 
   const N = HERO_SLIDES.length
 
@@ -316,71 +324,124 @@ function HeroCarousel({
   return (
     <section
       className="relative w-full overflow-hidden transition-colors duration-700"
-      style={{ background: slide.bg, minHeight: 320 }}
+      style={{ background: slide.bg }}
     >
-      <div className="max-w-7xl mx-auto px-6 py-10 flex items-center gap-8">
+      {/* ── VERSION MOBILE ── */}
+      {isMobile && <div className="px-4 py-6">
+        {/* Label + emoji + dots */}
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <span style={{ fontSize: 28 }}>{slide.emoji}</span>
+            <p className="text-xs font-bold tracking-widest uppercase" style={{ color: slide.accent }}>
+              {slide.sub}
+            </p>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <button onClick={() => { goTo(cur - 1); if (autoRef.current) clearInterval(autoRef.current); startAuto() }}
+              className="w-7 h-7 rounded-full flex items-center justify-center text-white text-sm font-bold"
+              style={{ background: "rgba(255,255,255,0.2)" }}>‹</button>
+            <button onClick={() => { goTo(cur + 1); if (autoRef.current) clearInterval(autoRef.current); startAuto() }}
+              className="w-7 h-7 rounded-full flex items-center justify-center text-white text-sm font-bold"
+              style={{ background: "rgba(255,255,255,0.2)" }}>›</button>
+          </div>
+        </div>
 
-        {/* ── Carrousel de catégories (gauche) ── */}
+        {/* Slogan */}
+        <h2 className="font-black mb-4" style={{
+          fontFamily: "'Syne', sans-serif",
+          fontSize: "clamp(24px, 7vw, 36px)",
+          letterSpacing: "-1px",
+          color: "#fff",
+          lineHeight: 1.1,
+          opacity: phraseVisible ? 1 : 0,
+          transform: phraseVisible ? "translateY(0)" : "translateY(-10px)",
+          transition: "opacity .3s ease, transform .3s ease",
+        }}>
+          {slide.phrase}
+        </h2>
+
+        {/* Events */}
+        <div className="flex flex-col gap-2 mb-4">
+          {slideEvents.length > 0 ? slideEvents.map((e) => (
+            <div key={e.id} className="flex items-center justify-between rounded-xl px-3 py-2.5 cursor-pointer"
+              style={{ background: "rgba(255,255,255,0.12)" }}>
+              <div className="flex items-center gap-2 min-w-0">
+                <span style={{ fontSize: 16 }}>{e.emoji || slide.emoji}</span>
+                <div className="min-w-0">
+                  <p className="text-white font-semibold text-xs truncate">{e.titre}</p>
+                  <p className="text-xs truncate" style={{ color: "rgba(255,255,255,0.6)" }}>
+                    {e.ville}{e.heure ? ` · ${e.heure}` : ""}
+                  </p>
+                </div>
+              </div>
+              <span className="text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0 ml-2"
+                style={{ background: e.prix === "Gratuit" ? "#22c55e" : "rgba(255,255,255,0.2)", color: "#fff" }}>
+                {e.prix}
+              </span>
+            </div>
+          )) : (
+            <div className="rounded-xl px-3 py-2.5" style={{ background: "rgba(255,255,255,0.08)" }}>
+              <p className="text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>Aucun événement pour le moment</p>
+            </div>
+          )}
+        </div>
+
+        {/* Recherche */}
+        <div className="flex items-center bg-white rounded-full px-4 py-2 gap-2" style={{ boxShadow: "0 4px 20px rgba(0,0,0,0.2)" }}>
+          <span className="text-gray-400 text-sm">🔍</span>
+          <input type="text" placeholder="Concert, rando, soirée..."
+            className="bg-transparent flex-1 text-sm text-gray-800 outline-none placeholder-gray-400 py-1"
+            value={recherche} onChange={(e) => setRecherche(e.target.value)}/>
+          <button className="flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-bold text-white"
+            style={{ background: slide.accent }}>Go →</button>
+        </div>
+
+        {/* Dots */}
+        <div className="flex gap-1.5 justify-center mt-4">
+          {HERO_SLIDES.map((_, i) => (
+            <button key={i} onClick={() => { goTo(i); if (autoRef.current) clearInterval(autoRef.current); startAuto() }}
+              className="rounded-full border-none cursor-pointer transition-all"
+              style={{ width: i === cur ? 16 : 6, height: 6, background: i === cur ? "#fff" : "rgba(255,255,255,0.35)" }}/>
+          ))}
+        </div>
+      </div>
+
+      </div>}
+      {/* ── VERSION DESKTOP ── */}
+      {!isMobile && <div className="max-w-7xl mx-auto px-6 py-10 flex items-center gap-8">
+        {/* Carrousel catégories */}
         <div className="flex items-center gap-3 flex-shrink-0">
-
-          {/* Carte précédente — petite, à gauche */}
-          <button
-            onClick={() => { goTo(cur - 1); if (autoRef.current) clearInterval(autoRef.current); startAuto() }}
+          <button onClick={() => { goTo(cur - 1); if (autoRef.current) clearInterval(autoRef.current); startAuto() }}
             className="flex flex-col items-center gap-2 px-4 py-4 rounded-2xl cursor-pointer transition-all opacity-50 hover:opacity-75 flex-shrink-0"
-            style={{ background: "rgba(255,255,255,0.1)", minWidth: 80 }}
-          >
+            style={{ background: "rgba(255,255,255,0.1)", minWidth: 80 }}>
             <span style={{ fontSize: 28 }}>{HERO_SLIDES[prevIdx].emoji}</span>
             <span className="text-white text-xs font-medium text-center leading-tight" style={{ fontSize: 11 }}>
               {HERO_SLIDES[prevIdx].categorie.replace(" & Rando", "")}
             </span>
           </button>
-
-          {/* Flèche gauche */}
-          <button
-            onClick={() => { goTo(cur - 1); if (autoRef.current) clearInterval(autoRef.current); startAuto() }}
+          <button onClick={() => { goTo(cur - 1); if (autoRef.current) clearInterval(autoRef.current); startAuto() }}
             className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0"
-            style={{ background: "rgba(255,255,255,0.2)", fontSize: 18 }}
-          >‹</button>
-
-          {/* Carte active — grande, centrale */}
-          <div
-            className="flex flex-col items-center gap-3 rounded-2xl transition-all flex-shrink-0"
-            style={{ background: "rgba(255,255,255,0.18)", padding: "24px 20px", minWidth: 130 }}
-          >
+            style={{ background: "rgba(255,255,255,0.2)", fontSize: 18 }}>‹</button>
+          <div className="flex flex-col items-center gap-3 rounded-2xl transition-all flex-shrink-0"
+            style={{ background: "rgba(255,255,255,0.18)", padding: "24px 20px", minWidth: 130 }}>
             <span style={{ fontSize: 52 }}>{slide.emoji}</span>
             <span className="text-white font-black text-center leading-tight" style={{ fontSize: 15, fontFamily: "'Syne', sans-serif" }}>
               {slide.categorie}
             </span>
-            {/* Dots */}
             <div className="flex gap-1.5 mt-1">
               {HERO_SLIDES.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => { goTo(i); if (autoRef.current) clearInterval(autoRef.current); startAuto() }}
+                <button key={i} onClick={() => { goTo(i); if (autoRef.current) clearInterval(autoRef.current); startAuto() }}
                   className="rounded-full border-none cursor-pointer transition-all"
-                  style={{
-                    width: i === cur ? 16 : 6,
-                    height: 6,
-                    background: i === cur ? "#fff" : "rgba(255,255,255,0.35)",
-                  }}
-                />
+                  style={{ width: i === cur ? 16 : 6, height: 6, background: i === cur ? "#fff" : "rgba(255,255,255,0.35)" }}/>
               ))}
             </div>
           </div>
-
-          {/* Flèche droite */}
-          <button
-            onClick={() => { goTo(cur + 1); if (autoRef.current) clearInterval(autoRef.current); startAuto() }}
+          <button onClick={() => { goTo(cur + 1); if (autoRef.current) clearInterval(autoRef.current); startAuto() }}
             className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0"
-            style={{ background: "rgba(255,255,255,0.2)", fontSize: 18 }}
-          >›</button>
-
-          {/* Carte suivante — petite, à droite */}
-          <button
-            onClick={() => { goTo(cur + 1); if (autoRef.current) clearInterval(autoRef.current); startAuto() }}
+            style={{ background: "rgba(255,255,255,0.2)", fontSize: 18 }}>›</button>
+          <button onClick={() => { goTo(cur + 1); if (autoRef.current) clearInterval(autoRef.current); startAuto() }}
             className="flex flex-col items-center gap-2 px-4 py-4 rounded-2xl cursor-pointer transition-all opacity-50 hover:opacity-75 flex-shrink-0"
-            style={{ background: "rgba(255,255,255,0.1)", minWidth: 80 }}
-          >
+            style={{ background: "rgba(255,255,255,0.1)", minWidth: 80 }}>
             <span style={{ fontSize: 28 }}>{HERO_SLIDES[nextIdx].emoji}</span>
             <span className="text-white text-xs font-medium text-center leading-tight" style={{ fontSize: 11 }}>
               {HERO_SLIDES[nextIdx].categorie.replace(" & Rando", "")}
@@ -388,38 +449,27 @@ function HeroCarousel({
           </button>
         </div>
 
-        {/* ── Contenu droit ── */}
+        {/* Contenu droit */}
         <div className="flex-1 min-w-0">
-          {/* Label catégorie */}
-          <p className="text-xs font-bold tracking-widest uppercase mb-3 transition-all" style={{ color: slide.accent }}>
+          <p className="text-xs font-bold tracking-widest uppercase mb-3" style={{ color: slide.accent }}>
             {slide.sub}
           </p>
-
-          {/* Phrase forte */}
-          <h2
-            className="font-black mb-5 transition-all duration-300"
-            style={{
-              fontFamily: "'Syne', sans-serif",
-              fontSize: "clamp(28px, 4vw, 52px)",
-              letterSpacing: "-1.5px",
-              color: "#fff",
-              lineHeight: 1.05,
-              opacity: phraseVisible ? 1 : 0,
-              transform: phraseVisible ? "translateY(0)" : "translateY(-12px)",
-              transition: "opacity .3s ease, transform .3s ease",
-            }}
-          >
+          <h2 className="font-black mb-5 transition-all duration-300" style={{
+            fontFamily: "'Syne', sans-serif",
+            fontSize: "clamp(28px, 4vw, 52px)",
+            letterSpacing: "-1.5px",
+            color: "#fff",
+            lineHeight: 1.05,
+            opacity: phraseVisible ? 1 : 0,
+            transform: phraseVisible ? "translateY(0)" : "translateY(-12px)",
+            transition: "opacity .3s ease, transform .3s ease",
+          }}>
             {slide.phrase}
           </h2>
-
-          {/* Événements de la catégorie */}
           <div className="flex flex-col gap-2 mb-5">
             {slideEvents.length > 0 ? slideEvents.map((e) => (
-              <div
-                key={e.id}
-                className="flex items-center justify-between rounded-xl px-4 py-3 cursor-pointer transition-all hover:opacity-90"
-                style={{ background: "rgba(255,255,255,0.12)" }}
-              >
+              <div key={e.id} className="flex items-center justify-between rounded-xl px-4 py-3 cursor-pointer transition-all hover:opacity-90"
+                style={{ background: "rgba(255,255,255,0.12)" }}>
                 <div className="flex items-center gap-3 min-w-0">
                   <span style={{ fontSize: 20 }}>{e.emoji || slide.emoji}</span>
                   <div className="min-w-0">
@@ -429,13 +479,8 @@ function HeroCarousel({
                     </p>
                   </div>
                 </div>
-                <span
-                  className="text-xs font-bold px-3 py-1 rounded-full flex-shrink-0 ml-3"
-                  style={{
-                    background: e.prix === "Gratuit" ? "#22c55e" : "rgba(255,255,255,0.2)",
-                    color: "#fff",
-                  }}
-                >
+                <span className="text-xs font-bold px-3 py-1 rounded-full flex-shrink-0 ml-3"
+                  style={{ background: e.prix === "Gratuit" ? "#22c55e" : "rgba(255,255,255,0.2)", color: "#fff" }}>
                   {e.prix}
                 </span>
               </div>
@@ -445,26 +490,16 @@ function HeroCarousel({
               </div>
             )}
           </div>
-
-          {/* Barre de recherche */}
           <div className="flex items-center bg-white rounded-full px-4 py-2 gap-3 max-w-md" style={{ boxShadow: "0 4px 20px rgba(0,0,0,0.2)" }}>
             <span className="text-gray-400">🔍</span>
-            <input
-              type="text"
-              placeholder="Un concert, une rando, une soirée..."
+            <input type="text" placeholder="Un concert, une rando, une soirée..."
               className="bg-transparent flex-1 text-sm text-gray-800 outline-none placeholder-gray-400 py-1"
-              value={recherche}
-              onChange={(e) => setRecherche(e.target.value)}
-            />
-            <button
-              className="flex-shrink-0 px-5 py-2 rounded-full text-sm font-bold text-white transition-colors"
-              style={{ background: slide.accent }}
-            >
-              Go →
-            </button>
+              value={recherche} onChange={(e) => setRecherche(e.target.value)}/>
+            <button className="flex-shrink-0 px-5 py-2 rounded-full text-sm font-bold text-white transition-colors"
+              style={{ background: slide.accent }}>Go →</button>
           </div>
         </div>
-      </div>
+      </div>}
     </section>
   )
 }
