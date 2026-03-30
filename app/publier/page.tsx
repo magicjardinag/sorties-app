@@ -431,19 +431,12 @@ export default function Publier() {
 
                     // Sauvegarder le titre dans la BDD des mots clés
                     if (form.titre.trim().length > 3) {
-                      await supabase.rpc("upsert_mot_cle", { p_mot: form.titre.trim() })
-                        .catch(() => {
-                          // Fallback si la fonction RPC n'existe pas encore
-                          supabase.from("mots_cles")
-                            .upsert({ mot: form.titre.trim(), count: 1 }, { onConflict: "mot", ignoreDuplicates: false })
-                            .then(({ error }) => {
-                              if (!error) {
-                                supabase.from("mots_cles")
-                                  .update({ count: supabase.raw("count + 1") as any })
-                                  .eq("mot", form.titre.trim())
-                              }
-                            })
-                        })
+                      try {
+                        await supabase.rpc("upsert_mot_cle", { p_mot: form.titre.trim() })
+                      } catch {
+                        await supabase.from("mots_cles")
+                          .upsert({ mot: form.titre.trim(), count: 1 }, { onConflict: "mot" })
+                      }
                     }
 
                     const res = await fetch("/api/checkout", {
