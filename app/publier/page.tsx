@@ -64,6 +64,53 @@ const SUGGESTIONS_KEYWORDS: Record<string, string[]> = {
   "famil": ["Sortie en famille", "Fête familiale", "Week-end famille", "Journée famille"],
 }
 
+// ── Liste de mots inappropriés ─────────────────────────────────────────
+const MOTS_INTERDITS = [
+  // Insultes courantes
+  "connard","connarde","connards","connardes","con","conne","cons","connes",
+  "merde","merdes","merdique","emmerde","emmerdeur",
+  "putain","putains","pute","putes",
+  "salaud","salauds","salope","salopes",
+  "enculé","enculés","enculée","enculées","encule",
+  "branleur","branleuse","branleurs","branleuses",
+  "bite","bites","couille","couilles","cul","culs",
+  "fdp","fils de pute","va te faire","vtff","vdf",
+  "ntm","nique ta mère","nique","niquer",
+  "pd","pédé","pédés","tapette",
+  "bâtard","batard","bâtards","batards",
+  "abruti","abrutis","abrutie","abrutis",
+  "idiot","idiote","idiots","idiotes","imbécile","imbéciles",
+  "crétin","crétins","crétine","crétines",
+  "débile","débiles",
+  "salopard","salopards","saloparde","salopardes",
+  "fumier","fumiers",
+  "ordure","ordures",
+  "raclure","raclures",
+  "tocard","tocards","tocarde","tocardes",
+  // Racisme / discrimination
+  "nègre","nègres","négresse","négresses",
+  "youpin","youpins","youpine","youpines",
+  "bougnoule","bougnoules",
+  "raton","ratons","bamboula","bamboulas",
+  "chintok","chintoks","chinetoque","chinetoques",
+  "bicot","bicots",
+  // Contenu adulte
+  "sexe","porn","porno","xxx","escort",
+]
+
+function contientMotInterdit(texte: string): string | null {
+  if (!texte) return null
+  const lower = texte.toLowerCase()
+    .normalize("NFD").replace(/[̀-ͯ]/g, "") // enlève accents pour comparaison
+  for (const mot of MOTS_INTERDITS) {
+    const motNorm = mot.normalize("NFD").replace(/[̀-ͯ]/g, "")
+    // Vérifier mot entier (pas dans un autre mot)
+    const regex = new RegExp(`(^|\s|[^a-z])${motNorm}($|\s|[^a-z])`, "i")
+    if (regex.test(lower)) return mot
+  }
+  return null
+}
+
 function getSuggestions(input: string): string[] {
   if (!input || input.length < 3) return []
   const lower = input.toLowerCase()
@@ -107,6 +154,8 @@ export default function Publier() {
   // ── Autocomplétion titre ──
   const [titreSuggestions, setTitreSuggestions] = useState<string[]>([])
   const [motsAppris, setMotsAppris] = useState<string[]>([])
+  const [erreurTitre, setErreurTitre] = useState("")
+  const [erreurDescription, setErreurDescription] = useState("")
   const titreRef = useRef<HTMLInputElement>(null)
 
   // Charger les mots appris depuis Supabase au démarrage
@@ -132,6 +181,12 @@ export default function Publier() {
     setForm({ ...form, [name]: value })
     if (name === "titre") {
       setTitreSuggestions(getSuggestionsCompletes(value))
+      const motInterdit = contientMotInterdit(value)
+      setErreurTitre(motInterdit ? `⛔ Le mot "${motInterdit}" n'est pas autorisé. Merci de modifier votre message.` : "")
+    }
+    if (name === "description") {
+      const motInterdit = contientMotInterdit(value)
+      setErreurDescription(motInterdit ? `⛔ Le mot "${motInterdit}" n'est pas autorisé. Merci de modifier votre message.` : "")
     }
   }
 
@@ -324,6 +379,12 @@ export default function Publier() {
                 className="w-full border border-gray-200 rounded-lg px-4 py-3 text-gray-800 outline-none focus:border-purple-400"
                 autoComplete="off"
               />
+              {/* Erreur modération titre */}
+              {erreurTitre && (
+                <div className="mt-2 flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold" style={{ background: "#FEE2E2", color: "#991B1B", border: "1px solid #FCA5A5" }}>
+                  {erreurTitre}
+                </div>
+              )}
               {/* Chips de suggestions */}
               {titreSuggestions.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-2">
@@ -373,7 +434,7 @@ export default function Publier() {
               )}
             </div>
 
-            <button onClick={() => setEtape(2)} disabled={!form.titre || !form.categorie || !villeValidee || analysingImage} className="w-full bg-purple-600 text-white py-3 rounded-full font-bold hover:bg-purple-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+            <button onClick={() => setEtape(2)} disabled={!form.titre || !form.categorie || !villeValidee || analysingImage || !!erreurTitre} className="w-full bg-purple-600 text-white py-3 rounded-full font-bold hover:bg-purple-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
               Suivant →
             </button>
           </div>
@@ -397,11 +458,17 @@ export default function Publier() {
             </div>
             <div>
               <label className="text-sm font-medium text-gray-700 mb-1 block">Description</label>
-              <textarea name="description" value={form.description} onChange={handleChange} placeholder="Décris ton événement..." rows={4} className="w-full border border-gray-200 rounded-lg px-4 py-3 text-gray-800 outline-none focus:border-purple-400 resize-none"/>
+              <textarea name="description" value={form.description} onChange={handleChange} placeholder="Décris ton événement..." rows={4}
+                className={`w-full border rounded-lg px-4 py-3 text-gray-800 outline-none focus:border-purple-400 resize-none ${erreurDescription ? "border-red-400" : "border-gray-200"}`}/>
+              {erreurDescription && (
+                <div className="mt-2 flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold" style={{ background: "#FEE2E2", color: "#991B1B", border: "1px solid #FCA5A5" }}>
+                  {erreurDescription}
+                </div>
+              )}
             </div>
             <div className="flex gap-3">
               <button onClick={() => setEtape(1)} className="w-full border border-gray-200 text-gray-600 py-3 rounded-full font-bold hover:bg-gray-50 transition-colors">← Retour</button>
-              <button onClick={() => setEtape(3)} disabled={!form.date || !form.heure} className="w-full bg-purple-600 text-white py-3 rounded-full font-bold hover:bg-purple-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">Suivant →</button>
+              <button onClick={() => setEtape(3)} disabled={!form.date || !form.heure || !!erreurDescription} className="w-full bg-purple-600 text-white py-3 rounded-full font-bold hover:bg-purple-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">Suivant →</button>
             </div>
           </div>
         )}
