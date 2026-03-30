@@ -629,8 +629,7 @@ export default function Home() {
         html { scroll-behavior: auto; }
         body { overscroll-behavior: none; }
         img { display: block; }
-        .ev-card { contain: strict; }
-        .ev-card * { transition: none !important; animation: none !important; }
+
         @media (max-width: 640px) {
           * { transition: none !important; animation: none !important; }
           .hero-phrase { transition: opacity 0.2s ease !important; }
@@ -843,7 +842,7 @@ export default function Home() {
                 const photoSrc = e.image_url || getFallbackPhoto(e.categorie)
                 return (
                   <div key={e.id} onClick={() => router.push(`/evenement/${e.id}`)}
-                    className="bg-white rounded-2xl overflow-hidden cursor-pointer border border-gray-100 shadow-sm ev-card">
+                    className="bg-white rounded-2xl overflow-hidden cursor-pointer border border-gray-100 shadow-sm">
                     <div className="relative h-40 overflow-hidden">
                       {/* Photo — fallback Unsplash si pas d'image */}
                       <img
