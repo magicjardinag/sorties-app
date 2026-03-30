@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 
@@ -9,6 +9,74 @@ type VilleSuggestion = {
   codePostal: string
   lat: number
   lng: number
+}
+
+// ── Dictionnaire de suggestions par mot-clé ──────────────────────────────
+const SUGGESTIONS_KEYWORDS: Record<string, string[]> = {
+  // Marchés
+  "march": ["Marché nocturne", "Marché provençal", "Marché bio", "Marché artisanal", "Marché de Noël", "Marché aux puces", "Marché fermier", "Marché créateurs"],
+  "marché": ["Marché nocturne", "Marché provençal", "Marché bio", "Marché artisanal", "Marché de Noël", "Marché aux puces", "Marché fermier"],
+  // Concerts
+  "conc": ["Concert acoustique", "Concert jazz", "Concert rock", "Concert classique", "Concert gratuit", "Concert en plein air", "Concert folk"],
+  "concert": ["Concert acoustique", "Concert jazz", "Concert rock", "Concert classique", "Concert gratuit", "Concert en plein air"],
+  // Festivals
+  "fest": ["Festival de musique", "Festival de rue", "Festival gastronomique", "Festival culturel", "Festival folk", "Festival jazz", "Festival gratuit"],
+  "festival": ["Festival de musique", "Festival de rue", "Festival gastronomique", "Festival culturel", "Festival folk"],
+  // Randonnées
+  "rand": ["Randonnée pédestre", "Randonnée nocturne", "Randonnée en famille", "Randonnée VTT", "Randonnée découverte", "Rando + pique-nique"],
+  "rando": ["Randonnée pédestre", "Randonnée nocturne", "Randonnée en famille", "Randonnée VTT", "Randonnée découverte"],
+  // Soirées
+  "soir": ["Soirée dansante", "Soirée jazz", "Soirée quiz", "Soirée déguisée", "Soirée karaoké", "Soirée jeux de société", "Soirée cinéma"],
+  "soirée": ["Soirée dansante", "Soirée jazz", "Soirée quiz", "Soirée déguisée", "Soirée karaoké"],
+  // Ateliers
+  "ateli": ["Atelier peinture", "Atelier céramique", "Atelier cuisine", "Atelier yoga", "Atelier photo", "Atelier broderie", "Atelier poterie"],
+  "atelier": ["Atelier peinture", "Atelier céramique", "Atelier cuisine", "Atelier yoga", "Atelier photo"],
+  // Sports
+  "tourn": ["Tournoi de foot", "Tournoi de pétanque", "Tournoi de tennis", "Tournoi de volley", "Tournoi inter-villages"],
+  "tournoi": ["Tournoi de foot", "Tournoi de pétanque", "Tournoi de tennis", "Tournoi de volley"],
+  "course": ["Course nature", "Course à pied", "Course cycliste", "Course en montagne", "Course caritative"],
+  // Expos
+  "expo": ["Exposition photo", "Exposition peinture", "Exposition sculptures", "Exposition artisanat", "Exposition temporaire"],
+  "exposition": ["Exposition photo", "Exposition peinture", "Exposition sculptures", "Exposition artisanat"],
+  // Brocante / vide-grenier
+  "broc": ["Brocante villageoise", "Brocante et antiquités", "Brocante en plein air", "Grande brocante"],
+  "vide": ["Vide-grenier", "Vide-grenier géant", "Vide-grenier familial", "Vide-dressing"],
+  // Spectacles
+  "spec": ["Spectacle de rue", "Spectacle de danse", "Spectacle enfants", "Spectacle humoristique", "Spectacle de magie"],
+  "spectacle": ["Spectacle de rue", "Spectacle de danse", "Spectacle enfants", "Spectacle humoristique"],
+  // Repas / food
+  "repas": ["Repas dansant", "Repas associatif", "Repas de village", "Repas gastronomique"],
+  "dîner": ["Dîner dansant", "Dîner spectacle", "Dîner associatif", "Dîner en blanc"],
+  "diner": ["Dîner dansant", "Dîner spectacle", "Dîner associatif"],
+  "food": ["Food truck", "Food festival", "Street food", "Food & music"],
+  // Loto
+  "loto": ["Loto du printemps", "Loto géant", "Loto caritatif", "Super loto", "Loto de l'association"],
+  // Bal
+  "bal": ["Bal populaire", "Bal folk", "Bal musette", "Bal de village", "Bal des pompiers"],
+  // Yoga / bien-être
+  "yoga": ["Yoga en plein air", "Yoga du matin", "Yoga et méditation", "Yoga pour débutants"],
+  "meditat": ["Méditation guidée", "Méditation en plein air", "Méditation et yoga"],
+  // Nature
+  "nature": ["Balade nature", "Nature et patrimoine", "Nature en famille", "Nature & photographie"],
+  "balade": ["Balade nature", "Balade nocturne", "Balade à vélo", "Balade historique", "Balade en famille"],
+  // Enfants
+  "enfant": ["Spectacle enfants", "Atelier enfants", "Sortie famille", "Animation enfants", "Chasse aux œufs"],
+  "famil": ["Sortie en famille", "Fête familiale", "Week-end famille", "Journée famille"],
+}
+
+function getSuggestions(input: string): string[] {
+  if (!input || input.length < 3) return []
+  const lower = input.toLowerCase()
+  const results = new Set<string>()
+  for (const [key, suggestions] of Object.entries(SUGGESTIONS_KEYWORDS)) {
+    if (lower.includes(key) || key.includes(lower)) {
+      suggestions.forEach(s => {
+        // Ne pas suggérer ce qui est déjà tapé
+        if (!s.toLowerCase().startsWith(lower)) results.add(s)
+      })
+    }
+  }
+  return Array.from(results).slice(0, 6)
 }
 
 export default function Publier() {
@@ -36,10 +104,27 @@ export default function Publier() {
   const [analysingImage, setAnalysingImage] = useState(false)
   const [analysisMessage, setAnalysisMessage] = useState("")
 
-  const categories = ["Musique", "Sport", "Culture", "Food", "Nature", "Autre"]
+  // ── Autocomplétion titre ──
+  const [titreSuggestions, setTitreSuggestions] = useState<string[]>([])
+  const titreRef = useRef<HTMLInputElement>(null)
+
+  const categories = [
+    "Musique", "Sport", "Danse", "Culture", "Atelier", "Food",
+    "Nature & Rando", "Animaux", "Brocante", "Bar & Nuit", "Loto", "Enfants", "Autre"
+  ]
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value })
+    const { name, value } = e.target
+    setForm({ ...form, [name]: value })
+    if (name === "titre") {
+      setTitreSuggestions(getSuggestions(value))
+    }
+  }
+
+  const applySuggestion = (suggestion: string) => {
+    setForm({ ...form, titre: suggestion })
+    setTitreSuggestions([])
+    titreRef.current?.focus()
   }
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -60,18 +145,12 @@ export default function Publier() {
         r.onerror = () => rej(new Error("Read failed"))
         r.readAsDataURL(file)
       })
-
       const response = await fetch("/api/analyser-affiche", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          image_base64: base64,
-          media_type: file.type,
-        }),
+        body: JSON.stringify({ image_base64: base64, media_type: file.type }),
       })
-
       const result = await response.json()
-
       if (result.success && result.data) {
         const data = result.data
         setForm((prev) => ({
@@ -83,24 +162,17 @@ export default function Publier() {
           prix: data.prix || prev.prix,
           description: data.description || prev.description,
         }))
-
+        if (data.titre) setTitreSuggestions(getSuggestions(data.titre))
         if (data.ville) {
           const res = await fetch(`https://geo.api.gouv.fr/communes?nom=${data.ville}&fields=nom,codesPostaux,centre&limit=1`)
           const communes = await res.json()
           if (communes.length > 0) {
             const c = communes[0]
             setVilleInput(`${c.nom} (${c.codesPostaux?.[0] || ""})`)
-            setForm((prev) => ({
-              ...prev,
-              ville: c.nom,
-              codePostal: c.codesPostaux?.[0] || "",
-              lat: c.centre?.coordinates?.[1] || 0,
-              lng: c.centre?.coordinates?.[0] || 0,
-            }))
+            setForm((prev) => ({ ...prev, ville: c.nom, codePostal: c.codesPostaux?.[0] || "", lat: c.centre?.coordinates?.[1] || 0, lng: c.centre?.coordinates?.[0] || 0 }))
             setVilleValidee(true)
           }
         }
-
         setAnalysisMessage("✅ Informations extraites automatiquement ! Vérifie et corrige si besoin.")
       } else {
         setAnalysisMessage("⚠️ Impossible d'extraire les infos. Remplis le formulaire manuellement.")
@@ -179,7 +251,7 @@ export default function Publier() {
         {etape === 1 && (
           <div className="bg-white rounded-xl shadow p-6 flex flex-col gap-4">
 
-            {/* Upload image EN PREMIER */}
+            {/* Upload image */}
             <div>
               <label className="text-sm font-medium text-gray-700 mb-1 block">
                 📸 Affiche de l'événement
@@ -198,11 +270,9 @@ export default function Publier() {
                   <input type="file" accept="image/*" onChange={handleImageChange} className="hidden"/>
                 </label>
               )}
-
               {analysingImage && (
                 <div className="bg-purple-50 border border-purple-200 rounded-lg px-4 py-3 text-sm text-purple-700 flex items-center gap-2">
-                  <span className="animate-spin">⏳</span>
-                  {analysisMessage}
+                  <span className="animate-spin">⏳</span> {analysisMessage}
                 </div>
               )}
               {!analysingImage && analysisMessage && (
@@ -212,10 +282,40 @@ export default function Publier() {
               )}
             </div>
 
+            {/* Titre avec autocomplétion */}
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-1 block">Titre de l'événement</label>
-              <input name="titre" value={form.titre} onChange={handleChange} placeholder="Ex: Concert Jazz au Parc" className="w-full border border-gray-200 rounded-lg px-4 py-3 text-gray-800 outline-none focus:border-purple-400"/>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">
+                Titre de l'événement
+                <span className="text-gray-400 font-normal ml-2 text-xs">— des suggestions apparaissent en tapant</span>
+              </label>
+              <input
+                ref={titreRef}
+                name="titre"
+                value={form.titre}
+                onChange={handleChange}
+                placeholder="Ex: Marché nocturne, Concert jazz..."
+                className="w-full border border-gray-200 rounded-lg px-4 py-3 text-gray-800 outline-none focus:border-purple-400"
+                autoComplete="off"
+              />
+              {/* Chips de suggestions */}
+              {titreSuggestions.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {titreSuggestions.map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => applySuggestion(s)}
+                      className="px-3 py-1.5 rounded-full text-xs font-semibold border transition-all hover:shadow-sm active:scale-95"
+                      style={{ background: "#F5F3FF", color: "#6D28D9", borderColor: "#DDD6FE" }}
+                    >
+                      {s} ↵
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
+
+            {/* Catégorie */}
             <div>
               <label className="text-sm font-medium text-gray-700 mb-1 block">Catégorie</label>
               <select name="categorie" value={form.categorie} onChange={handleChange} className="w-full border border-gray-200 rounded-lg px-4 py-3 text-gray-800 outline-none focus:border-purple-400">
@@ -223,6 +323,8 @@ export default function Publier() {
                 {categories.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
+
+            {/* Ville */}
             <div className="relative">
               <label className="text-sm font-medium text-gray-700 mb-1 block">Ville</label>
               <input
@@ -243,6 +345,7 @@ export default function Publier() {
                 </div>
               )}
             </div>
+
             <button onClick={() => setEtape(2)} disabled={!form.titre || !form.categorie || !villeValidee || analysingImage} className="w-full bg-purple-600 text-white py-3 rounded-full font-bold hover:bg-purple-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
               Suivant →
             </button>
@@ -289,11 +392,9 @@ export default function Publier() {
                 <div className="flex justify-between"><span className="text-gray-400">Prix</span><span className="font-medium text-gray-800">{form.prix || "Gratuit"}</span></div>
               </div>
             </div>
-
             <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 text-sm text-purple-700">
               💳 La publication coûte <strong>9,90€</strong> — paiement sécurisé via Stripe
             </div>
-
             <div className="flex gap-3">
               <button onClick={() => setEtape(2)} className="w-full border border-gray-200 text-gray-600 py-3 rounded-full font-bold hover:bg-gray-50 transition-colors">← Modifier</button>
               <button
