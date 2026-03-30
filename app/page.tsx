@@ -404,9 +404,8 @@ function HeroCarousel({
               style={{ width: i === cur ? 16 : 6, height: 6, background: i === cur ? "#fff" : "rgba(255,255,255,0.35)" }}/>
           ))}
         </div>
-      </div>
-
       </div>}
+
       {/* ── VERSION DESKTOP ── */}
       {!isMobile && <div className="max-w-7xl mx-auto px-6 py-10 flex items-center gap-8">
         {/* Carrousel catégories */}
