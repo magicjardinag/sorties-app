@@ -273,6 +273,7 @@ function HeroCarousel({
   const [slideEvents, setSlideEvents] = useState<Evenement[]>([])
   const [isMobile, setIsMobile] = useState(false)
   const autoRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const touchStartX = useRef<number | null>(null)
   const today = new Date(); today.setHours(0, 0, 0, 0)
 
   useEffect(() => {
@@ -327,7 +328,21 @@ function HeroCarousel({
       style={{ background: slide.bg }}
     >
       {/* ── VERSION MOBILE ── */}
-      {isMobile && <div className="px-4 py-6">
+      {isMobile && <div
+        className="px-4 py-6"
+        onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX }}
+        onTouchEnd={(e) => {
+          if (touchStartX.current === null) return
+          const diff = touchStartX.current - e.changedTouches[0].clientX
+          if (Math.abs(diff) > 40) {
+            if (diff > 0) goTo(cur + 1)
+            else goTo(cur - 1)
+            if (autoRef.current) clearInterval(autoRef.current)
+            startAuto()
+          }
+          touchStartX.current = null
+        }}
+      >
         {/* Label + emoji + dots */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
