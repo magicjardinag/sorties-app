@@ -324,8 +324,8 @@ function HeroCarousel({
 
   return (
     <section
-      className="relative w-full overflow-hidden transition-colors duration-700"
-      style={{ background: slide.bg }}
+      className="relative w-full overflow-hidden"
+      style={{ background: slide.bg, transition: "background-color 0.5s ease", transform: "translateZ(0)", willChange: "background-color" }}
     >
       {/* ── VERSION MOBILE ── */}
       {isMobile && <div
@@ -334,7 +334,7 @@ function HeroCarousel({
         onTouchEnd={(e) => {
           if (touchStartX.current === null) return
           const diff = touchStartX.current - e.changedTouches[0].clientX
-          if (Math.abs(diff) > 40) {
+          if (Math.abs(diff) > 50) {
             if (diff > 0) goTo(cur + 1)
             else goTo(cur - 1)
             if (autoRef.current) clearInterval(autoRef.current)
@@ -342,6 +342,7 @@ function HeroCarousel({
           }
           touchStartX.current = null
         }}
+        style={{ touchAction: "pan-y", willChange: "transform" }}
       >
         {/* Label + emoji + dots */}
         <div className="flex items-center justify-between mb-3">
@@ -621,7 +622,12 @@ export default function Home() {
   const isAgendaActif = showCalendrier || (jourActif !== "tout" && jourActif !== "weekend" && jourActif !== dates.today && jourActif !== dates.demain)
 
   return (
-    <main className="min-h-screen" style={{ background: "#F7F6F2" }}>
+    <main className="min-h-screen" style={{ background: "#F7F6F2", WebkitOverflowScrolling: "touch" }}>
+      <style>{`
+        * { -webkit-tap-highlight-color: transparent; }
+        img { content-visibility: auto; }
+        .grid-card { contain: layout style paint; }
+      `}</style>
 
       {/* ── HEADER ── */}
       <header className="bg-white sticky top-0 z-40 border-b border-gray-200 shadow-sm">
@@ -829,13 +835,14 @@ export default function Home() {
                 const photoSrc = e.image_url || getFallbackPhoto(e.categorie)
                 return (
                   <div key={e.id} onClick={() => router.push(`/evenement/${e.id}`)}
-                    className="bg-white rounded-2xl overflow-hidden cursor-pointer group transition-all duration-200 hover:-translate-y-1 hover:shadow-lg active:scale-[0.98] border border-gray-100 shadow-sm">
+                    className="bg-white rounded-2xl overflow-hidden cursor-pointer group border border-gray-100 shadow-sm grid-card" style={{ transform: "translateZ(0)", contain: "layout style paint" }}>
                     <div className="relative h-40 overflow-hidden">
                       {/* Photo — fallback Unsplash si pas d'image */}
                       <img
                         src={photoSrc}
                         alt={e.titre}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        className="w-full h-full object-cover"
+                        loading="lazy"
                         onError={(ev) => {
                           (ev.target as HTMLImageElement).src = getFallbackPhoto(e.categorie)
                         }}
