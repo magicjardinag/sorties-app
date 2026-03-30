@@ -4,6 +4,8 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 
+const ADMIN_EMAIL = "a.giraudon@astem.fr"
+
 export default function Auth() {
   const router = useRouter()
   const [mode, setMode] = useState<"login" | "signup" | "reset">("login")
@@ -37,11 +39,16 @@ export default function Auth() {
         setMessage("Compte créé ! Vérifie ton email pour confirmer.")
       }
     } else {
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) {
         setMessage(error.message)
       } else {
-        router.push("/")
+        // Redirection admin si c'est le compte administrateur
+        if (data.user?.email === ADMIN_EMAIL) {
+          router.push("/admin")
+        } else {
+          router.push("/")
+        }
       }
     }
     setLoading(false)
