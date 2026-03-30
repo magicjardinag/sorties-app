@@ -106,7 +106,21 @@ export default function Publier() {
 
   // ── Autocomplétion titre ──
   const [titreSuggestions, setTitreSuggestions] = useState<string[]>([])
+  const [motsAppris, setMotsAppris] = useState<string[]>([])
   const titreRef = useRef<HTMLInputElement>(null)
+
+  // Charger les mots appris depuis Supabase au démarrage
+  useEffect(() => {
+    const loadMotsAppris = async () => {
+      const { data } = await supabase
+        .from("mots_cles")
+        .select("mot")
+        .order("count", { ascending: false })
+        .limit(100)
+      if (data) setMotsAppris(data.map((d: any) => d.mot))
+    }
+    loadMotsAppris()
+  }, [])
 
   const categories = [
     "Musique", "Sport", "Danse", "Culture", "Atelier", "Food",
@@ -117,8 +131,21 @@ export default function Publier() {
     const { name, value } = e.target
     setForm({ ...form, [name]: value })
     if (name === "titre") {
-      setTitreSuggestions(getSuggestions(value))
+      setTitreSuggestions(getSuggestionsCompletes(value))
     }
+  }
+
+  // Suggestions combinées : dictionnaire local + mots appris de la BDD
+  const getSuggestionsCompletes = (input: string): string[] => {
+    if (!input || input.length < 3) return []
+    const lower = input.toLowerCase()
+    const fromDict = getSuggestions(input)
+    const fromDB = motsAppris.filter(mot =>
+      mot.toLowerCase().includes(lower) &&
+      !mot.toLowerCase().startsWith(lower) &&
+      !fromDict.includes(mot)
+    ).slice(0, 3)
+    return [...fromDict, ...fromDB].slice(0, 7)
   }
 
   const applySuggestion = (suggestion: string) => {
@@ -401,6 +428,24 @@ export default function Publier() {
                 onClick={async () => {
                   try {
                     const imageUrl = await uploadImage()
+
+                    // Sauvegarder le titre dans la BDD des mots clés
+                    if (form.titre.trim().length > 3) {
+                      await supabase.rpc("upsert_mot_cle", { p_mot: form.titre.trim() })
+                        .catch(() => {
+                          // Fallback si la fonction RPC n'existe pas encore
+                          supabase.from("mots_cles")
+                            .upsert({ mot: form.titre.trim(), count: 1 }, { onConflict: "mot", ignoreDuplicates: false })
+                            .then(({ error }) => {
+                              if (!error) {
+                                supabase.from("mots_cles")
+                                  .update({ count: supabase.raw("count + 1") as any })
+                                  .eq("mot", form.titre.trim())
+                              }
+                            })
+                        })
+                    }
+
                     const res = await fetch("/api/checkout", {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
