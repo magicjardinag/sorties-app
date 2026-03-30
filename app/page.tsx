@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback, memo } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 
@@ -325,7 +325,7 @@ function HeroCarousel({
   return (
     <section
       className="relative w-full overflow-hidden"
-      style={{ background: slide.bg, transition: "background-color 0.5s ease", transform: "translateZ(0)", willChange: "background-color" }}
+      style={{ background: slide.bg }}
     >
       {/* ── VERSION MOBILE ── */}
       {isMobile && <div
@@ -363,15 +363,13 @@ function HeroCarousel({
         </div>
 
         {/* Slogan */}
-        <h2 className="font-black mb-4" style={{
+        <h2 className="font-black mb-4 hero-phrase" style={{
           fontFamily: "'Syne', sans-serif",
           fontSize: "clamp(24px, 7vw, 36px)",
           letterSpacing: "-1px",
           color: "#fff",
           lineHeight: 1.1,
           opacity: phraseVisible ? 1 : 0,
-          transform: phraseVisible ? "translateY(0)" : "translateY(-10px)",
-          transition: "opacity .3s ease, transform .3s ease",
         }}>
           {slide.phrase}
         </h2>
@@ -568,10 +566,13 @@ export default function Home() {
   }, [])
 
   useEffect(() => {
-    if (pubsFiltrees.length === 0) return
-    const interval = setInterval(() => setPubIndex((prev) => (prev + 1) % pubsFiltrees.length), 4000)
+    const len = (position
+      ? pubs.filter(pub => !pub.lat || !pub.lng)
+      : pubs).length
+    if (len === 0) return
+    const interval = setInterval(() => setPubIndex((prev) => (prev + 1) % Math.max(len, 1)), 5000)
     return () => clearInterval(interval)
-  }, [pubs, position])
+  }, [pubs.length, position])
 
   const activerGeolocalisation = () => {
     setLoadingGeo(true)
@@ -582,7 +583,7 @@ export default function Home() {
   }
   const desactiverGeolocalisation = () => { setFiltreProximite(false); setPosition(null) }
 
-  const toggleFavori = async (e: React.MouseEvent, evenementId: string) => {
+  const toggleFavori = useCallback(async (e: React.MouseEvent, evenementId: string) => {
     e.stopPropagation()
     if (!user) { router.push("/auth"); return }
     const isFavori = favoris.includes(evenementId)
@@ -593,7 +594,7 @@ export default function Home() {
       await supabase.from("favoris").insert({ user_id: user.id, evenement_id: evenementId })
       setFavoris([...favoris, evenementId])
     }
-  }
+  }, [user, favoris])
 
   const pubsFiltrees = position
     ? pubs.filter((pub) => !pub.lat || !pub.lng || getDistance(position.lat, position.lng, pub.lat, pub.lng) <= (pub.rayon || 50))
@@ -624,9 +625,16 @@ export default function Home() {
   return (
     <main className="min-h-screen" style={{ background: "#F7F6F2", WebkitOverflowScrolling: "touch" }}>
       <style>{`
-        * { -webkit-tap-highlight-color: transparent; }
-        img { content-visibility: auto; }
-        .grid-card { contain: layout style paint; }
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+        html { scroll-behavior: auto; }
+        body { overscroll-behavior: none; }
+        img { display: block; }
+        .ev-card { contain: strict; }
+        .ev-card * { transition: none !important; animation: none !important; }
+        @media (max-width: 640px) {
+          * { transition: none !important; animation: none !important; }
+          .hero-phrase { transition: opacity 0.2s ease !important; }
+        }
       `}</style>
 
       {/* ── HEADER ── */}
@@ -835,7 +843,7 @@ export default function Home() {
                 const photoSrc = e.image_url || getFallbackPhoto(e.categorie)
                 return (
                   <div key={e.id} onClick={() => router.push(`/evenement/${e.id}`)}
-                    className="bg-white rounded-2xl overflow-hidden cursor-pointer group border border-gray-100 shadow-sm grid-card" style={{ transform: "translateZ(0)", contain: "layout style paint" }}>
+                    className="bg-white rounded-2xl overflow-hidden cursor-pointer border border-gray-100 shadow-sm ev-card">
                     <div className="relative h-40 overflow-hidden">
                       {/* Photo — fallback Unsplash si pas d'image */}
                       <img
@@ -843,12 +851,13 @@ export default function Home() {
                         alt={e.titre}
                         className="w-full h-full object-cover"
                         loading="lazy"
+                        decoding="async"
                         onError={(ev) => {
                           (ev.target as HTMLImageElement).src = getFallbackPhoto(e.categorie)
                         }}
                       />
                       {/* Overlay dégradé bas */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+                      <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.45) 0%, transparent 60%)" }} />
 
                       {/* Badge urgence en haut à gauche */}
                       {isToday && (
