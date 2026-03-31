@@ -440,14 +440,7 @@ function HeroCarousel({
               {slide.sub}
             </p>
           </div>
-          <div className="flex items-center gap-1.5">
-            <button onClick={() => { goTo(cur - 1); if (autoRef.current) clearInterval(autoRef.current); startAuto() }}
-              className="w-7 h-7 rounded-full flex items-center justify-center text-white text-sm font-bold"
-              style={{ background: "rgba(255,255,255,0.2)" }}>‹</button>
-            <button onClick={() => { goTo(cur + 1); if (autoRef.current) clearInterval(autoRef.current); startAuto() }}
-              className="w-7 h-7 rounded-full flex items-center justify-center text-white text-sm font-bold"
-              style={{ background: "rgba(255,255,255,0.2)" }}>›</button>
-          </div>
+
         </div>
 
         {/* Slogan */}
@@ -747,13 +740,7 @@ export default function Home() {
             <button onClick={() => setMenuMobileOpen(!menuMobileOpen)} className="w-9 h-9 flex items-center justify-center rounded-xl bg-gray-100 text-base">☰</button>
           </div>
         </div>
-        <div className="sm:hidden px-4 pb-3">
-          <div className="flex items-center bg-gray-100 rounded-full px-4 py-2.5 gap-2">
-            <span className="text-gray-400 text-sm">🔍</span>
-            <input type="text" placeholder="Rechercher..." className="bg-transparent flex-1 text-sm text-gray-800 outline-none placeholder-gray-400" value={recherche} onChange={(e) => setRecherche(e.target.value)} />
-            {recherche && <button onClick={() => setRecherche("")} className="text-gray-400 text-sm">✕</button>}
-          </div>
-        </div>
+
         {menuMobileOpen && (
           <div className="sm:hidden bg-white border-t border-gray-100 px-4 py-3 flex flex-col gap-2">
             {user ? <button onClick={() => { router.push("/dashboard"); setMenuMobileOpen(false) }} className="text-left px-3 py-2.5 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-100">👤 Mon espace</button>
@@ -765,8 +752,8 @@ export default function Home() {
         )}
       </header>
 
-      {/* ── PUB ── */}
-      {pubsFiltrees.length > 0 && pubActuel && (
+      {/* ── PUB — desktop uniquement en haut, mobile en bas ── */}
+      {pubsFiltrees.length > 0 && pubActuel && !isMobile && (
         <div className="border-b border-amber-100 px-4 py-2.5 flex items-center justify-between gap-3" style={{ background: "#FFFBEB" }}>
           <div className="flex items-center gap-2 min-w-0">
             <span className="flex-shrink-0 text-xs px-2 py-0.5 rounded-full font-semibold text-amber-700" style={{ background: "#FDE68A" }}>Pub</span>
@@ -871,10 +858,17 @@ export default function Home() {
           <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 items-center" style={{ scrollbarWidth: "none" }}>
             {categories.map((cat) => (
               <button key={cat.label} onClick={() => setCategorieActive(cat.label)}
-                className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all border"
-                style={{ background: categorieActive === cat.label ? "#FF4D00" : "#fff", color: categorieActive === cat.label ? "#fff" : "#555", borderColor: categorieActive === cat.label ? "#FF4D00" : "#e5e5e5" }}>
-                <span className="text-base leading-none">{cat.emoji}</span>
-                <span>{cat.label}</span>
+                className="flex-shrink-0 flex items-center gap-1.5 rounded-full font-semibold whitespace-nowrap transition-all border"
+                style={{
+                  background: categorieActive === cat.label ? "#FF4D00" : "#fff",
+                  color: categorieActive === cat.label ? "#fff" : "#555",
+                  borderColor: categorieActive === cat.label ? "#FF4D00" : "#e5e5e5",
+                  padding: isMobile ? "7px 10px" : "7px 12px",
+                  fontSize: isMobile ? 13 : 14,
+                }}>
+                <span style={{ fontSize: 15, lineHeight: 1 }}>{cat.emoji}</span>
+                {/* Label texte caché sur mobile portrait */}
+                {!isMobile && <span>{cat.label}</span>}
               </button>
             ))}
           </div>
@@ -1004,6 +998,18 @@ export default function Home() {
           )}
         </div>
       </div>
+
+      {/* ── PUB MOBILE — en bas avant footer ── */}
+      {isMobile && pubsFiltrees.length > 0 && pubActuel && (
+        <div className="px-4 py-2.5 flex items-center justify-between gap-3 mx-4 mb-4 rounded-2xl" style={{ background: "#FFFBEB", border: "1px solid #FDE68A" }}>
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="flex-shrink-0 text-xs px-2 py-0.5 rounded-full font-semibold text-amber-700" style={{ background: "#FDE68A" }}>Pub</span>
+            <span className="text-sm font-semibold text-gray-800 truncate">{pubActuel.nom_commerce}</span>
+            <span className="text-xs text-amber-700 truncate">{pubActuel.description}</span>
+          </div>
+          <a href={pubActuel.lien} target="_blank" className="text-xs font-semibold hover:underline whitespace-nowrap flex-shrink-0" style={{ color: "#FF4D00" }}>Voir →</a>
+        </div>
+      )}
 
       {/* ── FOOTER ── */}
       <footer className="mt-8 py-10 px-4 sm:px-6" style={{ background: "#1E2A3A" }}>
