@@ -617,14 +617,6 @@ export default function Home() {
   const [showCalendrier, setShowCalendrier] = useState(false)
   const [menuMobileOpen, setMenuMobileOpen] = useState(false)
   const [showGeoModal, setShowGeoModal] = useState(false)
-  const [isMobile, setIsMobile] = useState(false)
-
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 640)
-    check()
-    window.addEventListener("resize", check)
-    return () => window.removeEventListener("resize", check)
-  }, [])
 
   const dates = getFiltreDates()
 
@@ -760,9 +752,9 @@ export default function Home() {
         )}
       </header>
 
-      {/* ── PUB — desktop uniquement en haut, mobile en bas ── */}
-      {pubsFiltrees.length > 0 && pubActuel && !isMobile && (
-        <div className="border-b border-amber-100 px-4 py-2.5 flex items-center justify-between gap-3" style={{ background: "#FFFBEB" }}>
+      {/* ── PUB — cachée sur mobile (affichée en bas) ── */}
+      {pubsFiltrees.length > 0 && pubActuel && (
+        <div className="hidden sm:flex border-b border-amber-100 px-4 py-2.5 items-center justify-between gap-3" style={{ background: "#FFFBEB" }}>
           <div className="flex items-center gap-2 min-w-0">
             <span className="flex-shrink-0 text-xs px-2 py-0.5 rounded-full font-semibold text-amber-700" style={{ background: "#FDE68A" }}>Pub</span>
             <span className="text-sm font-semibold text-gray-800 truncate">{pubActuel.nom_commerce}</span>
@@ -871,12 +863,9 @@ export default function Home() {
                   background: categorieActive === cat.label ? "#FF4D00" : "#fff",
                   color: categorieActive === cat.label ? "#fff" : "#555",
                   borderColor: categorieActive === cat.label ? "#FF4D00" : "#e5e5e5",
-                  padding: isMobile ? "7px 10px" : "7px 12px",
-                  fontSize: isMobile ? 13 : 14,
                 }}>
                 <span style={{ fontSize: 15, lineHeight: 1 }}>{cat.emoji}</span>
-                {/* Label texte caché sur mobile portrait */}
-                {!isMobile && <span>{cat.label}</span>}
+                  <span className="hidden sm:inline">{cat.label}</span>
               </button>
             ))}
           </div>
@@ -1008,8 +997,8 @@ export default function Home() {
       </div>
 
       {/* ── PUB MOBILE — en bas avant footer ── */}
-      {isMobile && pubsFiltrees.length > 0 && pubActuel && (
-        <div className="px-4 py-2.5 flex items-center justify-between gap-3 mx-4 mb-4 rounded-2xl" style={{ background: "#FFFBEB", border: "1px solid #FDE68A" }}>
+      {pubsFiltrees.length > 0 && pubActuel && (
+        <div className="sm:hidden px-4 py-2.5 flex items-center justify-between gap-3 mx-4 mb-4 rounded-2xl" style={{ background: "#FFFBEB", border: "1px solid #FDE68A" }}>
           <div className="flex items-center gap-2 min-w-0">
             <span className="flex-shrink-0 text-xs px-2 py-0.5 rounded-full font-semibold text-amber-700" style={{ background: "#FDE68A" }}>Pub</span>
             <span className="text-sm font-semibold text-gray-800 truncate">{pubActuel.nom_commerce}</span>
