@@ -482,14 +482,7 @@ function HeroCarousel({
         </div>
 
         {/* Recherche */}
-        <div className="flex items-center bg-white rounded-full px-4 py-2 gap-2" style={{ boxShadow: "0 4px 20px rgba(0,0,0,0.2)" }}>
-          <span className="text-gray-400 text-sm">🔍</span>
-          <input type="text" placeholder="Concert, rando, soirée..."
-            className="bg-transparent flex-1 text-sm text-gray-800 outline-none placeholder-gray-400 py-1"
-            value={recherche} onChange={(e) => setRecherche(e.target.value)}/>
-          <button className="flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-bold text-white"
-            style={{ background: slide.accent }}>Go →</button>
-        </div>
+
 
         {/* Dots */}
         <div className="flex gap-1.5 justify-center mt-4">
@@ -735,9 +728,14 @@ export default function Home() {
               : <button onClick={() => router.push("/auth")} className="px-3 py-2 rounded-full text-sm font-medium text-gray-600 hover:bg-gray-100">Se connecter</button>}
             <button onClick={() => router.push("/publier")} className="px-4 py-2 rounded-full text-sm font-bold text-white shadow-sm" style={{ background: "#FF4D00" }}>+ Publier</button>
           </div>
-          <div className="flex sm:hidden items-center gap-2">
-            <button onClick={() => router.push("/carte")} className="w-9 h-9 flex items-center justify-center rounded-xl bg-gray-100 text-base">🗺️</button>
-            <button onClick={() => setMenuMobileOpen(!menuMobileOpen)} className="w-9 h-9 flex items-center justify-center rounded-xl bg-gray-100 text-base">☰</button>
+          <div className="flex sm:hidden items-center gap-2 flex-1 ml-2">
+            <div className="flex flex-1 items-center bg-gray-100 rounded-full px-3 py-2 gap-2">
+              <span className="text-gray-400 text-sm">🔍</span>
+              <input type="text" placeholder="Rechercher..." className="bg-transparent flex-1 text-sm text-gray-800 outline-none placeholder-gray-400" value={recherche} onChange={(e) => setRecherche(e.target.value)} />
+              {recherche && <button onClick={() => setRecherche("")} className="text-gray-400 text-xs">✕</button>}
+            </div>
+            <button onClick={() => router.push("/carte")} className="w-9 h-9 flex items-center justify-center rounded-xl bg-gray-100 text-base flex-shrink-0">🗺️</button>
+            <button onClick={() => setMenuMobileOpen(!menuMobileOpen)} className="w-9 h-9 flex items-center justify-center rounded-xl bg-gray-100 text-base flex-shrink-0">☰</button>
           </div>
         </div>
 
