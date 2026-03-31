@@ -1,9 +1,4 @@
 import { NextResponse } from "next/server"
-import OpenAI from "openai"
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!,
-})
 
 export async function POST(request: Request) {
   try {
@@ -13,48 +8,69 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No image provided" }, { status: 400 })
     }
 
-    const imageUrl = `data:${media_type || "image/jpeg"};base64,${image_base64}`
+    const apiKey = process.env.GOOGLE_AI_API_KEY
+    if (!apiKey) {
+      return NextResponse.json({ error: "Clé API Google manquante" }, { status: 500 })
+    }
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "user",
-          content: [
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [
             {
-              type: "image_url",
-              image_url: { url: imageUrl },
-            },
-            {
-              type: "text",
-              text: `Analyse cette affiche d'événement et extrait les informations suivantes en JSON.
+              parts: [
+                {
+                  inline_data: {
+                    mime_type: media_type || "image/jpeg",
+                    data: image_base64,
+                  },
+                },
+                {
+                  text: `Tu es un assistant spécialisé dans la lecture d'affiches d'événements français.
+Analyse cette affiche et extrait toutes les informations visibles.
 Réponds UNIQUEMENT avec un objet JSON valide, sans texte avant ou après, sans backticks.
 
 {
-  "titre": "nom de l'événement",
-  "categorie": "une de ces catégories exactes: Musique, Sport, Culture, Food, Nature, Autre",
+  "titre": "nom complet de l'événement tel qu'écrit sur l'affiche",
+  "categorie": "une de ces catégories exactes: Musique, Sport, Danse, Culture, Atelier, Food, Nature & Rando, Animaux, Brocante, Bar & Nuit, Loto, Enfants, Autre",
   "ville": "ville où se déroule l'événement",
   "date": "date au format YYYY-MM-DD si trouvée, sinon chaîne vide",
   "heure": "heure au format HH:MM si trouvée, sinon chaîne vide",
   "prix": "prix si trouvé (ex: 10€, Gratuit), sinon chaîne vide",
-  "description": "résumé détaillé de l'événement en 2-3 phrases"
+  "organisateur": "nom de l'organisateur ou association si visible, sinon chaîne vide",
+  "description": "résumé détaillé et accrocheur de l'événement en 2-3 phrases, en français"
 }
 
 Si une information n'est pas visible sur l'affiche, laisse le champ vide.`,
+                },
+              ],
             },
           ],
-        },
-      ],
-      max_tokens: 1024,
-    })
+          generationConfig: {
+            temperature: 0.1,
+            maxOutputTokens: 1024,
+          },
+        }),
+      }
+    )
 
-    const text = response.choices?.[0]?.message?.content || ""
+    if (!response.ok) {
+      const err = await response.text()
+      console.error("Gemini error:", err)
+      return NextResponse.json({ error: "Erreur Gemini API" }, { status: 500 })
+    }
+
+    const result = await response.json()
+    const text = result.candidates?.[0]?.content?.parts?.[0]?.text || ""
     const clean = text.replace(/```json|```/g, "").trim()
     const data = JSON.parse(clean)
 
     return NextResponse.json({ success: true, data })
   } catch (err: any) {
-    console.error("ERREUR OPENAI:", err?.message || err)
+    console.error("ERREUR GEMINI:", err?.message || err)
     return NextResponse.json({ error: err?.message || "Erreur analyse" }, { status: 500 })
   }
 }
