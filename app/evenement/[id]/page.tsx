@@ -456,8 +456,7 @@ export default function EvenementDetail() {
       </div>
 
       {/* ── CARTE TITRE (violet comme la capture) ── */}
-      <div className="mx-4 -mt-6 rounded-3xl relative overflow-hidden" style={{ zIndex: 2 }}
-        style={{ background: "linear-gradient(135deg, #7C3AED, #9333EA)", boxShadow: "0 8px 32px rgba(124,58,237,0.4)" }}>
+      <div className="mx-4 -mt-6 rounded-3xl relative overflow-hidden" style={{ zIndex: 2, background: "linear-gradient(135deg, #7C3AED, #9333EA)", boxShadow: "0 8px 32px rgba(124,58,237,0.4)" }}>
         <div className="px-5 py-4 flex items-center justify-between">
           <div className="flex-1 min-w-0 pr-3">
             <p className="text-purple-200 text-xs font-semibold uppercase tracking-wide mb-1">{evenement.categorie}</p>
