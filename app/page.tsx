@@ -639,6 +639,27 @@ export default function Home() {
   const [showCalendrier, setShowCalendrier] = useState(false)
   const [menuMobileOpen, setMenuMobileOpen] = useState(false)
   const [showGeoModal, setShowGeoModal] = useState(false)
+  const [installPrompt, setInstallPrompt] = useState<any>(null)
+  const [showInstallBtn, setShowInstallBtn] = useState(false)
+
+  useEffect(() => {
+    const handler = (e: any) => {
+      e.preventDefault()
+      setInstallPrompt(e)
+      setShowInstallBtn(true)
+    }
+    window.addEventListener("beforeinstallprompt", handler)
+    window.addEventListener("appinstalled", () => setShowInstallBtn(false))
+    return () => window.removeEventListener("beforeinstallprompt", handler)
+  }, [])
+
+  const handleInstall = async () => {
+    if (!installPrompt) return
+    installPrompt.prompt()
+    const { outcome } = await installPrompt.userChoice
+    if (outcome === "accepted") setShowInstallBtn(false)
+    setInstallPrompt(null)
+  }
 
   const dates = getFiltreDates()
 
@@ -755,6 +776,11 @@ export default function Home() {
             {user?.email === ADMIN_EMAIL && <button onClick={() => router.push("/admin")} className="px-3 py-2 rounded-full text-sm font-medium text-red-500 hover:bg-red-50">⚙️</button>}
             {user ? <button onClick={() => router.push("/dashboard")} className="px-3 py-2 rounded-full text-sm font-medium text-gray-600 hover:bg-gray-100">Mon espace</button>
               : <button onClick={() => router.push("/auth")} className="px-3 py-2 rounded-full text-sm font-medium text-gray-600 hover:bg-gray-100">Se connecter</button>}
+            {showInstallBtn && (
+              <button onClick={handleInstall} className="px-4 py-2 rounded-full text-sm font-bold border flex items-center gap-1.5 transition-all hover:bg-gray-50" style={{ borderColor: "#FF4D00", color: "#FF4D00" }}>
+                📲 Installer l'app
+              </button>
+            )}
             <button onClick={() => router.push("/publier")} className="px-4 py-2 rounded-full text-sm font-bold text-white shadow-sm" style={{ background: "#FF4D00" }}>+ Publier</button>
           </div>
           <div className="flex sm:hidden items-center gap-1.5 flex-1 min-w-0 ml-2">
@@ -774,6 +800,11 @@ export default function Home() {
               : <button onClick={() => { router.push("/auth"); setMenuMobileOpen(false) }} className="text-left px-3 py-2.5 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-100">Se connecter</button>}
             <button onClick={() => { router.push("/tarifs"); setMenuMobileOpen(false) }} className="text-left px-3 py-2.5 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-100">💎 Tarifs</button>
             {user?.email === ADMIN_EMAIL && <button onClick={() => { router.push("/admin"); setMenuMobileOpen(false) }} className="text-left px-3 py-2.5 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50">⚙️ Admin</button>}
+            {showInstallBtn && (
+              <button onClick={() => { handleInstall(); setMenuMobileOpen(false) }} className="px-4 py-2.5 rounded-xl text-sm font-bold text-center border" style={{ borderColor: "#FF4D00", color: "#FF4D00" }}>
+                📲 Installer l'app sur mon téléphone
+              </button>
+            )}
             <button onClick={() => { router.push("/publier"); setMenuMobileOpen(false) }} className="px-4 py-2.5 rounded-xl text-sm font-bold text-white text-center" style={{ background: "#FF4D00" }}>+ Publier un événement</button>
           </div>
         )}
