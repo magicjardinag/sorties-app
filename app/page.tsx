@@ -641,6 +641,7 @@ export default function Home() {
   const [showGeoModal, setShowGeoModal] = useState(false)
   const [installPrompt, setInstallPrompt] = useState<any>(null)
   const [showInstallBtn, setShowInstallBtn] = useState(false)
+  const [showQRModal, setShowQRModal] = useState(false)
 
   useEffect(() => {
     const handler = (e: any) => {
@@ -776,11 +777,9 @@ export default function Home() {
             {user?.email === ADMIN_EMAIL && <button onClick={() => router.push("/admin")} className="px-3 py-2 rounded-full text-sm font-medium text-red-500 hover:bg-red-50">⚙️</button>}
             {user ? <button onClick={() => router.push("/dashboard")} className="px-3 py-2 rounded-full text-sm font-medium text-gray-600 hover:bg-gray-100">Mon espace</button>
               : <button onClick={() => router.push("/auth")} className="px-3 py-2 rounded-full text-sm font-medium text-gray-600 hover:bg-gray-100">Se connecter</button>}
-            {showInstallBtn && (
-              <button onClick={handleInstall} className="px-4 py-2 rounded-full text-sm font-bold border flex items-center gap-1.5 transition-all hover:bg-gray-50" style={{ borderColor: "#FF4D00", color: "#FF4D00" }}>
-                📲 Installer l'app
-              </button>
-            )}
+            <button onClick={() => setShowQRModal(true)} className="px-4 py-2 rounded-full text-sm font-bold border flex items-center gap-1.5 transition-all hover:bg-gray-50" style={{ borderColor: "#FF4D00", color: "#FF4D00" }}>
+              📲 Installer l'app
+            </button>
             <button onClick={() => router.push("/publier")} className="px-4 py-2 rounded-full text-sm font-bold text-white shadow-sm" style={{ background: "#FF4D00" }}>+ Publier</button>
           </div>
           <div className="flex sm:hidden items-center gap-1.5 flex-1 min-w-0 ml-2">
@@ -1070,6 +1069,37 @@ export default function Home() {
             <span className="text-xs text-amber-700 truncate">{pubActuel.description}</span>
           </div>
           <a href={pubActuel.lien} target="_blank" className="text-xs font-semibold hover:underline whitespace-nowrap flex-shrink-0" style={{ color: "#FF4D00" }}>Voir →</a>
+        </div>
+      )}
+
+      {/* ── MODALE QR CODE INSTALLATION ── */}
+      {showQRModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.6)" }} onClick={() => setShowQRModal(false)}>
+          <div className="bg-white rounded-3xl p-6 max-w-sm w-full text-center shadow-2xl" onClick={e => e.stopPropagation()}>
+            <button onClick={() => setShowQRModal(false)} className="absolute top-4 right-4 text-gray-400 text-xl">✕</button>
+            <div className="text-4xl mb-3">📲</div>
+            <h3 className="font-black text-xl text-gray-900 mb-2" style={{ fontFamily: "'Syne', sans-serif" }}>
+              Installer SortiesApp
+            </h3>
+            <p className="text-sm text-gray-500 mb-4">
+              Scanne ce QR code avec ton téléphone pour ouvrir le site et l'installer sur ton écran d'accueil
+            </p>
+            <div className="flex justify-center mb-4">
+              <img
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent("https://sorties-app-seven.vercel.app")}&bgcolor=ffffff&color=FF4D00&qzone=1`}
+                alt="QR Code SortiesApp"
+                className="rounded-2xl border-4 border-orange-100"
+                width={180}
+                height={180}
+              />
+            </div>
+            <p className="text-xs text-gray-400 mb-4">
+              Une fois le site ouvert sur mobile → menu ☰ ou Chrome ⋮ → "Ajouter à l'écran d'accueil"
+            </p>
+            <button onClick={() => setShowQRModal(false)} className="w-full py-3 rounded-full font-bold text-white" style={{ background: "#FF4D00" }}>
+              Fermer
+            </button>
+          </div>
         </div>
       )}
 
