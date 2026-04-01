@@ -72,6 +72,17 @@ const FALLBACK_PHOTOS: Record<string, string[]> = {
   "Gratuit":        ["https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&q=80","https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=800&q=80"],
 }
 
+function getFallbackPhoto(categorie: string, seed?: string): string {
+  const pool = FALLBACK_PHOTOS[categorie] || FALLBACK_PHOTOS["Gratuit"] || ["https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&q=80"]
+  if (!seed) return pool[0]
+  let hash = 0
+  for (let i = 0; i < seed.length; i++) {
+    hash = ((hash << 5) - hash) + seed.charCodeAt(i)
+    hash |= 0
+  }
+  return pool[Math.abs(hash) % pool.length]
+}
+
 
 // Fonds organiques pastels par catégorie
 function OrganicBackground({ categorie }: { categorie: string }) {
@@ -347,7 +358,7 @@ export default function EvenementDetail() {
     )
   }
 
-  const photoSrc = evenement.image_url || FALLBACK_PHOTOS[evenement.categorie] || FALLBACK_PHOTOS["Gratuit"]
+  const photoSrc = evenement.image_url || getFallbackPhoto(evenement.categorie, evenement.id)
   const lienMaps = evenement.lat && evenement.lng
     ? `https://www.google.com/maps?q=${evenement.lat},${evenement.lng}`
     : `https://www.google.com/maps/search/${encodeURIComponent(evenement.ville || "")}`
