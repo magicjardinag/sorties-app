@@ -1,9 +1,9 @@
 "use client"
-
+ 
 import { useState, useEffect } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
-
+ 
 type Evenement = {
   id: string
   titre: string
@@ -20,21 +20,21 @@ type Evenement = {
   lat: number
   lng: number
 }
-
+ 
 function formatDateLong(dateStr: string): string {
   if (!dateStr) return ""
   return new Date(dateStr).toLocaleDateString("fr-FR", {
     weekday: "long", day: "numeric", month: "long", year: "numeric"
   })
 }
-
+ 
 function formatDateShort(dateStr: string): string {
   if (!dateStr) return ""
   return new Date(dateStr).toLocaleDateString("fr-FR", {
     day: "numeric", month: "short", year: "numeric"
   })
 }
-
+ 
 function genererICS(evenement: Evenement): string {
   const date = evenement.quand.replace(/-/g, "")
   const heure = evenement.heure?.replace(":", "") || "090000"
@@ -42,7 +42,7 @@ function genererICS(evenement: Evenement): string {
   const heureFin = `${date}T${String(parseInt(heure.slice(0, 2)) + 2).padStart(2, "0")}${heure.slice(2)}00`
   return `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//SortiesApp//FR\nBEGIN:VEVENT\nDTSTART:${heureDebut}\nDTEND:${heureFin}\nSUMMARY:${evenement.titre}\nDESCRIPTION:${evenement.description || ""}\nLOCATION:${evenement.ville}\nEND:VEVENT\nEND:VCALENDAR`
 }
-
+ 
 function genererLienGoogleCalendar(evenement: Evenement): string {
   const date = evenement.quand.replace(/-/g, "")
   const heure = evenement.heure?.replace(":", "") || "0900"
@@ -55,7 +55,7 @@ function genererLienGoogleCalendar(evenement: Evenement): string {
   })
   return `https://calendar.google.com/calendar/render?${p.toString()}`
 }
-
+ 
 const FALLBACK_PHOTOS: Record<string, string[]> = {
   "Musique":        ["https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&q=80","https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800&q=80","https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=800&q=80","https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=800&q=80"],
   "Sport":          ["https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&q=80","https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=800&q=80","https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=800&q=80","https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=800&q=80"],
@@ -71,9 +71,9 @@ const FALLBACK_PHOTOS: Record<string, string[]> = {
   "Enfants":        ["https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=800&q=80","https://images.unsplash.com/photo-1587654780291-39c9404d746b?w=800&q=80","https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800&q=80","https://images.unsplash.com/photo-1543946207-39bd91e70ca7?w=800&q=80"],
   "Gratuit":        ["https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&q=80","https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=800&q=80"],
 }
-
+ 
 function getFallbackPhoto(categorie: string, seed?: string): string {
-  const pool = FALLBACK_PHOTOS[categorie] || FALLBACK_PHOTOS["Gratuit"] || ["https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&q=80"]
+  const pool = getFallbackPhoto(categorie) || getFallbackPhoto("Gratuit") || ["https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&q=80"]
   if (!seed) return pool[0]
   let hash = 0
   for (let i = 0; i < seed.length; i++) {
@@ -82,8 +82,8 @@ function getFallbackPhoto(categorie: string, seed?: string): string {
   }
   return pool[Math.abs(hash) % pool.length]
 }
-
-
+ 
+ 
 // Fonds organiques pastels par catégorie
 function OrganicBackground({ categorie }: { categorie: string }) {
   const configs: Record<string, { bg: string; blobs: Array<{ d?: string; cx?: number; cy?: number; r?: number; rx?: number; ry?: number; fill: string; opacity: number; type: "path" | "circle" | "ellipse" }> }> = {
@@ -196,9 +196,9 @@ function OrganicBackground({ categorie }: { categorie: string }) {
       ]
     },
   }
-
+ 
   const cfg = configs[categorie] || configs["Musique"]
-
+ 
   return (
     <svg
       className="absolute inset-0 w-full h-full pointer-events-none"
@@ -216,7 +216,7 @@ function OrganicBackground({ categorie }: { categorie: string }) {
     </svg>
   )
 }
-
+ 
 export default function EvenementDetail() {
   const router = useRouter()
   const params = useParams()
@@ -232,7 +232,7 @@ export default function EvenementDetail() {
   const [hasParticipated, setHasParticipated] = useState(false)
   const [participationCount, setParticipationCount] = useState(0)
   const [vuesCount, setVuesCount] = useState(0)
-
+ 
   useEffect(() => {
     const fetchEvenement = async () => {
       const { data, error } = await supabase.from("evenements").select("*").eq("id", params.id).single()
@@ -246,7 +246,7 @@ export default function EvenementDetail() {
     fetchEvenement()
     fetchUser()
   }, [params.id])
-
+ 
   // Tracker la vue + charger stats quand l'événement est chargé
   useEffect(() => {
     if (!evenement) return
@@ -266,7 +266,7 @@ export default function EvenementDetail() {
       .eq("evenement_id", evenement.id)
       .then(({ count }) => setParticipationCount(count || 0))
   }, [evenement?.id])
-
+ 
   // Vérifier si l'user a déjà participé
   useEffect(() => {
     if (!user || !evenement) return
@@ -277,7 +277,7 @@ export default function EvenementDetail() {
       .single()
       .then(({ data }) => setHasParticipated(!!data))
   }, [user, evenement?.id])
-
+ 
   const telechargerICS = () => {
     if (!evenement) return
     const ics = genererICS(evenement)
@@ -287,7 +287,7 @@ export default function EvenementDetail() {
     a.href = url; a.download = `${evenement.titre}.ics`; a.click()
     URL.revokeObjectURL(url)
   }
-
+ 
   const demanderRappel = async () => {
     if (!user) { router.push("/auth"); return }
     if (!evenement) return
@@ -305,7 +305,7 @@ export default function EvenementDetail() {
       setRappelEnvoye(true)
     } catch (err) { console.error(err) }
   }
-
+ 
   const participer = async () => {
     if (!user) { router.push("/auth"); return }
     if (!evenement) return
@@ -325,7 +325,7 @@ export default function EvenementDetail() {
       setParticipationCount(c => c + 1)
     }
   }
-
+ 
   const partager = () => {
     if (navigator.share) {
       navigator.share({ title: evenement?.titre, url: window.location.href })
@@ -335,7 +335,7 @@ export default function EvenementDetail() {
       setTimeout(() => setCopied(false), 2000)
     }
   }
-
+ 
   if (loading) {
     return (
       <main className="min-h-screen flex items-center justify-center" style={{ background: "#F4F0FF" }}>
@@ -343,7 +343,7 @@ export default function EvenementDetail() {
       </main>
     )
   }
-
+ 
   if (!evenement) {
     return (
       <main className="min-h-screen flex items-center justify-center" style={{ background: "#F4F0FF" }}>
@@ -357,25 +357,25 @@ export default function EvenementDetail() {
       </main>
     )
   }
-
+ 
   const photoSrc = evenement.image_url || getFallbackPhoto(evenement.categorie, evenement.id)
   const lienMaps = evenement.lat && evenement.lng
     ? `https://www.google.com/maps?q=${evenement.lat},${evenement.lng}`
     : `https://www.google.com/maps/search/${encodeURIComponent(evenement.ville || "")}`
   const isGratuit = evenement.prix === "Gratuit"
-
+ 
   // Date badge (jour / mois)
   const dateObj = new Date(evenement.quand)
   const jourNum = dateObj.toLocaleDateString("fr-FR", { day: "numeric" })
   const moisCourt = dateObj.toLocaleDateString("fr-FR", { month: "short" }).toUpperCase().replace(".", "")
-
+ 
   return (
     <main className="min-h-screen relative overflow-x-hidden">
       {/* Fond organique en arrière-plan global */}
       <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 0 }}>
         <OrganicBackground categorie={evenement.categorie} />
       </div>
-
+ 
       {/* ── LIGHTBOX ── */}
       {showLightbox && (
         <div className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4" onClick={() => setShowLightbox(false)}>
@@ -383,7 +383,7 @@ export default function EvenementDetail() {
           <img src={photoSrc} alt={evenement.titre} className="max-h-[90vh] max-w-[90vw] object-contain rounded-2xl" onClick={e => e.stopPropagation()} />
         </div>
       )}
-
+ 
       {/* ── MODALE AGENDA ── */}
       {showAgenda && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center" onClick={() => setShowAgenda(false)}>
@@ -425,7 +425,7 @@ export default function EvenementDetail() {
           </div>
         </div>
       )}
-
+ 
       {/* ── PHOTO HERO ── */}
       <div className="relative w-full" style={{ height: "55vh", maxHeight: 440, zIndex: 1 }}>
         <img
@@ -433,11 +433,11 @@ export default function EvenementDetail() {
           alt={evenement.titre}
           className="w-full h-full object-cover cursor-zoom-in"
           onClick={() => setShowLightbox(true)}
-          onError={e => { (e.target as HTMLImageElement).src = FALLBACK_PHOTOS["Gratuit"] }}
+          onError={e => { (e.target as HTMLImageElement).src = getFallbackPhoto("Gratuit") }}
         />
         {/* Overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-purple-900/60 via-transparent to-transparent" />
-
+ 
         {/* Boutons top */}
         <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 pt-safe pt-5">
           <button
@@ -455,7 +455,7 @@ export default function EvenementDetail() {
             {favori ? "❤️" : "🤍"}
           </button>
         </div>
-
+ 
         {/* Badge date */}
         <div
           className="absolute top-16 right-4 flex flex-col items-center justify-center rounded-2xl text-white font-black leading-none"
@@ -465,7 +465,7 @@ export default function EvenementDetail() {
           <span style={{ fontSize: 10, letterSpacing: 1 }}>{moisCourt}</span>
         </div>
       </div>
-
+ 
       {/* ── CARTE TITRE (violet comme la capture) ── */}
       <div className="mx-4 -mt-6 rounded-3xl relative overflow-hidden" style={{ zIndex: 2, background: "linear-gradient(135deg, #7C3AED, #9333EA)", boxShadow: "0 8px 32px rgba(124,58,237,0.4)" }}>
         <div className="px-5 py-4 flex items-center justify-between">
@@ -488,10 +488,10 @@ export default function EvenementDetail() {
           </button>
         </div>
       </div>
-
+ 
       {/* ── CONTENU ── */}
       <div className="px-4 pt-5 pb-32 flex flex-col gap-4 max-w-lg mx-auto" style={{ position: "relative", zIndex: 2 }}>
-
+ 
         {/* Date & Lieu — deux colonnes comme la capture */}
         <div className="bg-white rounded-3xl p-5 grid grid-cols-2 gap-4 shadow-sm" style={{ border: "1px solid #EDE9FE" }}>
           <div>
@@ -507,7 +507,7 @@ export default function EvenementDetail() {
             </button>
           </div>
         </div>
-
+ 
         {/* Organisateur + note */}
         <div className="bg-white rounded-3xl p-5 shadow-sm flex items-center justify-between" style={{ border: "1px solid #EDE9FE" }}>
           <div className="flex items-center gap-3">
@@ -530,7 +530,7 @@ export default function EvenementDetail() {
             <span style={{ fontSize: 16 }}>⭐</span>
           </div>
         </div>
-
+ 
         {/* Description */}
         {evenement.description && (
           <div className="bg-white rounded-3xl p-5 shadow-sm" style={{ border: "1px solid #EDE9FE" }}>
@@ -547,7 +547,7 @@ export default function EvenementDetail() {
             )}
           </div>
         )}
-
+ 
         {/* Agenda */}
         <button
           onClick={() => setShowAgenda(true)}
@@ -563,9 +563,9 @@ export default function EvenementDetail() {
           </div>
           <span className="text-gray-300 text-xl">›</span>
         </button>
-
+ 
       </div>
-
+ 
       {/* ── BARRE BAS FIXE (prix + bouton) ── */}
       <div
         className="fixed bottom-0 left-0 right-0 px-4 pb-safe"
@@ -579,7 +579,7 @@ export default function EvenementDetail() {
               {isGratuit ? "Gratuit" : evenement.prix}
             </p>
           </div>
-
+ 
           {/* Bouton principal */}
           <button
             onClick={participer}
@@ -589,7 +589,7 @@ export default function EvenementDetail() {
             <span>{hasParticipated ? "✅ Je participe !" : "🎉 Je participe !"}</span>
             {participationCount > 0 && <span style={{ fontSize: 11, opacity: .8, fontWeight: 400 }}>{participationCount} participant{participationCount > 1 ? "s" : ""}</span>}
           </button>
-
+ 
           {/* Rappel */}
           <button
             onClick={demanderRappel}
@@ -602,7 +602,7 @@ export default function EvenementDetail() {
           </button>
         </div>
       </div>
-
+ 
     </main>
   )
 }
