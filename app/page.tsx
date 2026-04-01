@@ -1086,7 +1086,7 @@ export default function Home() {
             </p>
             <div className="flex justify-center mb-4">
               <img
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent("https://sorties-app-seven.vercel.app")}&bgcolor=ffffff&color=FF4D00&qzone=1`}
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent("https://sorties-app-seven.vercel.app/installer")}&bgcolor=ffffff&color=FF4D00&qzone=1`}
                 alt="QR Code SortiesApp"
                 className="rounded-2xl border-4 border-orange-100"
                 width={180}
