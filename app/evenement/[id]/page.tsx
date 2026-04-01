@@ -557,8 +557,8 @@ export default function EvenementDetail() {
 
       {/* ── BARRE BAS FIXE (prix + bouton) ── */}
       <div
-        className="fixed bottom-0 left-0 right-0 px-4 pb-safe" style={{ zIndex: 40 }}
-        style={{ background: "rgba(244,240,255,0.95)", backdropFilter: "blur(12px)", paddingBottom: "env(safe-area-inset-bottom, 16px)", borderTop: "1px solid #EDE9FE" }}
+        className="fixed bottom-0 left-0 right-0 px-4 pb-safe"
+        style={{ zIndex: 40, background: "rgba(244,240,255,0.95)", backdropFilter: "blur(12px)", paddingBottom: "env(safe-area-inset-bottom, 16px)", borderTop: "1px solid #EDE9FE" }}
       >
         <div className="max-w-lg mx-auto flex items-center gap-3 py-3">
           {/* Prix */}
