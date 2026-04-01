@@ -56,20 +56,20 @@ function genererLienGoogleCalendar(evenement: Evenement): string {
   return `https://calendar.google.com/calendar/render?${p.toString()}`
 }
 
-const FALLBACK_PHOTOS: Record<string, string> = {
-  "Musique":        "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&q=80",
-  "Sport":          "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&q=80",
-  "Danse":          "https://images.unsplash.com/photo-1504609813442-a8924e83f76e?w=800&q=80",
-  "Culture":        "https://images.unsplash.com/photo-1518998053901-5348d3961a04?w=800&q=80",
-  "Atelier":        "https://images.unsplash.com/photo-1452860606245-08befc0ff44b?w=800&q=80",
-  "Food":           "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800&q=80",
-  "Nature & Rando": "https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&q=80",
-  "Animaux":        "https://images.unsplash.com/photo-1425082661705-1834bfd09dca?w=800&q=80",
-  "Brocante":       "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80",
-  "Bar & Nuit":     "https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?w=800&q=80",
-  "Loto":           "https://images.unsplash.com/photo-1642543492481-44e81e3914a7?w=800&q=80",
-  "Enfants":        "https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=800&q=80",
-  "Gratuit":        "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&q=80",
+const FALLBACK_PHOTOS: Record<string, string[]> = {
+  "Musique":        ["https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&q=80","https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800&q=80","https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=800&q=80","https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=800&q=80"],
+  "Sport":          ["https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&q=80","https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=800&q=80","https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=800&q=80","https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=800&q=80"],
+  "Danse":          ["https://images.unsplash.com/photo-1504609813442-a8924e83f76e?w=800&q=80","https://images.unsplash.com/photo-1535525153412-5a42439a210d?w=800&q=80","https://images.unsplash.com/photo-1537368910025-700350fe46c7?w=800&q=80","https://images.unsplash.com/photo-1578763363228-6e8428de69b2?w=800&q=80"],
+  "Culture":        ["https://images.unsplash.com/photo-1518998053901-5348d3961a04?w=800&q=80","https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?w=800&q=80","https://images.unsplash.com/photo-1554907984-15263bfd63bd?w=800&q=80","https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=800&q=80"],
+  "Atelier":        ["https://images.unsplash.com/photo-1452860606245-08befc0ff44b?w=800&q=80","https://images.unsplash.com/photo-1459183885421-5cc683b8dbba?w=800&q=80","https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=800&q=80","https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800&q=80"],
+  "Food":           ["https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800&q=80","https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&q=80","https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800&q=80","https://images.unsplash.com/photo-1476224203421-9ac39bcb3327?w=800&q=80"],
+  "Nature & Rando": ["https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&q=80","https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&q=80","https://images.unsplash.com/photo-1473773508845-188df298d2d1?w=800&q=80","https://images.unsplash.com/photo-1510797215324-95aa89f43c33?w=800&q=80"],
+  "Animaux":        ["https://images.unsplash.com/photo-1450778869180-41d0601e046e?w=800&q=80","https://images.unsplash.com/photo-1560743641-3914f2c45636?w=800&q=80","https://images.unsplash.com/photo-1548767797-d8c844163c4a?w=800&q=80","https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=800&q=80"],
+  "Brocante":       ["https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80","https://images.unsplash.com/photo-1519682337058-a94d519337bc?w=800&q=80","https://images.unsplash.com/photo-1524117074681-31bd4de22ad3?w=800&q=80","https://images.unsplash.com/photo-1567521464027-f127ff144326?w=800&q=80"],
+  "Bar & Nuit":     ["https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?w=800&q=80","https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=800&q=80","https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=800&q=80","https://images.unsplash.com/photo-1574096079513-d8259312b785?w=800&q=80"],
+  "Loto":           ["https://images.unsplash.com/photo-1518895312237-a9e23508077d?w=800&q=80","https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=800&q=80","https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800&q=80"],
+  "Enfants":        ["https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=800&q=80","https://images.unsplash.com/photo-1587654780291-39c9404d746b?w=800&q=80","https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800&q=80","https://images.unsplash.com/photo-1543946207-39bd91e70ca7?w=800&q=80"],
+  "Gratuit":        ["https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&q=80","https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=800&q=80"],
 }
 
 
