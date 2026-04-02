@@ -767,7 +767,7 @@ export default function Home() {
       `}</style>
 
       {/* ── HEADER ── */}
-      <header className="bg-white sticky top-0 z-40 border-b border-gray-200 shadow-sm">
+      <header className="hidden sm:block bg-white sticky top-0 z-40 border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-3">
           <button onClick={() => router.push("/")} className="flex-shrink-0 font-black text-xl tracking-tight text-gray-900">
             Sorties<span style={{ color: "#FF4D00" }}>App</span>
