@@ -76,6 +76,8 @@ export default function CarteClient() {
   const [mapBounds, setMapBounds] = useState<MapBounds | null>(null)
   const [evenementSelectionne, setEvenementSelectionne] = useState<Evenement | null>(null)
   const [showFilters, setShowFilters] = useState(false)
+  const [rechercheVille, setRechercheVille] = useState("")
+  const [suggestionVilles, setSuggestionVilles] = useState<{nom: string, lat: number, lng: number}[]>([])
   const carouselRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -96,6 +98,27 @@ export default function CarteClient() {
     }
     fetchEvenements()
   }, [])
+
+  const rechercherVille = async (query: string) => {
+    setRechercheVille(query)
+    if (query.length < 2) { setSuggestionVilles([]); return }
+    try {
+      const res = await fetch(`https://geo.api.gouv.fr/communes?nom=${query}&fields=nom,centre&limit=5`)
+      const data = await res.json()
+      setSuggestionVilles(data.map((c: any) => ({
+        nom: c.nom,
+        lat: c.centre?.coordinates?.[1] || 0,
+        lng: c.centre?.coordinates?.[0] || 0,
+      })))
+    } catch {}
+  }
+
+  const selectionnerVille = (ville: {nom: string, lat: number, lng: number}) => {
+    setPosition({ lat: ville.lat, lng: ville.lng })
+    setFiltreProximite(true)
+    setRechercheVille(ville.nom)
+    setSuggestionVilles([])
+  }
 
   const activerGeolocalisation = () => {
     setLoadingGeo(true)
@@ -156,11 +179,31 @@ export default function CarteClient() {
           ←
         </button>
 
-        <div className="flex-1 bg-white rounded-full shadow-md flex items-center px-4 py-2.5 gap-2">
-          <span className="text-gray-400 text-sm">🔍</span>
-          <span className="text-sm text-gray-400 flex-1">
-            {evenementsVisibles.length} événement{evenementsVisibles.length > 1 ? "s" : ""} dans cette zone
-          </span>
+        <div className="flex-1 relative">
+          <div className="bg-white rounded-full shadow-md flex items-center px-4 py-2.5 gap-2">
+            <span className="text-gray-400 text-sm">🔍</span>
+            <input
+              type="text"
+              placeholder="Rechercher une ville..."
+              value={rechercheVille}
+              onChange={(e) => rechercherVille(e.target.value)}
+              className="flex-1 text-sm text-gray-800 outline-none bg-transparent placeholder-gray-400"
+            />
+            {rechercheVille && (
+              <button onClick={() => { setRechercheVille(""); setSuggestionVilles([]) }} className="text-gray-400 text-xs">✕</button>
+            )}
+          </div>
+          {suggestionVilles.length > 0 && (
+            <div className="absolute top-12 left-0 right-0 bg-white rounded-2xl shadow-xl overflow-hidden z-30">
+              {suggestionVilles.map((v, i) => (
+                <button key={i} onClick={() => selectionnerVille(v)}
+                  className="w-full text-left px-4 py-3 text-sm text-gray-800 hover:bg-gray-50 border-b border-gray-100 last:border-0 flex items-center gap-2">
+                  <span className="text-gray-400">📍</span>
+                  {v.nom}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <button onClick={activerGeolocalisation} disabled={loadingGeo}
