@@ -73,7 +73,7 @@ const FALLBACK_PHOTOS: Record<string, string[]> = {
 }
 
 function getFallbackPhoto(categorie: string, seed?: string): string {
-  const pool = getFallbackPhoto(categorie) || getFallbackPhoto("Gratuit") || ["https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&q=80"]
+  const pool = FALLBACK_PHOTOS[categorie] || FALLBACK_PHOTOS["Gratuit"] || ["https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&q=80"]
   if (!seed) return pool[0]
   let hash = 0
   for (let i = 0; i < seed.length; i++) {
