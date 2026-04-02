@@ -219,6 +219,36 @@ export default function CarteClient() {
         </button>
       </div>
 
+      {/* ── SLIDER RAYON ── */}
+      {filtreProximite && (
+        <div className="absolute z-20 left-4 right-4" style={{ top: 68 }}>
+          <div className="bg-white rounded-2xl shadow-lg px-4 py-3">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-bold text-gray-700">📍 Rayon autour de la ville</span>
+              <span className="text-sm font-black" style={{ color: "#FF4D00" }}>{rayon} km</span>
+            </div>
+            <input
+              type="range" min="5" max="200" step="5" value={rayon}
+              onChange={(e) => setRayon(Number(e.target.value))}
+              className="w-full mb-2"
+              style={{ accentColor: "#FF4D00" }}
+            />
+            <div className="flex gap-2 justify-between">
+              {[5, 10, 25, 50, 100].map(km => (
+                <button key={km} onClick={() => setRayon(km)}
+                  className="flex-1 py-1.5 rounded-full text-xs font-bold transition-all"
+                  style={{
+                    background: rayon === km ? "#FF4D00" : "#f3f4f6",
+                    color: rayon === km ? "#fff" : "#555"
+                  }}>
+                  {km}km
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── FILTRES DÉROULANTS ── */}
       {showFilters && (
         <div className="absolute top-20 left-4 right-4 z-20 bg-white rounded-2xl shadow-xl p-4">
