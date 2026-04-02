@@ -433,7 +433,10 @@ export default function EvenementDetail() {
           alt={evenement.titre}
           className="w-full h-full object-cover cursor-zoom-in"
           onClick={() => setShowLightbox(true)}
-          onError={e => { (e.target as HTMLImageElement).src = getFallbackPhoto("Gratuit") }}
+          onError={e => {
+            const t = e.target as HTMLImageElement
+            if (!t.dataset.err) { t.dataset.err = "1"; t.src = "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&q=80" }
+          }}
         />
         {/* Overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-purple-900/60 via-transparent to-transparent" />
