@@ -274,7 +274,7 @@ export default function EvenementDetail() {
       .select("id")
       .eq("evenement_id", evenement.id)
       .eq("user_id", user.id)
-      .single()
+      .maybeSingle()
       .then(({ data }) => setHasParticipated(!!data))
   }, [user, evenement?.id])
 
