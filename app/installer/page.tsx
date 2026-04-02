@@ -76,7 +76,7 @@ export default function Installer() {
             </div>
             <div className="text-left">
               <p className="font-bold text-gray-900">Android</p>
-              <p className="text-xs text-gray-400 mt-0.5">Samsung, Huawei, Pixel, Xiaomi...</p>
+              <p className="text-xs text-gray-400 mt-0.5">Chrome · Edge · Opera · Brave · Samsung</p>
             </div>
             <span className="ml-auto text-gray-300 text-xl">›</span>
           </button>
@@ -140,6 +140,12 @@ export default function Installer() {
               ))}
             </div>
           )}
+
+          <div className="mt-4 bg-amber-50 border border-amber-200 rounded-2xl p-4">
+            <p className="text-xs text-amber-700 text-center">
+              ⚠️ Firefox ne supporte pas l'installation. Utilise Chrome, Edge, Opera ou Brave.
+            </p>
+          </div>
 
           <button onClick={() => router.push("/")} className="text-sm text-gray-400 underline text-center mt-6">
             Continuer sans installer
