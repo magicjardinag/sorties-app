@@ -425,11 +425,14 @@ function HeroCarousel({
 
   function startAuto() {
     if (autoRef.current) clearInterval(autoRef.current)
-    autoRef.current = setInterval(() => goTo(cur + 1), 4500)
+    autoRef.current = setInterval(() => setCur(c => (c + 1) % N), 4500)
   }
 
   useEffect(() => {
-    startAuto()
+    if (autoRef.current) clearInterval(autoRef.current)
+    autoRef.current = setInterval(() => {
+      setCur(c => (c + 1) % N)
+    }, 4500)
     return () => { if (autoRef.current) clearInterval(autoRef.current) }
   }, [cur])
 
@@ -929,6 +932,7 @@ export default function Home() {
                   background: categorieActive === cat.label ? "#FF4D00" : "#fff",
                   color: categorieActive === cat.label ? "#fff" : "#555",
                   borderColor: categorieActive === cat.label ? "#FF4D00" : "#e5e5e5",
+                  padding: "7px 12px",
                 }}>
                 <span style={{ fontSize: 15, lineHeight: 1 }}>{cat.emoji}</span>
                   <span className="hidden sm:inline">{cat.label}</span>
