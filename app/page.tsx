@@ -621,57 +621,6 @@ function HeroCarousel({
 }
 // ─────────────────────────────────────────────────────────────────────────
 
-function OnboardingOverlay({ slide, slides, visible, onNext, onSkip }: {
-  slide: number
-  slides: { bg: string; emoji: string; titre: string; texte: string }[]
-  visible: boolean
-  onNext: () => void
-  onSkip: () => void
-}) {
-  const s = slides[slide]
-  return (
-    <div className="fixed inset-0 z-50 flex flex-col">
-      <div className="relative flex flex-col items-center justify-center flex-shrink-0 overflow-hidden"
-        style={{ background: s.bg, height: "55vh", borderRadius: "0 0 40px 40px" }}>
-        <style>{`@keyframes floatConf{0%{transform:translateY(0) rotate(0deg)}100%{transform:translateY(-12px) rotate(15deg)}}`}</style>
-        {[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17].map(i => (
-          <div key={i} className="absolute" style={{
-            left:`${(i*17+10)%100}%`, top:`${(i*23+5)%65}%`,
-            width:8+(i%3)*6, height:8+(i%3)*6,
-            background:"rgba(255,255,255,0.3)",
-            borderRadius:i%2===0?"50%":"3px",
-            transform:`rotate(${i*37}deg)`,
-            animation:`floatConf ${2+(i%3)*0.5}s ease-in-out infinite alternate`
-          }}/>
-        ))}
-        <div style={{ fontSize:90, opacity:visible?1:0, transform:visible?"scale(1)":"scale(0.7)", transition:"all 0.25s ease", filter:"drop-shadow(0 8px 24px rgba(0,0,0,0.2))" }}>
-          {s.emoji}
-        </div>
-        <div className="flex gap-2 mt-8">
-          {slides.map((_,i) => (
-            <div key={i} className="rounded-full transition-all" style={{ width:i===slide?24:8, height:8, background:i===slide?"#fff":"rgba(255,255,255,0.4)" }}/>
-          ))}
-        </div>
-      </div>
-      <div className="flex flex-col items-center justify-between flex-1 px-6 py-8" style={{ background:"#fff" }}>
-        <div className="text-center" style={{ opacity:visible?1:0, transform:visible?"translateY(0)":"translateY(12px)", transition:"all 0.25s ease" }}>
-          <h1 className="font-black text-2xl text-gray-900 mb-3" style={{ fontFamily:"'Syne',sans-serif" }}>{s.titre}</h1>
-          <p className="text-gray-500 text-sm leading-relaxed max-w-xs mx-auto">{s.texte}</p>
-        </div>
-        <div className="flex flex-col gap-3 w-full max-w-xs">
-          <button onClick={onNext} className="w-full py-4 rounded-full font-bold text-white text-base active:scale-95 transition-all"
-            style={{ background:s.bg, boxShadow:"0 8px 24px rgba(255,77,0,0.3)" }}>
-            {slide < slides.length-1 ? "Suivant →" : "Commencer 🚀"}
-          </button>
-          {slide < slides.length-1 && (
-            <button onClick={onSkip} className="text-sm text-gray-400 text-center py-2">Passer</button>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
-
 export default function Home() {
   const router = useRouter()
   const [categorieActive, setCategorieActive] = useState("Tout")
@@ -690,34 +639,7 @@ export default function Home() {
   const [showCalendrier, setShowCalendrier] = useState(false)
   const [menuMobileOpen, setMenuMobileOpen] = useState(false)
   const [showGeoModal, setShowGeoModal] = useState(false)
-  const [showOnboarding, setShowOnboarding] = useState(false)
-  const [onboardingSlide, setOnboardingSlide] = useState(0)
-  const [onboardingVisible, setOnboardingVisible] = useState(true)
 
-  useEffect(() => {
-    const done = localStorage.getItem("onboarding_done")
-    if (!done) setShowOnboarding(true)
-  }, [])
-
-  const onboardingSlides = [
-    { bg: "linear-gradient(160deg, #FF8C42 0%, #FF4D00 100%)", emoji: "🎉", titre: "Bienvenue sur SortiesApp !", texte: "Découvre les meilleurs événements et sorties près de chez toi, en un clin d'œil." },
-    { bg: "linear-gradient(160deg, #7C3AED 0%, #9333EA 100%)", emoji: "📍", titre: "Tout près de chez toi", texte: "Concerts, randonnées, ateliers, marchés... Des centaines d'événements locaux t'attendent." },
-    { bg: "linear-gradient(160deg, #059669 0%, #10B981 100%)", emoji: "✨", titre: "Publie ton événement", texte: "Organise quelque chose ? Publie-le en quelques minutes et touche des milliers de personnes." },
-  ]
-
-  const terminerOnboarding = () => {
-    localStorage.setItem("onboarding_done", "1")
-    setShowOnboarding(false)
-  }
-
-  const nextSlide = () => {
-    if (onboardingSlide < onboardingSlides.length - 1) {
-      setOnboardingVisible(false)
-      setTimeout(() => { setOnboardingSlide(s => s + 1); setOnboardingVisible(true) }, 250)
-    } else {
-      terminerOnboarding()
-    }
-  }
 
   const [installPrompt, setInstallPrompt] = useState<any>(null)
   const [showInstallBtn, setShowInstallBtn] = useState(false)
@@ -1184,14 +1106,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* ── ONBOARDING OVERLAY ── */}
-      {showOnboarding && <OnboardingOverlay
-        slide={onboardingSlide}
-        slides={onboardingSlides}
-        visible={onboardingVisible}
-        onNext={nextSlide}
-        onSkip={terminerOnboarding}
-      />}
+
 
       {/* ── FOOTER ── */}
       <footer className="mt-8 py-10 px-4 sm:px-6" style={{ background: "#1E2A3A" }}>
