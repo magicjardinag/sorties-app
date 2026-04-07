@@ -326,6 +326,23 @@ export default function EvenementDetail() {
         .insert({ evenement_id: evenement.id, user_id: user.id })
       setHasParticipated(true)
       setParticipationCount(c => c + 1)
+
+      // Notifier l'organisateur par email
+      try {
+        await fetch("/api/notif-organisateur", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            evenement_id: evenement.id,
+            titre: evenement.titre,
+            ville: evenement.ville,
+            quand: evenement.quand,
+            participant_email: user.email,
+          })
+        })
+      } catch (e) {
+        // Silencieux — la participation est quand même enregistrée
+      }
     }
   }
 
