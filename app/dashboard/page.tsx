@@ -10,10 +10,12 @@ type Evenement = {
   categorie: string
   ville: string
   quand: string
+  heure: string
   prix: string
   emoji: string
   statut: string
   image_url: string
+  description: string
 }
 
 type Stats = {
@@ -21,6 +23,8 @@ type Stats = {
   participations: number
   favoris: number
 }
+
+const CATEGORIES = ["Musique","Sport","Danse","Culture","Atelier","Food","Nature & Rando","Animaux","Brocante","Bar & Nuit","Loto","Enfants","Autre"]
 
 function formatDate(dateStr: string): string {
   if (!dateStr) return ""
@@ -50,7 +54,12 @@ export default function Dashboard() {
   const [totalStats, setTotalStats] = useState({ vues: 0, participations: 0, favoris: 0 })
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
-  const [section, setSection] = useState<"evenements" | "stats" | "favoris">("evenements")
+  const [section, setSection] = useState<"evenements" | "stats">("evenements")
+
+  // Modification
+  const [editingId, setEditingId] = useState<number | null>(null)
+  const [editForm, setEditForm] = useState<Partial<Evenement>>({})
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -59,15 +68,11 @@ export default function Dashboard() {
       setUser(user)
 
       const { data: evs } = await supabase
-        .from("evenements")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("quand", { ascending: true })
+        .from("evenements").select("*").eq("user_id", user.id).order("quand", { ascending: true })
 
       const evList = evs || []
       setEvenements(evList)
 
-      // Charger les stats pour chaque événement
       const statsMap: Record<number, Stats> = {}
       let totalV = 0, totalP = 0, totalF = 0
 
@@ -97,6 +102,31 @@ export default function Dashboard() {
     setEvenements(evenements.filter(e => e.id !== id))
   }
 
+  const handleEdit = (e: Evenement) => {
+    setEditingId(e.id)
+    setEditForm({ titre: e.titre, categorie: e.categorie, ville: e.ville, quand: e.quand, heure: e.heure || "", prix: e.prix, description: e.description || "", image_url: e.image_url || "" })
+  }
+
+  const handleSave = async (id: number) => {
+    setSaving(true)
+    await supabase.from("evenements").update({
+      titre: editForm.titre,
+      categorie: editForm.categorie,
+      ville: editForm.ville,
+      quand: editForm.quand,
+      heure: editForm.heure,
+      prix: editForm.prix,
+      description: editForm.description,
+      image_url: editForm.image_url,
+      statut: "en_attente", // repasse en modération après modif
+    }).eq("id", id)
+
+    // Mettre à jour localement
+    setEvenements(evenements.map(e => e.id === id ? { ...e, ...editForm as any, statut: "en_attente" } : e))
+    setEditingId(null)
+    setSaving(false)
+  }
+
   const handleLogout = async () => {
     await supabase.auth.signOut()
     router.push("/")
@@ -112,18 +142,12 @@ export default function Dashboard() {
       {/* HEADER */}
       <header className="bg-white border-b border-gray-100 px-4 sm:px-6 py-4 flex items-center justify-between sticky top-0 z-20 shadow-sm">
         <div>
-          <h1 className="font-black text-lg text-gray-900" style={{ fontFamily: "'Syne', sans-serif" }}>
-            Mon espace
-          </h1>
+          <h1 className="font-black text-lg text-gray-900" style={{ fontFamily: "'Syne', sans-serif" }}>Mon espace</h1>
           <p className="text-xs text-gray-400">{user?.email}</p>
         </div>
         <div className="flex gap-2">
-          <button onClick={() => router.push("/")} className="px-3 py-2 rounded-full text-sm font-semibold text-gray-600 border border-gray-200 hover:bg-gray-50">
-            ← Accueil
-          </button>
-          <button onClick={handleLogout} className="px-3 py-2 rounded-full text-sm font-semibold text-red-500 border border-red-200 hover:bg-red-50">
-            Déconnexion
-          </button>
+          <button onClick={() => router.push("/")} className="px-3 py-2 rounded-full text-sm font-semibold text-gray-600 border border-gray-200 hover:bg-gray-50">← Accueil</button>
+          <button onClick={handleLogout} className="px-3 py-2 rounded-full text-sm font-semibold text-red-500 border border-red-200 hover:bg-red-50">Déconnexion</button>
         </div>
       </header>
 
@@ -167,11 +191,7 @@ export default function Dashboard() {
           ].map(s => (
             <button key={s.key} onClick={() => setSection(s.key as any)}
               className="px-4 py-2 rounded-full text-sm font-bold transition-all border"
-              style={{
-                background: section === s.key ? "#FF4D00" : "#fff",
-                color: section === s.key ? "#fff" : "#555",
-                borderColor: section === s.key ? "#FF4D00" : "#e5e5e5"
-              }}>
+              style={{ background: section === s.key ? "#FF4D00" : "#fff", color: section === s.key ? "#fff" : "#555", borderColor: section === s.key ? "#FF4D00" : "#e5e5e5" }}>
               {s.label}{s.count !== undefined ? ` (${s.count})` : ""}
             </button>
           ))}
@@ -203,8 +223,12 @@ export default function Dashboard() {
                 const s = stats[e.id] || { vues: 0, participations: 0, favoris: 0 }
                 const taux = s.vues > 0 ? Math.round((s.participations / s.vues) * 100) : 0
                 const isPasse = e.quand && new Date(e.quand) < new Date()
+                const isEditing = editingId === e.id
+
                 return (
                   <div key={e.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+
+                    {/* Infos événement */}
                     <div className="flex items-center gap-3 p-4">
                       {e.image_url ? (
                         <img src={e.image_url} alt={e.titre} className="w-14 h-14 rounded-xl object-cover flex-shrink-0" />
@@ -227,44 +251,114 @@ export default function Dashboard() {
                       </div>
                     </div>
 
-                    {/* Mini stats par événement */}
-                    <div className="border-t border-gray-50 px-4 py-3 flex items-center gap-4">
-                      <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                        <span>👁️</span><span className="font-bold text-gray-800">{s.vues}</span> vues
-                      </div>
-                      <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                        <span>🎉</span><span className="font-bold text-gray-800">{s.participations}</span> participations
-                      </div>
-                      <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                        <span>❤️</span><span className="font-bold text-gray-800">{s.favoris}</span> favoris
-                      </div>
-                      {s.vues > 0 && (
-                        <div className="ml-auto flex items-center gap-1 text-xs font-bold" style={{ color: "#059669" }}>
-                          📈 {taux}%
-                        </div>
-                      )}
-                    </div>
+                    {/* Formulaire de modification inline */}
+                    {isEditing && (
+                      <div className="border-t border-orange-100 bg-orange-50 px-4 py-4 flex flex-col gap-3">
+                        <p className="text-xs font-bold text-orange-700 mb-1">✏️ Modifier l'événement — repassera en modération</p>
 
-                    {/* Barre de progression taux */}
-                    {s.vues > 0 && (
-                      <div className="px-4 pb-3">
-                        <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                          <div className="h-1.5 rounded-full" style={{ width: `${Math.min(taux, 100)}%`, background: "linear-gradient(90deg,#FF4D00,#FF8C42)" }} />
+                        <div>
+                          <label className="text-xs text-gray-500 mb-1 block">Titre</label>
+                          <input value={editForm.titre || ""} onChange={e => setEditForm({ ...editForm, titre: e.target.value })}
+                            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-orange-400 bg-white" />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-xs text-gray-500 mb-1 block">Ville</label>
+                            <input value={editForm.ville || ""} onChange={e => setEditForm({ ...editForm, ville: e.target.value })}
+                              className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-orange-400 bg-white" />
+                          </div>
+                          <div>
+                            <label className="text-xs text-gray-500 mb-1 block">Prix</label>
+                            <input value={editForm.prix || ""} onChange={e => setEditForm({ ...editForm, prix: e.target.value })}
+                              placeholder="Ex: 10€ ou Gratuit"
+                              className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-orange-400 bg-white" />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="text-xs text-gray-500 mb-1 block">Catégorie</label>
+                          <select value={editForm.categorie || ""} onChange={e => setEditForm({ ...editForm, categorie: e.target.value })}
+                            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none bg-white">
+                            {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                          </select>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-xs text-gray-500 mb-1 block">Date</label>
+                            <input type="date" value={editForm.quand || ""} onChange={e => setEditForm({ ...editForm, quand: e.target.value })}
+                              className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none bg-white" />
+                          </div>
+                          <div>
+                            <label className="text-xs text-gray-500 mb-1 block">Heure</label>
+                            <input type="time" value={editForm.heure || ""} onChange={e => setEditForm({ ...editForm, heure: e.target.value })}
+                              className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none bg-white" />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="text-xs text-gray-500 mb-1 block">Description</label>
+                          <textarea value={editForm.description || ""} onChange={e => setEditForm({ ...editForm, description: e.target.value })}
+                            rows={3} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none resize-none bg-white" />
+                        </div>
+
+                        <div className="flex gap-2">
+                          <button onClick={() => setEditingId(null)}
+                            className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-gray-600 border border-gray-200 bg-white">
+                            Annuler
+                          </button>
+                          <button onClick={() => handleSave(e.id)} disabled={saving}
+                            className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-50"
+                            style={{ background: "#FF4D00" }}>
+                            {saving ? "⏳ Sauvegarde..." : "💾 Sauvegarder"}
+                          </button>
                         </div>
                       </div>
                     )}
 
-                    {/* Actions */}
-                    <div className="border-t border-gray-50 px-4 py-2 flex gap-2">
-                      <button onClick={() => router.push(`/evenement/${e.id}`)}
-                        className="flex-1 py-2 rounded-xl text-xs font-semibold text-gray-600 border border-gray-200 hover:bg-gray-50">
-                        👁️ Voir
-                      </button>
-                      <button onClick={() => handleDelete(e.id)}
-                        className="flex-1 py-2 rounded-xl text-xs font-semibold text-red-500 border border-red-200 hover:bg-red-50">
-                        🗑️ Supprimer
-                      </button>
-                    </div>
+                    {/* Mini stats */}
+                    {!isEditing && (
+                      <>
+                        <div className="border-t border-gray-50 px-4 py-3 flex items-center gap-4">
+                          <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                            <span>👁️</span><span className="font-bold text-gray-800">{s.vues}</span> vues
+                          </div>
+                          <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                            <span>🎉</span><span className="font-bold text-gray-800">{s.participations}</span> participations
+                          </div>
+                          <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                            <span>❤️</span><span className="font-bold text-gray-800">{s.favoris}</span> favoris
+                          </div>
+                          {s.vues > 0 && (
+                            <div className="ml-auto flex items-center gap-1 text-xs font-bold" style={{ color: "#059669" }}>
+                              📈 {taux}%
+                            </div>
+                          )}
+                        </div>
+                        {s.vues > 0 && (
+                          <div className="px-4 pb-3">
+                            <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                              <div className="h-1.5 rounded-full" style={{ width: `${Math.min(taux, 100)}%`, background: "linear-gradient(90deg,#FF4D00,#FF8C42)" }} />
+                            </div>
+                          </div>
+                        )}
+                        <div className="border-t border-gray-50 px-4 py-2 flex gap-2">
+                          <button onClick={() => router.push(`/evenement/${e.id}`)}
+                            className="flex-1 py-2 rounded-xl text-xs font-semibold text-gray-600 border border-gray-200 hover:bg-gray-50">
+                            👁️ Voir
+                          </button>
+                          <button onClick={() => handleEdit(e)}
+                            className="flex-1 py-2 rounded-xl text-xs font-semibold text-blue-600 border border-blue-200 hover:bg-blue-50">
+                            ✏️ Modifier
+                          </button>
+                          <button onClick={() => handleDelete(e.id)}
+                            className="flex-1 py-2 rounded-xl text-xs font-semibold text-red-500 border border-red-200 hover:bg-red-50">
+                            🗑️ Supprimer
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </div>
                 )
               })
@@ -284,11 +378,8 @@ export default function Dashboard() {
               </div>
             ) : (
               <>
-                {/* Classement événements par vues */}
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                  <h2 className="font-black text-gray-900 mb-4" style={{ fontFamily: "'Syne', sans-serif" }}>
-                    Classement par vues
-                  </h2>
+                  <h2 className="font-black text-gray-900 mb-4" style={{ fontFamily: "'Syne', sans-serif" }}>Classement par vues</h2>
                   <div className="flex flex-col gap-3">
                     {evenements
                       .map(e => ({ ...e, ...(stats[e.id] || { vues: 0, participations: 0, favoris: 0 }) }))
@@ -300,7 +391,7 @@ export default function Dashboard() {
                             <p className="text-sm font-bold text-gray-900 truncate">{e.titre}</p>
                             <div className="h-1.5 bg-gray-100 rounded-full mt-1 overflow-hidden">
                               <div className="h-1.5 rounded-full" style={{
-                                width: `${totalStats.vues > 0 ? (e.vues / Math.max(...evenements.map(ev => stats[ev.id]?.vues || 0))) * 100 : 0}%`,
+                                width: `${totalStats.vues > 0 ? (e.vues / Math.max(...evenements.map(ev => stats[ev.id]?.vues || 0), 1)) * 100 : 0}%`,
                                 background: "linear-gradient(90deg,#7C3AED,#9333EA)"
                               }} />
                             </div>
@@ -311,11 +402,8 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                {/* Taux de concrétisation par événement */}
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                  <h2 className="font-black text-gray-900 mb-4" style={{ fontFamily: "'Syne', sans-serif" }}>
-                    Taux de concrétisation
-                  </h2>
+                  <h2 className="font-black text-gray-900 mb-4" style={{ fontFamily: "'Syne', sans-serif" }}>Taux de concrétisation</h2>
                   <div className="flex flex-col gap-3">
                     {evenements
                       .map(e => {
@@ -330,10 +418,7 @@ export default function Dashboard() {
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-bold text-gray-900 truncate">{e.titre}</p>
                             <div className="h-1.5 bg-gray-100 rounded-full mt-1 overflow-hidden">
-                              <div className="h-1.5 rounded-full" style={{
-                                width: `${e.taux}%`,
-                                background: "linear-gradient(90deg,#FF4D00,#FF8C42)"
-                              }} />
+                              <div className="h-1.5 rounded-full" style={{ width: `${e.taux}%`, background: "linear-gradient(90deg,#FF4D00,#FF8C42)" }} />
                             </div>
                           </div>
                           <div className="flex-shrink-0 text-right">
@@ -345,12 +430,11 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                {/* Conseil */}
                 {tauxConcretisation < 10 && totalStats.vues > 5 && (
                   <div className="rounded-2xl p-4 border" style={{ background: "#FFF7ED", borderColor: "#FED7AA" }}>
                     <p className="text-sm font-bold text-orange-800 mb-1">💡 Conseil</p>
                     <p className="text-xs text-orange-700 leading-relaxed">
-                      Ton taux de concrétisation est de {tauxConcretisation}%. Essaie d'améliorer la description de tes événements, d'ajouter une belle photo et de préciser le prix pour convertir plus de visiteurs en participants.
+                      Ton taux de concrétisation est de {tauxConcretisation}%. Essaie d'améliorer la description, d'ajouter une belle photo et de préciser le prix.
                     </p>
                   </div>
                 )}
