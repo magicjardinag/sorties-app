@@ -63,7 +63,6 @@ export default function Onboarding() {
       className="min-h-screen flex flex-col"
       style={{
         background: s.bg,
-        transition: "background 0.6s ease",
         opacity: leaving ? 0 : 1,
         transition: leaving ? "opacity 0.3s ease" : "background 0.6s ease",
       }}
