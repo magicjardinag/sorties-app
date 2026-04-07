@@ -225,6 +225,7 @@ export default function EvenementDetail() {
   const [showLightbox, setShowLightbox] = useState(false)
   const [showFullDesc, setShowFullDesc] = useState(false)
   const [rappelEnvoye, setRappelEnvoye] = useState(false)
+  const [rappelDelai, setRappelDelai] = useState(1)
   const [user, setUser] = useState<any>(null)
   const [copied, setCopied] = useState(false)
   const [showPartage, setShowPartage] = useState(false)
@@ -301,6 +302,7 @@ export default function EvenementDetail() {
           quand: evenement.quand, heure: evenement.heure, prix: evenement.prix,
           evenement_id: evenement.id, image_url: evenement.image_url,
           lat: evenement.lat, lng: evenement.lng, description: evenement.description,
+          jours_avant: rappelDelai,
         })
       })
       setRappelEnvoye(true)
@@ -425,20 +427,48 @@ export default function EvenementDetail() {
                   <p className="text-xs text-gray-400">Télécharge un fichier .ics</p>
                 </div>
               </button>
-              <button onClick={() => { demanderRappel(); setShowAgenda(false) }}
-                disabled={rappelEnvoye}
-                className="flex items-center gap-3 w-full border rounded-2xl p-4 transition-colors text-left"
-                style={{ borderColor: rappelEnvoye ? "#22c55e" : "#7C3AED", background: rappelEnvoye ? "#F0FDF4" : "#F5F3FF" }}>
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl" style={{ background: rappelEnvoye ? "#DCFCE7" : "#EDE9FE" }}>
-                  {rappelEnvoye ? "✅" : "🔔"}
+              {/* Choix du délai de rappel */}
+              {!rappelEnvoye ? (
+                <div className="border rounded-2xl p-4" style={{ borderColor: "#7C3AED", background: "#F5F3FF" }}>
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0" style={{ background: "#EDE9FE" }}>🔔</div>
+                    <div>
+                      <p className="font-semibold text-sm" style={{ color: "#7C3AED" }}>Rappel email</p>
+                      <p className="text-xs text-gray-400">Quand veux-tu être rappelé ?</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 mb-3">
+                    {[
+                      { label: "Veille", value: 1, desc: "J-1" },
+                      { label: "3 jours avant", value: 3, desc: "J-3" },
+                      { label: "1 semaine avant", value: 7, desc: "J-7" },
+                    ].map(opt => (
+                      <button key={opt.value} onClick={() => setRappelDelai(opt.value)}
+                        className="flex-1 py-2 rounded-xl text-xs font-bold transition-all border"
+                        style={{
+                          background: rappelDelai === opt.value ? "#7C3AED" : "#fff",
+                          color: rappelDelai === opt.value ? "#fff" : "#7C3AED",
+                          borderColor: "#7C3AED"
+                        }}>
+                        {opt.desc}
+                      </button>
+                    ))}
+                  </div>
+                  <button onClick={() => { demanderRappel(); setShowAgenda(false) }}
+                    className="w-full py-2.5 rounded-xl text-sm font-bold text-white"
+                    style={{ background: "#7C3AED" }}>
+                    🔔 Activer le rappel
+                  </button>
                 </div>
-                <div>
-                  <p className="font-semibold text-sm" style={{ color: rappelEnvoye ? "#16a34a" : "#7C3AED" }}>
-                    {rappelEnvoye ? "Rappel confirmé !" : "Rappel email J-1"}
-                  </p>
-                  <p className="text-xs text-gray-400">Reçois un email la veille</p>
+              ) : (
+                <div className="flex items-center gap-3 border rounded-2xl p-4" style={{ borderColor: "#22c55e", background: "#F0FDF4" }}>
+                  <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center text-xl">✅</div>
+                  <div>
+                    <p className="font-semibold text-sm text-green-700">Rappel confirmé !</p>
+                    <p className="text-xs text-gray-400">Tu recevras un email {rappelDelai === 1 ? "la veille" : rappelDelai === 3 ? "3 jours avant" : "7 jours avant"}</p>
+                  </div>
                 </div>
-              </button>
+              )}
             </div>
           </div>
         </div>
@@ -658,11 +688,10 @@ export default function EvenementDetail() {
 
           {/* Rappel */}
           <button
-            onClick={demanderRappel}
-            disabled={rappelEnvoye}
+            onClick={() => setShowAgenda(true)}
             className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 transition-all active:scale-95"
             style={{ background: rappelEnvoye ? "#DCFCE7" : "#EDE9FE" }}
-            title="Recevoir un rappel email J-1"
+            title="Recevoir un rappel email"
           >
             <span style={{ fontSize: 20 }}>{rappelEnvoye ? "✅" : "🔔"}</span>
           </button>
