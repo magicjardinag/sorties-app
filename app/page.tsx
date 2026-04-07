@@ -1162,25 +1162,32 @@ export default function Home() {
       {/* ── MOBILE BOTTOM NAV ── */}
       <nav className="sm:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40 shadow-lg">
         <div className="flex items-center justify-around px-2 py-2">
-          <button onClick={() => router.push("/")} className="flex flex-col items-center gap-0.5 px-4 py-1.5">
+          <button onClick={() => router.push("/")} className="flex flex-col items-center gap-0.5 px-3 py-1.5">
             <span className="text-xl">🏠</span>
             <span className="text-[10px] font-bold" style={{ color: "#FF4D00" }}>Accueil</span>
           </button>
-          <button onClick={() => router.push("/carte")} className="flex flex-col items-center gap-0.5 px-4 py-1.5">
+          <button onClick={() => router.push("/carte")} className="flex flex-col items-center gap-0.5 px-3 py-1.5">
             <span className="text-xl">🗺️</span>
             <span className="text-[10px] font-semibold text-gray-400">Carte</span>
           </button>
           <button onClick={() => router.push("/publier")} className="flex flex-col items-center gap-0.5 -mt-5">
             <span className="w-14 h-14 flex items-center justify-center text-white text-2xl font-black rounded-2xl shadow-lg" style={{ background: "#FF4D00" }}>+</span>
           </button>
-          <button onClick={() => user ? router.push("/dashboard") : router.push("/auth")} className="flex flex-col items-center gap-0.5 px-4 py-1.5">
-            <span className="text-xl">❤️</span>
-            <span className="text-[10px] font-semibold text-gray-400">Favoris</span>
-          </button>
-          <button onClick={() => user ? router.push("/dashboard") : router.push("/auth")} className="flex flex-col items-center gap-0.5 px-4 py-1.5">
+          <button onClick={() => user ? router.push("/dashboard") : router.push("/auth")} className="flex flex-col items-center gap-0.5 px-3 py-1.5">
             <span className="text-xl">👤</span>
             <span className="text-[10px] font-semibold text-gray-400">{user ? "Moi" : "Connexion"}</span>
           </button>
+          {user?.email === ADMIN_EMAIL ? (
+            <button onClick={() => router.push("/admin")} className="flex flex-col items-center gap-0.5 px-3 py-1.5">
+              <span className="text-xl">⚙️</span>
+              <span className="text-[10px] font-bold text-orange-500">Admin</span>
+            </button>
+          ) : (
+            <button onClick={() => user ? router.push("/dashboard") : router.push("/auth")} className="flex flex-col items-center gap-0.5 px-3 py-1.5">
+              <span className="text-xl">❤️</span>
+              <span className="text-[10px] font-semibold text-gray-400">Favoris</span>
+            </button>
+          )}
         </div>
       </nav>
       <div className="sm:hidden h-20" />
