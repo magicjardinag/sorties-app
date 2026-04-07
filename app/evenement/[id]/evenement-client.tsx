@@ -227,6 +227,7 @@ export default function EvenementDetail() {
   const [rappelEnvoye, setRappelEnvoye] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [copied, setCopied] = useState(false)
+  const [showPartage, setShowPartage] = useState(false)
   const [showAgenda, setShowAgenda] = useState(false)
   const [favori, setFavori] = useState(false)
   const [hasParticipated, setHasParticipated] = useState(false)
@@ -330,9 +331,26 @@ export default function EvenementDetail() {
     if (navigator.share) {
       navigator.share({ title: evenement?.titre, url: window.location.href })
     } else {
-      navigator.clipboard.writeText(window.location.href)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      setShowPartage(true)
+    }
+  }
+
+  const copierLien = () => {
+    navigator.clipboard.writeText(window.location.href)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  const getShareLinks = () => {
+    if (!evenement) return {} as any
+    const url = encodeURIComponent(window.location.href)
+    const text = encodeURIComponent(`${evenement.titre} - ${evenement.ville}`)
+    return {
+      whatsapp: `https://wa.me/?text=${text}%20${url}`,
+      facebook: `https://www.facebook.com/sharer/sharer.php?u=${url}`,
+      twitter: `https://twitter.com/intent/tweet?text=${text}&url=${url}`,
+      telegram: `https://t.me/share/url?url=${url}&text=${text}`,
+      email: `mailto:?subject=${encodeURIComponent(evenement.titre)}&body=${text}%20${url}`,
     }
   }
 
@@ -426,6 +444,51 @@ export default function EvenementDetail() {
         </div>
       )}
 
+      {/* ── MODALE PARTAGE ── */}
+      {showPartage && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center" onClick={() => setShowPartage(false)}>
+          <div className="bg-white rounded-t-3xl w-full max-w-lg p-6 pb-10" onClick={e => e.stopPropagation()}>
+            <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-6" />
+            <h3 className="font-black text-lg text-gray-900 mb-4" style={{ fontFamily: "'Syne', sans-serif" }}>Partager</h3>
+            <div className="grid grid-cols-4 gap-3 mb-4">
+              {[
+                { label: "WhatsApp", icon: "💬", color: "#25D366", bg: "#E7FFE7", href: getShareLinks().whatsapp },
+                { label: "Facebook", icon: "👥", color: "#1877F2", bg: "#E7F0FF", href: getShareLinks().facebook },
+                { label: "Twitter", icon: "🐦", color: "#1DA1F2", bg: "#E7F5FF", href: getShareLinks().twitter },
+                { label: "Telegram", icon: "✈️", color: "#0088CC", bg: "#E7F4FF", href: getShareLinks().telegram },
+              ].map(r => (
+                <a key={r.label} href={r.href} target="_blank" rel="noopener noreferrer"
+                  className="flex flex-col items-center gap-2 p-3 rounded-2xl active:scale-95 transition-all"
+                  style={{ background: r.bg }}>
+                  <span style={{ fontSize: 28 }}>{r.icon}</span>
+                  <span className="text-xs font-semibold" style={{ color: r.color }}>{r.label}</span>
+                </a>
+              ))}
+            </div>
+            <button onClick={copierLien}
+              className="w-full flex items-center gap-3 p-4 rounded-2xl border mb-2 transition-all active:scale-[0.98]"
+              style={{ borderColor: copied ? "#22c55e" : "#e5e5e5", background: copied ? "#F0FDF4" : "#f9fafb" }}>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl" style={{ background: copied ? "#DCFCE7" : "#f0f0f0" }}>
+                {copied ? "✅" : "🔗"}
+              </div>
+              <div className="text-left">
+                <p className="font-semibold text-sm" style={{ color: copied ? "#16a34a" : "#1a1a1a" }}>{copied ? "Lien copié !" : "Copier le lien"}</p>
+                <p className="text-xs text-gray-400">Partager directement</p>
+              </div>
+            </button>
+            <a href={getShareLinks().email}
+              className="w-full flex items-center gap-3 p-4 rounded-2xl border border-gray-200 active:scale-[0.98] transition-all"
+              style={{ background: "#f9fafb" }}>
+              <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-xl">📧</div>
+              <div>
+                <p className="font-semibold text-gray-900 text-sm">Envoyer par email</p>
+                <p className="text-xs text-gray-400">Partager avec un ami</p>
+              </div>
+            </a>
+          </div>
+        </div>
+      )}
+
       {/* ── PHOTO HERO ── */}
       <div className="relative w-full" style={{ height: "55vh", maxHeight: 440, zIndex: 1 }}>
         <img
@@ -483,11 +546,11 @@ export default function EvenementDetail() {
           </div>
           {/* Bouton partager */}
           <button
-            onClick={partager}
+            onClick={() => setShowPartage(true)}
             className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 text-white transition-all active:scale-95"
             style={{ background: "rgba(255,255,255,0.2)" }}
           >
-            {copied ? "✅" : "↗"}
+            ↗
           </button>
         </div>
       </div>
