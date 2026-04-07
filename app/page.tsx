@@ -670,6 +670,11 @@ export default function Home() {
   const dates = getFiltreDates()
 
   useEffect(() => {
+    const done = localStorage.getItem("onboarding_done")
+    if (!done) router.replace("/onboarding")
+  }, [])
+
+  useEffect(() => {
     const fetchEvenements = async () => {
       const { data, error } = await supabase.from("evenements").select("*").eq("statut", "approuve")
       if (error) { console.error(error) } else { setEvenements(data || []) }
