@@ -79,6 +79,8 @@ export default function Admin() {
   const [rappels, setRappels] = useState<any[]>([])
   const [slogans, setSlogans] = useState<Record<string,string>>(HERO_SLOGANS_DEFAULT)
   const [savingParams, setSavingParams] = useState(false)
+  const [geocoding, setGeocoding] = useState(false)
+  const [geocodeResult, setGeocodeResult] = useState("")
   const [paramsSaved, setParamsSaved] = useState(false)
 
   useEffect(() => {
@@ -169,6 +171,19 @@ export default function Admin() {
   const nbEnAttente = evenements.filter(e=>e.statut==="en_attente"&&!isPasse(e.quand)).length
   const nbApprouves = evenements.filter(e=>e.statut==="approuve"&&!isPasse(e.quand)).length
   const totalFavoris = users.reduce((a,u)=>a+u.favoris,0)
+
+  const lancerGeocodage = async () => {
+    setGeocoding(true)
+    setGeocodeResult("")
+    try {
+      const res = await fetch("/api/geocode", { method: "POST" })
+      const data = await res.json()
+      setGeocodeResult(data.message || "Terminé !")
+    } catch {
+      setGeocodeResult("Erreur lors du géocodage")
+    }
+    setGeocoding(false)
+  }
 
   const saveParams = async () => {
     setSavingParams(true)
@@ -599,6 +614,20 @@ export default function Admin() {
                   {savingParams?"⏳":"paramsSaved?'✅ Sauvegardé !':'💾 Sauvegarder'"}
                 </button>
               </div>
+              {/* Géocodage en masse */}
+              <div className="bg-white rounded-2xl border border-gray-100 p-4">
+                <p className="font-black text-gray-900 text-sm mb-1" style={{fontFamily:"'Syne',sans-serif"}}>🗺️ Géocodage des événements</p>
+                <p className="text-xs text-gray-400 mb-3">Place automatiquement tous les événements sur la carte en utilisant leur ville</p>
+                <button onClick={lancerGeocodage} disabled={geocoding}
+                  className="w-full py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-50 mb-2"
+                  style={{background:"#7C3AED"}}>
+                  {geocoding ? "⏳ Géocodage en cours..." : "🗺️ Géocoder tous les événements"}
+                </button>
+                {geocodeResult && (
+                  <p className="text-xs font-semibold text-center" style={{color:"#059669"}}>{geocodeResult}</p>
+                )}
+              </div>
+
               <button onClick={()=>router.push("/")} className="flex items-center justify-center gap-2 py-3 rounded-2xl border border-gray-200 text-sm font-semibold text-gray-600 bg-white">
                 ← Retour au site
               </button>
