@@ -58,6 +58,8 @@ export default function Dashboard() {
   const [favorisEvts, setFavorisEvts] = useState<Evenement[]>([])
   const [loadingFavoris, setLoadingFavoris] = useState(false)
   const [participationsEvts, setParticipationsEvts] = useState<Evenement[]>([])
+  const [avatarUrl, setAvatarUrl] = useState<string|null>(null)
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -99,6 +101,14 @@ export default function Dashboard() {
         setParticipationsEvts(partEvts || [])
       }
 
+      // Charger avatar
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("avatar_url")
+        .eq("id", user.id)
+        .maybeSingle()
+      if (profile?.avatar_url) setAvatarUrl(profile.avatar_url)
+
       setLoading(false)
     }
     fetchData()
@@ -120,6 +130,24 @@ export default function Dashboard() {
     await supabase.from("evenements").update({ ...editForm, statut: "en_attente" }).eq("id", id)
     setEvenements(evenements.map(e => e.id === id ? { ...e, ...editForm as any, statut: "en_attente" } : e))
     setEditingId(null); setSaving(false)
+  }
+
+  const handleAvatarUpload = async (file: File) => {
+    if (!user) return
+    setUploadingAvatar(true)
+    try {
+      const ext = file.name.split(".").pop()
+      const path = `${user.id}/avatar.${ext}`
+      const { error } = await supabase.storage.from("avatars").upload(path, file, { upsert: true })
+      if (!error) {
+        const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path)
+        const url = urlData.publicUrl + "?t=" + Date.now()
+        setAvatarUrl(url)
+        // Sauvegarder dans une table profiles
+        await supabase.from("profiles").upsert({ id: user.id, avatar_url: url })
+      }
+    } catch (e) { console.error(e) }
+    setUploadingAvatar(false)
   }
 
   const handleLogout = async () => {
@@ -144,9 +172,9 @@ export default function Dashboard() {
       <header className="bg-white border-b border-gray-100 px-4 sm:px-6 py-4 flex items-center justify-between sticky top-0 z-20 shadow-sm">
         <div className="flex items-center gap-3">
           {user && (
-            <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-black flex-shrink-0"
-              style={{ background: getAvatarColor(user.email) }}>
-              {getInitiales(user.email)}
+            <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center text-white text-sm font-black"
+              style={{ background: avatarUrl ? "transparent" : getAvatarColor(user.email) }}>
+              {avatarUrl ? <img src={avatarUrl} alt="avatar" className="w-full h-full object-cover" /> : getInitiales(user.email)}
             </div>
           )}
           <div>
@@ -185,10 +213,23 @@ export default function Dashboard() {
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
               <div className="h-20" style={{ background: user ? `linear-gradient(135deg, ${getAvatarColor(user.email)}, ${getAvatarColor(user.email)}99)` : "#FF4D00" }} />
               <div className="px-5 pb-5 -mt-8">
-                <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-white text-2xl font-black border-4 border-white shadow-sm mb-3"
-                  style={{ background: user ? getAvatarColor(user.email) : "#FF4D00" }}>
-                  {user ? getInitiales(user.email) : "?"}
-                </div>
+                <label className="relative cursor-pointer w-16 h-16 mb-3 block">
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="avatar" className="w-16 h-16 rounded-2xl object-cover border-4 border-white shadow-sm" />
+                  ) : (
+                    <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-white text-2xl font-black border-4 border-white shadow-sm"
+                      style={{ background: user ? getAvatarColor(user.email) : "#FF4D00" }}>
+                      {user ? getInitiales(user.email) : "?"}
+                    </div>
+                  )}
+                  <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-white shadow-sm flex items-center justify-center text-xs border border-gray-100">
+                    {uploadingAvatar ? "⏳" : "📷"}
+                  </div>
+                  <input type="file" accept="image/*" className="hidden" onChange={e => {
+                    const file = e.target.files?.[0]
+                    if (file) handleAvatarUpload(file)
+                  }} />
+                </label>
                 <p className="font-black text-gray-900 text-lg" style={{ fontFamily: "'Syne', sans-serif" }}>
                   {user?.email?.split("@")[0]}
                 </p>
