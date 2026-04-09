@@ -483,7 +483,7 @@ export default function Home() {
     if (!installPrompt) return
     installPrompt.prompt()
     const { outcome } = await installPrompt.userChoice
-    if (outcome === "accepted") setShowInstallBtn(false)
+    if (outcome === "accepted") { setShowInstallBtn(false); track("install_app", undefined, { outcome: "accepted" }) }
     setInstallPrompt(null)
   }
 
@@ -493,6 +493,13 @@ export default function Home() {
     const done = localStorage.getItem("onboarding_done")
     if (!done) router.replace("/onboarding")
   }, [])
+
+  // Track recherche (après 1s sans frappe)
+  useEffect(() => {
+    if (!recherche) return
+    const t = setTimeout(() => track("recherche", undefined, { query: recherche }), 1000)
+    return () => clearTimeout(t)
+  }, [recherche])
 
   useEffect(() => {
     supabase.from("evenements").select("*").eq("statut","approuve").then(({data,error}) => { if (!error) setEvenements(data||[]); setLoading(false) })
@@ -512,7 +519,7 @@ export default function Home() {
   const activerGeolocalisation = () => {
     setLoadingGeo(true)
     navigator.geolocation.getCurrentPosition(
-      pos => { setPosition({lat:pos.coords.latitude,lng:pos.coords.longitude}); setFiltreProximite(true); setLoadingGeo(false) },
+      pos => { setPosition({lat:pos.coords.latitude,lng:pos.coords.longitude}); setFiltreProximite(true); setLoadingGeo(false); track("geo_activee") },
       () => { alert("Impossible d'accéder à ta position."); setLoadingGeo(false) }
     )
   }
@@ -590,11 +597,11 @@ export default function Home() {
             {recherche && <button onClick={() => setRecherche("")} className="text-gray-400 text-sm">✕</button>}
           </div>
           <div className="hidden sm:flex items-center gap-2">
-            <button onClick={() => router.push("/carte")} className="flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium text-gray-600 hover:bg-gray-100">🗺️ Carte</button>
+            <button onClick={() => { router.push("/carte"); track("clic_carte") }} className="flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium text-gray-600 hover:bg-gray-100">🗺️ Carte</button>
             {user?.email===ADMIN_EMAIL && <button onClick={() => router.push("/admin")} className="px-3 py-2 rounded-full text-sm font-medium text-gray-500 hover:bg-gray-100">⚙️</button>}
             {user ? <button onClick={() => router.push("/dashboard")} className="px-3 py-2 rounded-full text-sm font-medium text-gray-600 hover:bg-gray-100">Mon espace</button>
               : <button onClick={() => router.push("/auth")} className="px-3 py-2 rounded-full text-sm font-medium text-gray-600 hover:bg-gray-100">Se connecter</button>}
-            <button onClick={() => setShowQRModal(true)} className="px-4 py-2 rounded-full text-sm font-bold border border-gray-200 text-gray-600 hover:bg-gray-50 flex items-center gap-1.5">
+            <button onClick={() => { setShowQRModal(true); track("scan_qr", undefined, { source: "header_desktop" }) }} className="px-4 py-2 rounded-full text-sm font-bold border border-gray-200 text-gray-600 hover:bg-gray-50 flex items-center gap-1.5">
               📲 Installer
             </button>
             <button onClick={() => router.push("/publier")} className="px-4 py-2 rounded-full text-sm font-bold text-white" style={{ background: ACCENT }}>+ Publier</button>
@@ -676,7 +683,7 @@ export default function Home() {
               </button>
               {/* Jours défilants */}
               {prochainsjours.map(j => (
-                <button key={j.dateStr} onClick={() => { setJourActif(jourActif===j.dateStr ? "tout" : j.dateStr); setShowCalendrier(false) }}
+                <button key={j.dateStr} onClick={() => { const next = jourActif===j.dateStr ? "tout" : j.dateStr; setJourActif(next); setShowCalendrier(false); if (next !== "tout") track("filtre_date", undefined, { date: j.dateStr }) }}
                   className="flex-shrink-0 flex flex-col items-center justify-center rounded-2xl border transition-all"
                   style={{ background: jourActif===j.dateStr ? ACCENT : "#fff", color: jourActif===j.dateStr ? "#fff" : "#555", borderColor: jourActif===j.dateStr ? ACCENT : "#e5e5e5", minWidth: 52, padding: "6px 8px" }}>
                   <span className="text-[10px] font-bold uppercase tracking-wide">{j.jourNom}</span>
@@ -709,7 +716,7 @@ export default function Home() {
           </div>
           <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 items-center" style={{ scrollbarWidth: "none" }}>
             {categories.map(cat => (
-              <button key={cat.label} onClick={() => setCategorieActive(cat.label)}
+              <button key={cat.label} onClick={() => { setCategorieActive(cat.label); if (cat.label !== "Tout") track("filtre_categorie", undefined, { categorie: cat.label }) }}
                 className="flex-shrink-0 flex items-center gap-1.5 rounded-full font-semibold whitespace-nowrap border transition-all"
                 style={{ background: categorieActive===cat.label ? ACCENT : "#fff", color: categorieActive===cat.label ? "#fff" : "#555", borderColor: categorieActive===cat.label ? ACCENT : "#e5e5e5", padding: "7px 12px" }}>
                 <span style={{ fontSize: 15 }}>{cat.emoji}</span>
