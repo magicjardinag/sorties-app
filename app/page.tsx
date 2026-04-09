@@ -445,7 +445,7 @@ function HeroCarousel({
   return (
     <section
       className="relative w-full overflow-hidden"
-      style={{ background: "linear-gradient(135deg, #f1f3f4 0%, #e8eaed 100%)" }}
+      style={{ background: slide.bg }}
     >
       {/* ── VERSION MOBILE ── */}
       {isMobile && <div
