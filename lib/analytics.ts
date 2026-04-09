@@ -10,6 +10,11 @@ type EventType =
   | "vue_pub"
   | "clic_pub"
   | "clic_code_promo"
+  | "vue_evenement" | "clic_participer" | "ajout_calendrier"
+  | "ajout_favori" | "retrait_favori" | "clic_partage"
+  | "vue_pub" | "clic_pub" | "clic_code_promo"
+  | "scan_qr" | "install_app" | "geo_activee"
+  | "filtre_categorie" | "filtre_date" | "recherche" | "clic_carte"
 
 export async function track(
   type: EventType,
