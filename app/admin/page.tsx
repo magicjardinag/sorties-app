@@ -82,6 +82,12 @@ export default function Admin() {
   const [geocoding, setGeocoding] = useState(false)
   const [geocodeResult, setGeocodeResult] = useState("")
   const [paramsSaved, setParamsSaved] = useState(false)
+  const [analyticsData, setAnalyticsData] = useState<{
+    totalVues: number; totalParticipations: number; totalFavoris: number; totalClicsPub: number
+    vuesParJour: {date:string;count:number}[]
+    topEvents: {ref_id:string;titre:string;count:number}[]
+  } | null>(null)
+  const [loadingAnalytics, setLoadingAnalytics] = useState(false)
 
   useEffect(() => {
     const check = async () => {
@@ -103,7 +109,55 @@ export default function Admin() {
   useEffect(() => {
     if (section==="utilisateurs"&&users.length===0) fetchUsers()
     if (section==="rappels"&&rappels.length===0) fetchRappels()
+    if (section==="analytics"&&!analyticsData) fetchAnalytics()
   }, [section])
+
+  const fetchAnalytics = async () => {
+    setLoadingAnalytics(true)
+    const il7 = new Date(); il7.setDate(il7.getDate()-6); il7.setHours(0,0,0,0)
+
+    // Totaux depuis analytics_events
+    const [vuesRes, partRes, favRes, pubRes] = await Promise.all([
+      supabase.from("analytics_events").select("id",{count:"exact"}).eq("type","vue_evenement"),
+      supabase.from("analytics_events").select("id",{count:"exact"}).eq("type","clic_participer"),
+      supabase.from("analytics_events").select("id",{count:"exact"}).eq("type","ajout_favori"),
+      supabase.from("analytics_events").select("id",{count:"exact"}).eq("type","clic_pub"),
+    ])
+
+    // Vues par jour (7 jours)
+    const {data:vuesData} = await supabase
+      .from("analytics_events").select("created_at")
+      .eq("type","vue_evenement").gte("created_at",il7.toISOString())
+    const compteur: Record<string,number> = {}
+    for(let i=0;i<7;i++){const d=new Date();d.setDate(d.getDate()-(6-i));compteur[d.toISOString().split("T")[0]]=0}
+    for(const v of vuesData||[]){const day=v.created_at.split("T")[0];if(compteur[day]!==undefined)compteur[day]++}
+
+    // Top événements
+    const {data:topData} = await supabase
+      .from("analytics_events").select("ref_id")
+      .eq("type","vue_evenement").not("ref_id","is",null).limit(500)
+    const topCount: Record<string,number> = {}
+    for(const t of topData||[]){topCount[t.ref_id]=(topCount[t.ref_id]||0)+1}
+    const topIds = Object.entries(topCount).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([id])=>id)
+    const {data:topEvts} = topIds.length>0
+      ? await supabase.from("evenements").select("id,titre").in("id",topIds)
+      : {data:[]}
+    const topEvents = topIds.map(id=>({
+      ref_id:id,
+      titre:(topEvts||[]).find((e:any)=>e.id===id)?.titre||"Événement",
+      count:topCount[id]
+    }))
+
+    setAnalyticsData({
+      totalVues: vuesRes.count||0,
+      totalParticipations: partRes.count||0,
+      totalFavoris: favRes.count||0,
+      totalClicsPub: pubRes.count||0,
+      vuesParJour: Object.entries(compteur).map(([date,count])=>({date,count})),
+      topEvents,
+    })
+    setLoadingAnalytics(false)
+  }
 
   const fetchEvenements = async () => {
     const {data} = await supabase.from("evenements").select("*").order("quand",{ascending:true})
@@ -556,40 +610,96 @@ export default function Admin() {
           {/* ══ ANALYTICS ══ */}
           {section==="analytics" && (
             <div className="flex flex-col gap-4">
-              <div className="grid grid-cols-2 gap-3">
-                {[
-                  {label:"Actifs",value:nbApprouves,icon:"✅",color:"#22c55e"},
-                  {label:"En attente",value:nbEnAttente,icon:"⏳",color:"#f59e0b"},
-                  {label:"Passés",value:evenements.filter(e=>isPasse(e.quand)).length,icon:"🕰️",color:"#9ca3af"},
-                  {label:"Pubs actives",value:pubs.filter(p=>p.actif).length,icon:"📢",color:"#3b82f6"},
-                ].map((s,i) => (
-                  <div key={i} className="bg-white rounded-2xl border border-gray-100 p-4">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xl">{s.icon}</span>
-                      <span className="font-black text-2xl" style={{color:s.color}}>{s.value}</span>
-                    </div>
-                    <p className="text-xs text-gray-400">{s.label}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="bg-white rounded-2xl border border-gray-100 p-4">
-                <p className="font-black text-gray-900 mb-3 text-sm" style={{fontFamily:"'Syne',sans-serif"}}>Par catégorie</p>
-                <div className="flex flex-col gap-2.5">
-                  {ALL_CATEGORIES.map(cat => {
-                    const count = evenements.filter(e=>e.categorie===cat&&!isPasse(e.quand)).length
-                    const max = Math.max(...ALL_CATEGORIES.map(c=>evenements.filter(e=>e.categorie===c&&!isPasse(e.quand)).length),1)
-                    return (
-                      <div key={cat} className="flex items-center gap-2">
-                        <span className="text-xs text-gray-600 w-28 flex-shrink-0">{cat}</span>
-                        <div className="flex-1 bg-gray-100 rounded-full h-2">
-                          <div className="h-2 rounded-full" style={{width:`${(count/max)*100}%`,background:"linear-gradient(90deg,#FF4D00,#FF8C42)"}}/>
-                        </div>
-                        <span className="text-xs font-bold text-gray-500 w-4 text-right">{count}</span>
-                      </div>
-                    )
-                  })}
+              {loadingAnalytics ? (
+                <div className="text-center py-16 text-gray-400">
+                  <div className="w-10 h-10 border-4 border-gray-200 border-t-gray-600 rounded-full animate-spin mx-auto mb-3"/>
+                  Chargement des stats...
                 </div>
-              </div>
+              ) : analyticsData ? (<>
+                {/* KPIs */}
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    {label:"Vues événements",value:analyticsData.totalVues,icon:"👁️",color:"#7C3AED"},
+                    {label:"Participations",value:analyticsData.totalParticipations,icon:"🎉",color:"#1a1a2e"},
+                    {label:"Favoris ajoutés",value:analyticsData.totalFavoris,icon:"❤️",color:"#DB2777"},
+                    {label:"Clics pubs",value:analyticsData.totalClicsPub,icon:"📢",color:"#059669"},
+                  ].map((s,i) => (
+                    <div key={i} className="bg-white rounded-2xl border border-gray-100 p-4">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xl">{s.icon}</span>
+                        <span className="font-black text-2xl" style={{color:s.color,fontFamily:"'Syne',sans-serif"}}>{s.value}</span>
+                      </div>
+                      <p className="text-xs text-gray-400">{s.label}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Graphique vues 7 jours */}
+                <div className="bg-white rounded-2xl border border-gray-100 p-5">
+                  <p className="font-black text-gray-900 mb-4 text-sm" style={{fontFamily:"'Syne',sans-serif"}}>Vues — 7 derniers jours</p>
+                  <div className="flex items-end gap-1.5 h-28">
+                    {analyticsData.vuesParJour.map((j,i) => {
+                      const max = Math.max(...analyticsData.vuesParJour.map(x=>x.count),1)
+                      const pct = (j.count/max)*100
+                      const d = new Date(j.date)
+                      const label = i===analyticsData.vuesParJour.length-1?"Auj.":d.toLocaleDateString("fr-FR",{weekday:"short"}).slice(0,3)
+                      return (
+                        <div key={j.date} className="flex-1 flex flex-col items-center gap-1">
+                          <span className="text-[9px] text-gray-400">{j.count>0?j.count:""}</span>
+                          <div className="w-full rounded-t-lg" style={{height:`${Math.max(pct,4)}%`,background:i===analyticsData.vuesParJour.length-1?"#1a1a2e":"#e5e7eb",minHeight:4}}/>
+                          <span className="text-[9px] text-gray-400">{label}</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Top événements */}
+                {analyticsData.topEvents.length>0 && (
+                  <div className="bg-white rounded-2xl border border-gray-100 p-5">
+                    <p className="font-black text-gray-900 mb-4 text-sm" style={{fontFamily:"'Syne',sans-serif"}}>Top événements</p>
+                    <div className="flex flex-col gap-3">
+                      {analyticsData.topEvents.map((e,i) => {
+                        const max = Math.max(...analyticsData.topEvents.map(x=>x.count),1)
+                        return (
+                          <div key={e.ref_id} className="flex items-center gap-3">
+                            <span className="text-sm font-black text-gray-300 w-5">#{i+1}</span>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-bold text-gray-900 truncate">{e.titre}</p>
+                              <div className="h-1.5 bg-gray-100 rounded-full mt-1 overflow-hidden">
+                                <div className="h-1.5 rounded-full" style={{width:`${(e.count/max)*100}%`,background:"linear-gradient(90deg,#7C3AED,#9333EA)"}}/>
+                              </div>
+                            </div>
+                            <span className="text-sm font-bold text-gray-600 flex-shrink-0">{e.count} vues</span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Par catégorie */}
+                <div className="bg-white rounded-2xl border border-gray-100 p-4">
+                  <p className="font-black text-gray-900 mb-3 text-sm" style={{fontFamily:"'Syne',sans-serif"}}>Événements actifs par catégorie</p>
+                  <div className="flex flex-col gap-2.5">
+                    {ALL_CATEGORIES.map(cat => {
+                      const count = evenements.filter(e=>e.categorie===cat&&!isPasse(e.quand)).length
+                      const max = Math.max(...ALL_CATEGORIES.map(c=>evenements.filter(e=>e.categorie===c&&!isPasse(e.quand)).length),1)
+                      return (
+                        <div key={cat} className="flex items-center gap-2">
+                          <span className="text-xs text-gray-600 w-28 flex-shrink-0">{cat}</span>
+                          <div className="flex-1 bg-gray-100 rounded-full h-2">
+                            <div className="h-2 rounded-full" style={{width:`${(count/max)*100}%`,background:"linear-gradient(90deg,#1a1a2e,#374151)"}}/>
+                          </div>
+                          <span className="text-xs font-bold text-gray-500 w-4 text-right">{count}</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                <button onClick={()=>setAnalyticsData(null)} className="text-xs text-gray-400 text-center hover:underline">↻ Actualiser</button>
+              </>) : null}
             </div>
           )}
 
