@@ -38,7 +38,7 @@ function getInitiales(email: string): string {
 }
 
 function getAvatarColor(email: string): string {
-  const colors = ["#FF4D00","#7C3AED","#059669","#0891B2","#DB2777","#D97706"]
+  const colors = ["#1a1a1a","#7C3AED","#059669","#0891B2","#DB2777","#D97706"]
   let hash = 0
   for (let i = 0; i < email.length; i++) hash = email.charCodeAt(i) + ((hash << 5) - hash)
   return colors[Math.abs(hash) % colors.length]
@@ -60,6 +60,7 @@ export default function Dashboard() {
   const [participationsEvts, setParticipationsEvts] = useState<Evenement[]>([])
   const [avatarUrl, setAvatarUrl] = useState<string|null>(null)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
+  const [vuesParJour, setVuesParJour] = useState<{date: string; count: number}[]>([])
 
   useEffect(() => {
     const fetchData = async () => {
@@ -108,6 +109,27 @@ export default function Dashboard() {
         .eq("id", user.id)
         .maybeSingle()
       if (profile?.avatar_url) setAvatarUrl(profile.avatar_url)
+
+      // Vues par jour (7 derniers jours)
+      if (evList.length > 0) {
+        const evIds = evList.map(e => e.id)
+        const il7 = new Date(); il7.setDate(il7.getDate() - 6); il7.setHours(0,0,0,0)
+        const { data: vuesData } = await supabase
+          .from("vues_evenements")
+          .select("created_at")
+          .in("evenement_id", evIds)
+          .gte("created_at", il7.toISOString())
+        const compteur: Record<string, number> = {}
+        for (let i = 0; i < 7; i++) {
+          const d = new Date(); d.setDate(d.getDate() - (6 - i))
+          compteur[d.toISOString().split("T")[0]] = 0
+        }
+        for (const v of vuesData || []) {
+          const day = v.created_at.split("T")[0]
+          if (compteur[day] !== undefined) compteur[day]++
+        }
+        setVuesParJour(Object.entries(compteur).map(([date, count]) => ({ date, count })))
+      }
 
       setLoading(false)
     }
@@ -194,10 +216,10 @@ export default function Dashboard() {
           {NAV.map(n => (
             <button key={n.key} onClick={() => setSection(n.key as any)}
               className="flex-shrink-0 flex items-center gap-1.5 px-4 py-3 text-sm font-semibold border-b-2 transition-all whitespace-nowrap"
-              style={{ borderColor: section === n.key ? "#FF4D00" : "transparent", color: section === n.key ? "#FF4D00" : "#9ca3af" }}>
+              style={{ borderColor: section === n.key ? "#1a1a1a" : "transparent", color: section === n.key ? "#1a1a1a" : "#9ca3af" }}>
               {n.icon} {n.label}
               {n.count !== undefined && n.count > 0 && (
-                <span className="text-xs font-bold px-1.5 py-0.5 rounded-full" style={{ background: section === n.key ? "#FF4D00" : "#f3f4f6", color: section === n.key ? "#fff" : "#6b7280" }}>{n.count}</span>
+                <span className="text-xs font-bold px-1.5 py-0.5 rounded-full" style={{ background: section === n.key ? "#1a1a1a" : "#f3f4f6", color: section === n.key ? "#fff" : "#6b7280" }}>{n.count}</span>
               )}
             </button>
           ))}
@@ -211,14 +233,14 @@ export default function Dashboard() {
           <div className="flex flex-col gap-4">
             {/* Carte profil */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-              <div className="h-20" style={{ background: user ? `linear-gradient(135deg, ${getAvatarColor(user.email)}, ${getAvatarColor(user.email)}99)` : "#FF4D00" }} />
+              <div className="h-20" style={{ background: user ? `linear-gradient(135deg, ${getAvatarColor(user.email)}, ${getAvatarColor(user.email)}99)` : "#1a1a1a" }} />
               <div className="px-5 pb-5 -mt-8">
                 <label className="relative cursor-pointer w-16 h-16 mb-3 block">
                   {avatarUrl ? (
                     <img src={avatarUrl} alt="avatar" className="w-16 h-16 rounded-2xl object-cover border-4 border-white shadow-sm" />
                   ) : (
                     <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-white text-2xl font-black border-4 border-white shadow-sm"
-                      style={{ background: user ? getAvatarColor(user.email) : "#FF4D00" }}>
+                      style={{ background: user ? getAvatarColor(user.email) : "#1a1a1a" }}>
                       {user ? getInitiales(user.email) : "?"}
                     </div>
                   )}
@@ -241,7 +263,7 @@ export default function Dashboard() {
             {/* Stats rapides */}
             <div className="grid grid-cols-3 gap-3">
               {[
-                { icon: "📅", label: "Événements", value: evenements.length, color: "#FF4D00" },
+                { icon: "📅", label: "Événements", value: evenements.length, color: "#1a1a1a" },
                 { icon: "❤️", label: "Favoris", value: favorisEvts.length, color: "#DB2777" },
                 { icon: "🎉", label: "Participations", value: participationsEvts.length, color: "#7C3AED" },
               ].map((s, i) => (
@@ -261,7 +283,7 @@ export default function Dashboard() {
                   {participationsEvts.slice(0, 4).map(e => (
                     <div key={e.id} onClick={() => router.push(`/evenement/${e.id}`)}
                       className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors">
-                      <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0 bg-orange-50 flex items-center justify-center text-lg">
+                      <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0 bg-gray-50 flex items-center justify-center text-lg">
                         {e.image_url ? <img src={e.image_url} alt={e.titre} className="w-full h-full object-cover" /> : e.emoji}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -279,7 +301,7 @@ export default function Dashboard() {
             <div className="flex flex-col gap-2">
               <button onClick={() => router.push("/publier")}
                 className="w-full py-3.5 rounded-2xl font-bold text-white text-sm"
-                style={{ background: "#FF4D00" }}>
+                style={{ background: "#1a1a1a" }}>
                 + Publier un événement
               </button>
               <button onClick={handleLogout}
@@ -295,7 +317,7 @@ export default function Dashboard() {
           <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between mb-1">
               <p className="text-sm font-semibold text-gray-500">{evenements.length} événement{evenements.length > 1 ? "s" : ""}</p>
-              <button onClick={() => router.push("/publier")} className="px-4 py-2 rounded-full text-sm font-bold text-white" style={{ background: "#FF4D00" }}>+ Publier</button>
+              <button onClick={() => router.push("/publier")} className="px-4 py-2 rounded-full text-sm font-bold text-white" style={{ background: "#1a1a1a" }}>+ Publier</button>
             </div>
             {loading ? (
               <div className="text-center py-16 text-gray-400">
@@ -305,7 +327,7 @@ export default function Dashboard() {
               <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
                 <p className="text-5xl mb-4">📭</p>
                 <p className="text-gray-500 mb-4 font-medium">Aucun événement publié</p>
-                <button onClick={() => router.push("/publier")} className="px-6 py-3 rounded-full font-bold text-white" style={{ background: "#FF4D00" }}>
+                <button onClick={() => router.push("/publier")} className="px-6 py-3 rounded-full font-bold text-white" style={{ background: "#1a1a1a" }}>
                   Publier mon premier événement
                 </button>
               </div>
@@ -318,7 +340,7 @@ export default function Dashboard() {
                 <div key={e.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                   <div className="flex items-center gap-3 p-4">
                     {e.image_url ? <img src={e.image_url} alt={e.titre} className="w-14 h-14 rounded-xl object-cover flex-shrink-0" />
-                      : <div className="w-14 h-14 rounded-xl bg-orange-50 flex items-center justify-center text-2xl flex-shrink-0">{e.emoji}</div>}
+                      : <div className="w-14 h-14 rounded-xl bg-gray-50 flex items-center justify-center text-2xl flex-shrink-0">{e.emoji}</div>}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">
                         <h3 className="font-bold text-gray-900 text-sm truncate">{e.titre}</h3>
@@ -326,13 +348,13 @@ export default function Dashboard() {
                           {isPasse ? "Passé" : e.statut === "approuve" ? "Publié" : e.statut === "refuse" ? "Refusé" : "En attente"}
                         </span>
                       </div>
-                      <p className="text-xs text-gray-400">{e.ville} · <span style={{ color: "#FF4D00", fontWeight: 600 }}>{formatDate(e.quand)}</span> · {e.prix || "Gratuit"}</p>
+                      <p className="text-xs text-gray-400">{e.ville} · <span style={{ color: "#1a1a1a", fontWeight: 600 }}>{formatDate(e.quand)}</span> · {e.prix || "Gratuit"}</p>
                     </div>
                   </div>
 
                   {isEditing && (
-                    <div className="border-t border-orange-100 bg-orange-50 px-4 py-4 flex flex-col gap-3">
-                      <p className="text-xs font-bold text-orange-700">✏️ Modifier — repassera en modération</p>
+                    <div className="border-t border-orange-100 bg-gray-50 px-4 py-4 flex flex-col gap-3">
+                      <p className="text-xs font-bold text-gray-600">✏️ Modifier — repassera en modération</p>
                       <input value={editForm.titre||""} onChange={ev => setEditForm({...editForm, titre: ev.target.value})} placeholder="Titre"
                         className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none bg-white" />
                       <div className="grid grid-cols-2 gap-2">
@@ -355,7 +377,7 @@ export default function Dashboard() {
                         rows={3} placeholder="Description" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none resize-none bg-white" />
                       <div className="flex gap-2">
                         <button onClick={() => setEditingId(null)} className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-gray-600 border border-gray-200 bg-white">Annuler</button>
-                        <button onClick={() => handleSave(e.id)} disabled={saving} className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-50" style={{ background: "#FF4D00" }}>
+                        <button onClick={() => handleSave(e.id)} disabled={saving} className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-50" style={{ background: "#1a1a1a" }}>
                           {saving ? "⏳" : "💾 Sauver"}
                         </button>
                       </div>
@@ -373,7 +395,7 @@ export default function Dashboard() {
                       {s.vues > 0 && (
                         <div className="px-4 pb-3">
                           <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                            <div className="h-1.5 rounded-full" style={{ width: `${Math.min(taux, 100)}%`, background: "linear-gradient(90deg,#FF4D00,#FF8C42)" }} />
+                            <div className="h-1.5 rounded-full" style={{ width: `${Math.min(taux, 100)}%`, background: "linear-gradient(90deg,#1a1a1a,#FF8C42)" }} />
                           </div>
                         </div>
                       )}
@@ -398,7 +420,7 @@ export default function Dashboard() {
               <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
                 <p className="text-5xl mb-4">❤️</p>
                 <p className="text-gray-500 mb-4 font-medium">Aucun favori pour l'instant</p>
-                <button onClick={() => router.push("/")} className="px-6 py-3 rounded-full font-bold text-white" style={{ background: "#FF4D00" }}>
+                <button onClick={() => router.push("/")} className="px-6 py-3 rounded-full font-bold text-white" style={{ background: "#1a1a1a" }}>
                   Explorer les événements
                 </button>
               </div>
@@ -407,11 +429,11 @@ export default function Dashboard() {
                 className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-all">
                 <div className="flex items-center gap-3 p-4">
                   {e.image_url ? <img src={e.image_url} alt={e.titre} className="w-14 h-14 rounded-xl object-cover flex-shrink-0" />
-                    : <div className="w-14 h-14 rounded-xl bg-orange-50 flex items-center justify-center text-2xl flex-shrink-0">{e.emoji}</div>}
+                    : <div className="w-14 h-14 rounded-xl bg-gray-50 flex items-center justify-center text-2xl flex-shrink-0">{e.emoji}</div>}
                   <div className="flex-1 min-w-0">
                     <h3 className="font-bold text-gray-900 text-sm truncate">{e.titre}</h3>
-                    <p className="text-xs text-gray-400">{e.ville} · <span style={{ color: "#FF4D00", fontWeight: 600 }}>{formatDate(e.quand)}</span></p>
-                    <span className="text-xs px-2 py-0.5 rounded-full font-semibold mt-1 inline-block" style={{ background: "#FEF3C7", color: "#92400e" }}>{e.categorie}</span>
+                    <p className="text-xs text-gray-400">{e.ville} · <span style={{ color: "#1a1a1a", fontWeight: 600 }}>{formatDate(e.quand)}</span></p>
+                    <span className="text-xs px-2 py-0.5 rounded-full font-semibold mt-1 inline-block" style={{ background: "#f3f4f6", color: "#6b7280" }}>{e.categorie}</span>
                   </div>
                   <div className="flex flex-col items-end gap-1 flex-shrink-0">
                     <span className="text-lg">❤️</span>
@@ -429,7 +451,7 @@ export default function Dashboard() {
             <div className="grid grid-cols-2 gap-3">
               {[
                 { icon: "👁️", label: "Vues totales", value: totalStats.vues, color: "#7C3AED" },
-                { icon: "🎉", label: "Participations", value: totalStats.participations, color: "#FF4D00" },
+                { icon: "🎉", label: "Participations", value: totalStats.participations, color: "#1a1a1a" },
                 { icon: "❤️", label: "Favoris reçus", value: totalStats.favoris, color: "#DB2777" },
                 { icon: "📈", label: "Taux concrét.", value: `${tauxConcretisation}%`, color: "#059669" },
               ].map((s, i) => (
@@ -465,9 +487,9 @@ export default function Dashboard() {
             )}
 
             {tauxConcretisation < 10 && totalStats.vues > 5 && (
-              <div className="rounded-2xl p-4 border" style={{ background: "#FFF7ED", borderColor: "#FED7AA" }}>
-                <p className="text-sm font-bold text-orange-800 mb-1">💡 Conseil</p>
-                <p className="text-xs text-orange-700 leading-relaxed">
+              <div className="rounded-2xl p-4 border" style={{ background: "#f9fafb", borderColor: "#e5e7eb" }}>
+                <p className="text-sm font-bold text-gray-800 mb-1">💡 Conseil</p>
+                <p className="text-xs text-gray-600 leading-relaxed">
                   Taux de concrétisation de {tauxConcretisation}%. Améliore ta description, ajoute une photo et précise le prix.
                 </p>
               </div>
