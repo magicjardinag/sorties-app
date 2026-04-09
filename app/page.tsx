@@ -696,21 +696,41 @@ export default function Home() {
             {/* Agenda + Géoloc */}
             <div className="flex items-center gap-1.5 flex-shrink-0">
               <button onClick={() => setShowCalendrier(!showCalendrier)}
-                className="w-10 h-10 flex items-center justify-center rounded-xl border transition-all text-base"
-                style={{ background: isAgendaActif ? ACCENT : "#fff", color: isAgendaActif ? "#fff" : "#555", borderColor: isAgendaActif ? ACCENT : "#e5e5e5" }}>
-                📅
+                className="flex-shrink-0 flex flex-col items-center justify-center transition-all"
+                style={{
+                  background: isAgendaActif ? ACCENT : "#fff",
+                  color: isAgendaActif ? "#fff" : "#374151",
+                  border: isAgendaActif ? "none" : "1px solid #e5e7eb",
+                  borderRadius: isAgendaActif ? "20px" : "14px",
+                  minWidth: 58, padding: "8px 10px",
+                  boxShadow: isAgendaActif ? "0 4px 12px rgba(26,26,46,0.25)" : "none",
+                }}>
+                <span className="text-[10px] font-bold uppercase tracking-wide" style={{ opacity: isAgendaActif ? 1 : 0.5 }}>Cal.</span>
+                <span className="text-2xl leading-tight">📅</span>
+                <span className="text-[9px]" style={{ opacity: isAgendaActif ? 0.8 : 0.4 }}>agenda</span>
               </button>
               {!filtreProximite ? (
                 <button onClick={activerGeolocalisation} disabled={loadingGeo}
-                  className="w-10 h-10 flex items-center justify-center rounded-xl border transition-all disabled:opacity-50 text-base"
-                  style={{ background: "#fff", borderColor: "#e5e5e5" }}>
-                  {loadingGeo ? "⏳" : "📍"}
+                  className="flex-shrink-0 flex flex-col items-center justify-center transition-all disabled:opacity-50"
+                  style={{
+                    background: "#fff",
+                    color: "#374151",
+                    border: "1px solid #e5e7eb",
+                    borderRadius: "14px",
+                    minWidth: 58, padding: "8px 10px",
+                  }}>
+                  <span className="text-[10px] font-bold uppercase tracking-wide" style={{ opacity: 0.5 }}>Lieu</span>
+                  <span className="text-2xl leading-tight">{loadingGeo ? "⏳" : "📍"}</span>
+                  <span className="text-[9px]" style={{ opacity: 0.4 }}>près de moi</span>
                 </button>
               ) : (
-                <div className="flex items-center gap-1.5 rounded-xl px-2 py-1.5 border" style={{ background: "#f8fafc", borderColor: "#e2e8f0" }}>
-                  <span className="text-xs font-semibold text-gray-600">📍 {rayon}km</span>
-                  <input type="range" min="5" max="200" step="5" value={rayon} onChange={e => setRayon(Number(e.target.value))} className="w-16" />
-                  <button onClick={() => { setFiltreProximite(false); setPosition(null) }} className="text-gray-400 text-sm">✕</button>
+                <div className="flex flex-col items-center justify-center transition-all"
+                  style={{ background: ACCENT, color: "#fff", border: "none", borderRadius: "20px", minWidth: 58, padding: "8px 10px", boxShadow: "0 4px 12px rgba(26,26,46,0.25)" }}>
+                  <span className="text-[10px] font-bold uppercase tracking-wide" style={{ opacity: 0.8 }}>📍 actif</span>
+                  <div className="flex items-center gap-1 my-0.5">
+                    <input type="range" min="5" max="200" step="5" value={rayon} onChange={e => setRayon(Number(e.target.value))} className="w-14" />
+                  </div>
+                  <button onClick={() => { setFiltreProximite(false); setPosition(null) }} className="text-[9px]" style={{ opacity: 0.7 }}>{rayon}km ✕</button>
                 </div>
               )}
             </div>
