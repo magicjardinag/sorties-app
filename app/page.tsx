@@ -517,10 +517,16 @@ export default function Home() {
   }, [pubs.length, position])
 
 
-  const activerGeolocalisation = () => {
+  const activerGeolocalisation = (onSuccess?: () => void) => {
     setLoadingGeo(true)
     navigator.geolocation.getCurrentPosition(
-      pos => { setPosition({lat:pos.coords.latitude,lng:pos.coords.longitude}); setFiltreProximite(true); setLoadingGeo(false); track("geo_activee") },
+      pos => {
+        setPosition({lat:pos.coords.latitude,lng:pos.coords.longitude})
+        setFiltreProximite(true)
+        setLoadingGeo(false)
+        track("geo_activee")
+        onSuccess?.()
+      },
       () => { alert("Impossible d'accéder à ta position."); setLoadingGeo(false) }
     )
   }
@@ -876,11 +882,11 @@ export default function Home() {
             {/* Boutons */}
             <div className="flex flex-col gap-3">
               {!filtreProximite ? (
-                <button onClick={() => { activerGeolocalisation(); setShowGeoSheet(false) }}
+                <button onClick={() => activerGeolocalisation(() => setShowGeoSheet(false))}
                   disabled={loadingGeo}
                   className="w-full py-3.5 rounded-2xl font-bold text-white text-sm disabled:opacity-50"
                   style={{ background: "#1a1a2e" }}>
-                  {loadingGeo ? "⏳ Localisation..." : "📍 Activer ma position"}
+                  {loadingGeo ? "⏳ Localisation en cours..." : "📍 Activer ma position"}
                 </button>
               ) : (
                 <>
