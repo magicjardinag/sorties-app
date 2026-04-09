@@ -468,8 +468,6 @@ export default function Home() {
   const [showCalendrier, setShowCalendrier] = useState(false)
   const [menuMobileOpen, setMenuMobileOpen] = useState(false)
   const [showGeoModal, setShowGeoModal] = useState(false)
-  const [showCalendrier, setShowCalendrier] = useState(false)
-  const [menuMobileOpen, setMenuMobileOpen] = useState(false)
   const [installPrompt, setInstallPrompt] = useState<any>(null)
   const [showInstallBtn, setShowInstallBtn] = useState(false)
   const [showQRModal, setShowQRModal] = useState(false)
