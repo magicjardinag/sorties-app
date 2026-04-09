@@ -28,7 +28,7 @@ const HERO_SLIDES = [
     categorie: "Musique",
     emoji: "🎵",
     bg: "#7C3AED",
-    accent: "#FCD34D",
+    accent: "#f3f4f6",
     phrase: "Tes oreilles méritent mieux que Spotify.",
     sub: "Musique · en ce moment",
   },
@@ -36,7 +36,7 @@ const HERO_SLIDES = [
     categorie: "Sport",
     emoji: "🏃",
     bg: "#059669",
-    accent: "#FCD34D",
+    accent: "#f3f4f6",
     phrase: "Ton canapé survivra sans toi ce soir.",
     sub: "Sport · en ce moment",
   },
@@ -44,7 +44,7 @@ const HERO_SLIDES = [
     categorie: "Nature & Rando",
     emoji: "🌿",
     bg: "#0891B2",
-    accent: "#FCD34D",
+    accent: "#f3f4f6",
     phrase: "La nature existe aussi en vrai, paraît-il.",
     sub: "Nature & Rando · en ce moment",
   },
@@ -52,7 +52,7 @@ const HERO_SLIDES = [
     categorie: "Culture",
     emoji: "🎨",
     bg: "#D97706",
-    accent: "#FEF3C7",
+    accent: "#f3f4f6",
     phrase: "Sors, t'auras l'air cultivé au bureau lundi.",
     sub: "Culture · en ce moment",
   },
@@ -60,7 +60,7 @@ const HERO_SLIDES = [
     categorie: "Food",
     emoji: "🍕",
     bg: "#DC2626",
-    accent: "#FCD34D",
+    accent: "#f3f4f6",
     phrase: "Tu peux pas manger pareil chez toi. Promis.",
     sub: "Food · en ce moment",
   },
@@ -68,7 +68,7 @@ const HERO_SLIDES = [
     categorie: "Danse",
     emoji: "💃",
     bg: "#DB2777",
-    accent: "#FCD34D",
+    accent: "#f3f4f6",
     phrase: "Personne juge. Enfin presque.",
     sub: "Danse · en ce moment",
   },
@@ -76,7 +76,7 @@ const HERO_SLIDES = [
     categorie: "Bar & Nuit",
     emoji: "🍸",
     bg: "#1D4ED8",
-    accent: "#FCD34D",
+    accent: "#f3f4f6",
     phrase: "Un verre dehors, ça compte comme du social.",
     sub: "Bar & Nuit · en ce moment",
   },
@@ -84,7 +84,7 @@ const HERO_SLIDES = [
     categorie: "Atelier",
     emoji: "🛠️",
     bg: "#B45309",
-    accent: "#FEF3C7",
+    accent: "#f3f4f6",
     phrase: "Crée un truc. Même raté c'est sympa.",
     sub: "Atelier · en ce moment",
   },
@@ -92,7 +92,7 @@ const HERO_SLIDES = [
     categorie: "Enfants",
     emoji: "🧒",
     bg: "#0EA5E9",
-    accent: "#FCD34D",
+    accent: "#f3f4f6",
     phrase: "Épuise-les dehors. Dors mieux ce soir.",
     sub: "Enfants · en ce moment",
   },
@@ -100,7 +100,7 @@ const HERO_SLIDES = [
     categorie: "Animaux",
     emoji: "🐾",
     bg: "#16A34A",
-    accent: "#FCD34D",
+    accent: "#f3f4f6",
     phrase: "Ton chien a besoin de toi. (C'est lui qui le dit.)",
     sub: "Animaux · en ce moment",
   },
@@ -108,7 +108,7 @@ const HERO_SLIDES = [
     categorie: "Brocante",
     emoji: "🏺",
     bg: "#92400E",
-    accent: "#FEF3C7",
+    accent: "#f3f4f6",
     phrase: "Achète des trucs dont t'as pas besoin. Avec style.",
     sub: "Brocante · en ce moment",
   },
@@ -116,7 +116,7 @@ const HERO_SLIDES = [
     categorie: "Loto",
     emoji: "🎰",
     bg: "#BE185D",
-    accent: "#FCD34D",
+    accent: "#f3f4f6",
     phrase: "Ce soir c'est peut-être toi. (C'est pas toi.)",
     sub: "Loto · en ce moment",
   },
@@ -338,9 +338,9 @@ function MiniCalendrier({ evenements, jourActif, setJourActif }: {
   return (
     <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-4 w-72">
       <div className="flex items-center justify-between mb-3">
-        <button onClick={() => setMoisActuel(new Date(annee, mois - 1, 1))} className="text-gray-400 hover:text-orange-500 text-lg px-1">‹</button>
+        <button onClick={() => setMoisActuel(new Date(annee, mois - 1, 1))} className="text-gray-400 hover:text-gray-600 text-lg px-1">‹</button>
         <p className="font-bold text-gray-800 text-sm">{moisNoms[mois]} {annee}</p>
-        <button onClick={() => setMoisActuel(new Date(annee, mois + 1, 1))} className="text-gray-400 hover:text-orange-500 text-lg px-1">›</button>
+        <button onClick={() => setMoisActuel(new Date(annee, mois + 1, 1))} className="text-gray-400 hover:text-gray-600 text-lg px-1">›</button>
       </div>
       <div className="grid grid-cols-7 gap-0.5 mb-1">
         {joursNoms.map(j => <p key={j} className="text-center text-xs text-gray-400 font-medium py-1">{j}</p>)}
@@ -357,16 +357,16 @@ function MiniCalendrier({ evenements, jourActif, setJourActif }: {
           return (
             <button key={dateStr} onClick={() => setJourActif(isSelected ? "tout" : dateStr)} disabled={isPast && !hasEvent}
               className={`relative flex flex-col items-center justify-center rounded-xl py-1.5 text-xs font-medium transition-all
-                ${isSelected ? "bg-orange-500 text-white" : isToday ? "bg-orange-100 text-orange-600 font-bold" :
-                  isPast ? "text-gray-300 cursor-not-allowed" : hasEvent ? "text-gray-800 hover:bg-orange-50 cursor-pointer" : "text-gray-400 hover:bg-gray-50 cursor-pointer"}`}>
+                ${isSelected ? "bg-gray-800 text-white" : isToday ? "bg-gray-100 text-gray-700 font-bold" :
+                  isPast ? "text-gray-300 cursor-not-allowed" : hasEvent ? "text-gray-800 hover:bg-gray-50 cursor-pointer" : "text-gray-400 hover:bg-gray-50 cursor-pointer"}`}>
               {jour}
-              {hasEvent && !isSelected && <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-orange-400" />}
+              {hasEvent && !isSelected && <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-gray-400" />}
             </button>
           )
         })}
       </div>
       {jourActif !== "tout" && (
-        <button onClick={() => setJourActif("tout")} className="mt-3 w-full text-xs text-orange-500 hover:underline text-center">Voir tous les événements ×</button>
+        <button onClick={() => setJourActif("tout")} className="mt-3 w-full text-xs text-gray-600 hover:underline text-center">Voir tous les événements ×</button>
       )}
     </div>
   )
@@ -445,7 +445,7 @@ function HeroCarousel({
   return (
     <section
       className="relative w-full overflow-hidden"
-      style={{ background: slide.bg }}
+      style={{ background: "linear-gradient(135deg, #f1f3f4 0%, #e8eaed 100%)" }}
     >
       {/* ── VERSION MOBILE ── */}
       {isMobile && <div
@@ -775,7 +775,7 @@ export default function Home() {
       <header className="hidden sm:block bg-white sticky top-0 z-40 border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-3">
           <button onClick={() => router.push("/")} className="flex-shrink-0 font-black text-xl tracking-tight text-gray-900">
-            Sorties<span style={{ color: "#FF4D00" }}>App</span>
+            Sorties<span style={{ color: "#1a1a1a" }}>App</span>
           </button>
           <div className="hidden sm:flex flex-1 max-w-md items-center bg-gray-100 rounded-full px-4 py-2.5 gap-2">
             <span className="text-gray-400 text-sm">🔍</span>
@@ -787,16 +787,16 @@ export default function Home() {
             {user?.email === ADMIN_EMAIL && <button onClick={() => router.push("/admin")} className="px-3 py-2 rounded-full text-sm font-medium text-red-500 hover:bg-red-50">⚙️</button>}
             {user ? <button onClick={() => router.push("/dashboard")} className="px-3 py-2 rounded-full text-sm font-medium text-gray-600 hover:bg-gray-100">Mon espace</button>
               : <button onClick={() => router.push("/auth")} className="px-3 py-2 rounded-full text-sm font-medium text-gray-600 hover:bg-gray-100">Se connecter</button>}
-            <button onClick={() => setShowQRModal(true)} className="px-4 py-2 rounded-full text-sm font-bold border flex items-center gap-1.5 transition-all hover:bg-gray-50" style={{ borderColor: "#FF4D00", color: "#FF4D00" }}>
+            <button onClick={() => setShowQRModal(true)} className="px-4 py-2 rounded-full text-sm font-bold border flex items-center gap-1.5 transition-all hover:bg-gray-50" style={{ borderColor: "#1a1a1a", color: "#1a1a1a" }}>
               📲 Installer l'app
             </button>
-            <button onClick={() => router.push("/publier")} className="px-4 py-2 rounded-full text-sm font-bold text-white shadow-sm" style={{ background: "#FF4D00" }}>+ Publier</button>
+            <button onClick={() => router.push("/publier")} className="px-4 py-2 rounded-full text-sm font-bold text-white shadow-sm" style={{ background: "#1a1a1a" }}>+ Publier</button>
           </div>
           <div className="flex sm:hidden items-center gap-2 ml-2">
             {showInstallBtn && (
               <button onClick={handleInstall}
                 className="flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold text-white"
-                style={{ background: "#FF4D00" }}>
+                style={{ background: "#1a1a1a" }}>
                 📲 Installer
               </button>
             )}
@@ -812,26 +812,26 @@ export default function Home() {
             <button onClick={() => { router.push("/tarifs"); setMenuMobileOpen(false) }} className="text-left px-3 py-2.5 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-100">💎 Tarifs</button>
             {user?.email === ADMIN_EMAIL && <button onClick={() => { router.push("/admin"); setMenuMobileOpen(false) }} className="text-left px-3 py-2.5 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50">⚙️ Admin</button>}
             {showInstallBtn && (
-              <button onClick={() => { handleInstall(); setMenuMobileOpen(false) }} className="px-4 py-2.5 rounded-xl text-sm font-bold text-center border" style={{ borderColor: "#FF4D00", color: "#FF4D00" }}>
+              <button onClick={() => { handleInstall(); setMenuMobileOpen(false) }} className="px-4 py-2.5 rounded-xl text-sm font-bold text-center border" style={{ borderColor: "#1a1a1a", color: "#1a1a1a" }}>
                 📲 Installer l'app sur mon téléphone
               </button>
             )}
-            <button onClick={() => { router.push("/publier"); setMenuMobileOpen(false) }} className="px-4 py-2.5 rounded-xl text-sm font-bold text-white text-center" style={{ background: "#FF4D00" }}>+ Publier un événement</button>
+            <button onClick={() => { router.push("/publier"); setMenuMobileOpen(false) }} className="px-4 py-2.5 rounded-xl text-sm font-bold text-white text-center" style={{ background: "#1a1a1a" }}>+ Publier un événement</button>
           </div>
         )}
       </header>
 
       {/* ── PUB — cachée sur mobile (affichée en bas) ── */}
       {pubsFiltrees.length > 0 && pubActuel && (
-        <div className="hidden sm:flex border-b border-amber-100 px-4 py-2.5 items-center justify-between gap-3" style={{ background: "#FFFBEB" }}>
+        <div className="hidden sm:flex border-b border-amber-100 px-4 py-2.5 items-center justify-between gap-3" style={{ background: "#fafafa" }}>
           <div className="flex items-center gap-2 min-w-0">
-            <span className="flex-shrink-0 text-xs px-2 py-0.5 rounded-full font-semibold text-amber-700" style={{ background: "#FDE68A" }}>Pub</span>
+            <span className="flex-shrink-0 text-xs px-2 py-0.5 rounded-full font-semibold text-gray-500" style={{ background: "#f3f4f6" }}>Pub</span>
             <span className="text-sm font-semibold text-gray-800 truncate">{pubActuel.nom_commerce}</span>
-            <span className="text-sm text-amber-700 hidden sm:inline truncate">{pubActuel.description}</span>
+            <span className="text-sm text-gray-500 hidden sm:inline truncate">{pubActuel.description}</span>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
-            <a href={pubActuel.lien} target="_blank" className="text-xs font-semibold hover:underline whitespace-nowrap" style={{ color: "#FF4D00" }}>Voir →</a>
-            <div className="flex gap-1">{pubsFiltrees.map((_, i) => <div key={i} className={`w-1.5 h-1.5 rounded-full ${i === pubIndex % pubsFiltrees.length ? "bg-amber-500" : "bg-amber-200"}`} />)}</div>
+            <a href={pubActuel.lien} target="_blank" className="text-xs font-semibold hover:underline whitespace-nowrap" style={{ color: "#1a1a1a" }}>Voir →</a>
+            <div className="flex gap-1">{pubsFiltrees.map((_, i) => <div key={i} className={`w-1.5 h-1.5 rounded-full ${i === pubIndex % pubsFiltrees.length ? "bg-gray-500" : "bg-gray-200"}`} />)}</div>
           </div>
         </div>
       )}
@@ -864,7 +864,7 @@ export default function Home() {
                 activerGeolocalisation()
               }}
               className="w-full py-3 rounded-2xl font-bold text-white text-sm mb-3 transition-all active:scale-[0.98]"
-              style={{ background: "#FF4D00" }}>
+              style={{ background: "#1a1a1a" }}>
               📍 Oui, trouve des events près de moi
             </button>
             <button
@@ -896,7 +896,7 @@ export default function Home() {
             {filtresBoutons.map((f) => (
               <button key={f.value} onClick={() => { setJourActif(f.value); setShowCalendrier(false) }}
                 className="flex-shrink-0 px-4 py-2 rounded-full text-sm font-semibold transition-all whitespace-nowrap border"
-                style={{ background: jourActif === f.value ? "#FF4D00" : "#fff", color: jourActif === f.value ? "#fff" : "#555", borderColor: jourActif === f.value ? "#FF4D00" : "#e5e5e5" }}>
+                style={{ background: jourActif === f.value ? "#1a1a1a" : "#fff", color: jourActif === f.value ? "#fff" : "#555", borderColor: jourActif === f.value ? "#1a1a1a" : "#e5e5e5" }}>
                 {f.label}
               </button>
             ))}
@@ -904,7 +904,7 @@ export default function Home() {
             {/* Agenda */}
             <button onClick={() => setShowCalendrier(!showCalendrier)}
               className="flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-all whitespace-nowrap border"
-              style={{ background: isAgendaActif ? "#FF4D00" : "#fff", color: isAgendaActif ? "#fff" : "#555", borderColor: isAgendaActif ? "#FF4D00" : "#e5e5e5" }}>
+              style={{ background: isAgendaActif ? "#1a1a1a" : "#fff", color: isAgendaActif ? "#fff" : "#555", borderColor: isAgendaActif ? "#1a1a1a" : "#e5e5e5" }}>
               📅 <span>{jourActif !== "tout" && jourActif !== "weekend" && jourActif !== dates.today && jourActif !== dates.demain ? new Date(jourActif).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) : "Agenda"}</span>
             </button>
             {/* Géoloc — juste à côté d'Agenda */}
@@ -929,9 +929,9 @@ export default function Home() {
               <button key={cat.label} onClick={() => setCategorieActive(cat.label)}
                 className="flex-shrink-0 flex items-center gap-1.5 rounded-full font-semibold whitespace-nowrap transition-all border"
                 style={{
-                  background: categorieActive === cat.label ? "#FF4D00" : "#fff",
+                  background: categorieActive === cat.label ? "#1a1a1a" : "#fff",
                   color: categorieActive === cat.label ? "#fff" : "#555",
-                  borderColor: categorieActive === cat.label ? "#FF4D00" : "#e5e5e5",
+                  borderColor: categorieActive === cat.label ? "#1a1a1a" : "#e5e5e5",
                   padding: "7px 12px",
                 }}>
                 <span style={{ fontSize: 15, lineHeight: 1 }}>{cat.emoji}</span>
@@ -949,9 +949,9 @@ export default function Home() {
           <div className="hidden lg:block flex-shrink-0 sticky top-24">
             <MiniCalendrier evenements={evenements.filter(e => new Date(e.quand) >= today)} jourActif={jourActif} setJourActif={setJourActif} />
             {jourActif !== "tout" && jourActif !== "weekend" && (
-              <div className="mt-3 rounded-2xl p-3 border border-orange-100 w-72" style={{ background: "#FFF7ED" }}>
-                <p className="text-xs font-semibold" style={{ color: "#FF4D00" }}>📅 {new Date(jourActif).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}</p>
-                <p className="text-xs text-orange-400 mt-1">{evenementsFiltres.length} événement{evenementsFiltres.length > 1 ? "s" : ""}</p>
+              <div className="mt-3 rounded-2xl p-3 border border-gray-100 w-72" style={{ background: "#FFF7ED" }}>
+                <p className="text-xs font-semibold" style={{ color: "#1a1a1a" }}>📅 {new Date(jourActif).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}</p>
+                <p className="text-xs text-gray-400 mt-1">{evenementsFiltres.length} événement{evenementsFiltres.length > 1 ? "s" : ""}</p>
               </div>
             )}
           </div>
@@ -980,7 +980,7 @@ export default function Home() {
               <p className="text-5xl mb-4">😕</p>
               <p className="text-lg font-bold text-gray-700 mb-1">Aucun événement trouvé</p>
               <p className="text-sm text-gray-400 mb-4">Essaie de modifier tes filtres</p>
-              {filtreProximite && <button onClick={() => setRayon(r => Math.min(r + 25, 200))} className="mt-2 px-5 py-2.5 text-white rounded-full text-sm font-semibold shadow-sm" style={{ background: "#FF4D00" }}>Élargir → {rayon + 25} km</button>}
+              {filtreProximite && <button onClick={() => setRayon(r => Math.min(r + 25, 200))} className="mt-2 px-5 py-2.5 text-white rounded-full text-sm font-semibold shadow-sm" style={{ background: "#1a1a1a" }}>Élargir → {rayon + 25} km</button>}
             </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -1011,14 +1011,14 @@ export default function Home() {
                       {/* Badge urgence en haut à gauche */}
                       {isToday && (
                         <div className="absolute top-2.5 left-2.5 flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold text-white z-10"
-                          style={{ background: "#FF4D00" }}>
+                          style={{ background: "#1a1a1a" }}>
                           <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse inline-block" />
                           Aujourd'hui
                         </div>
                       )}
                       {isTomorrow && (
                         <div className="absolute top-2.5 left-2.5 px-2 py-1 rounded-full text-xs font-bold z-10"
-                          style={{ background: "#FCD34D", color: "#92400e" }}>
+                          style={{ background: "#f3f4f6", color: "#92400e" }}>
                           Demain
                         </div>
                       )}
@@ -1040,11 +1040,11 @@ export default function Home() {
                     <div className="p-3">
                       <div className="flex items-center justify-between mb-1.5">
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                          style={{ background: "#FEF3C7", color: "#92400e" }}>
+                          style={{ background: "#f3f4f6", color: "#92400e" }}>
                           {e.categorie}
                         </span>
                         {!isToday && !isTomorrow && e.quand && (
-                          <span className="text-[10px] font-semibold" style={{ color: "#FF4D00" }}>
+                          <span className="text-[10px] font-semibold" style={{ color: "#1a1a1a" }}>
                             {dateLabel}
                           </span>
                         )}
@@ -1069,13 +1069,13 @@ export default function Home() {
 
       {/* ── PUB MOBILE — en bas avant footer ── */}
       {pubsFiltrees.length > 0 && pubActuel && (
-        <div className="sm:hidden px-4 py-2.5 flex items-center justify-between gap-3 mx-4 mb-4 rounded-2xl" style={{ background: "#FFFBEB", border: "1px solid #FDE68A" }}>
+        <div className="sm:hidden px-4 py-2.5 flex items-center justify-between gap-3 mx-4 mb-4 rounded-2xl" style={{ background: "#fafafa", border: "1px solid #f3f4f6" }}>
           <div className="flex items-center gap-2 min-w-0">
-            <span className="flex-shrink-0 text-xs px-2 py-0.5 rounded-full font-semibold text-amber-700" style={{ background: "#FDE68A" }}>Pub</span>
+            <span className="flex-shrink-0 text-xs px-2 py-0.5 rounded-full font-semibold text-gray-500" style={{ background: "#f3f4f6" }}>Pub</span>
             <span className="text-sm font-semibold text-gray-800 truncate">{pubActuel.nom_commerce}</span>
-            <span className="text-xs text-amber-700 truncate">{pubActuel.description}</span>
+            <span className="text-xs text-gray-500 truncate">{pubActuel.description}</span>
           </div>
-          <a href={pubActuel.lien} target="_blank" className="text-xs font-semibold hover:underline whitespace-nowrap flex-shrink-0" style={{ color: "#FF4D00" }}>Voir →</a>
+          <a href={pubActuel.lien} target="_blank" className="text-xs font-semibold hover:underline whitespace-nowrap flex-shrink-0" style={{ color: "#1a1a1a" }}>Voir →</a>
         </div>
       )}
 
@@ -1095,7 +1095,7 @@ export default function Home() {
               <img
                 src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent("https://sorties-app-seven.vercel.app/installer")}&bgcolor=ffffff&color=FF4D00&qzone=1`}
                 alt="QR Code SortiesApp"
-                className="rounded-2xl border-4 border-orange-100"
+                className="rounded-2xl border-4 border-gray-100"
                 width={180}
                 height={180}
               />
@@ -1103,7 +1103,7 @@ export default function Home() {
             <p className="text-xs text-gray-400 mb-4">
               Une fois le site ouvert sur mobile → menu ☰ ou Chrome ⋮ → "Ajouter à l'écran d'accueil"
             </p>
-            <button onClick={() => setShowQRModal(false)} className="w-full py-3 rounded-full font-bold text-white" style={{ background: "#FF4D00" }}>
+            <button onClick={() => setShowQRModal(false)} className="w-full py-3 rounded-full font-bold text-white" style={{ background: "#1a1a1a" }}>
               Fermer
             </button>
           </div>
@@ -1117,7 +1117,7 @@ export default function Home() {
         <div className="max-w-5xl mx-auto">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-8 mb-8">
             <div className="col-span-2 sm:col-span-1">
-              <h3 className="font-black text-white text-lg mb-2">Sorties<span style={{ color: "#FF4D00" }}>App</span></h3>
+              <h3 className="font-black text-white text-lg mb-2">Sorties<span style={{ color: "#1a1a1a" }}>App</span></h3>
               <p className="text-sm leading-relaxed" style={{ color: "#94A3B8" }}>Trouve des activités et événements près de chez toi. La vie est trop courte pour s'ennuyer.</p>
             </div>
             <div>
@@ -1125,7 +1125,7 @@ export default function Home() {
               <div className="flex flex-col gap-2">
                 {[{ l: "Accueil", p: "/" }, { l: "Carte", p: "/carte" }, { l: "Publier", p: "/publier" }, { l: "Tarifs", p: "/tarifs" }].map(x => (
                   <button key={x.l} onClick={() => router.push(x.p)} className="text-sm text-left transition-colors" style={{ color: "#94A3B8" }}
-                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#FF4D00"}
+                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#1a1a1a"}
                     onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#94A3B8"}>{x.l}</button>
                 ))}
               </div>
@@ -1135,7 +1135,7 @@ export default function Home() {
               <div className="flex flex-col gap-2">
                 {[{ l: "Contact", p: "/contact" }, { l: "Remboursement", p: "/contact" }, { l: "Signaler", p: "/contact" }].map(x => (
                   <button key={x.l} onClick={() => router.push(x.p)} className="text-sm text-left transition-colors" style={{ color: "#94A3B8" }}
-                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#FF4D00"}
+                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#1a1a1a"}
                     onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#94A3B8"}>{x.l}</button>
                 ))}
               </div>
@@ -1145,7 +1145,7 @@ export default function Home() {
               <div className="flex flex-col gap-2">
                 {[{ l: "Partenariat local", p: "/contact" }, { l: "Affiliation", p: "/contact" }, { l: "Publicité", p: "/contact" }].map(x => (
                   <button key={x.l} onClick={() => router.push(x.p)} className="text-sm text-left transition-colors" style={{ color: "#94A3B8" }}
-                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#FF4D00"}
+                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#1a1a1a"}
                     onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#94A3B8"}>{x.l}</button>
                 ))}
               </div>
@@ -1156,7 +1156,7 @@ export default function Home() {
             <div className="flex gap-4">
               {[{ l: "Mentions légales", p: "/mentions-legales" }, { l: "CGU", p: "/cgu" }, { l: "Contact", p: "/contact" }].map(x => (
                 <button key={x.l} onClick={() => router.push(x.p)} className="text-xs transition-colors" style={{ color: "#475569" }}
-                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#FF4D00"}
+                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#1a1a1a"}
                   onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#475569"}>{x.l}</button>
               ))}
             </div>
@@ -1169,14 +1169,14 @@ export default function Home() {
         <div className="flex items-center justify-around px-2 py-2">
           <button onClick={() => router.push("/")} className="flex flex-col items-center gap-0.5 px-3 py-1.5">
             <span className="text-xl">🏠</span>
-            <span className="text-[10px] font-bold" style={{ color: "#FF4D00" }}>Accueil</span>
+            <span className="text-[10px] font-bold" style={{ color: "#1a1a1a" }}>Accueil</span>
           </button>
           <button onClick={() => router.push("/carte")} className="flex flex-col items-center gap-0.5 px-3 py-1.5">
             <span className="text-xl">🗺️</span>
             <span className="text-[10px] font-semibold text-gray-400">Carte</span>
           </button>
           <button onClick={() => router.push("/publier")} className="flex flex-col items-center gap-0.5 -mt-5">
-            <span className="w-14 h-14 flex items-center justify-center text-white text-2xl font-black rounded-2xl shadow-lg" style={{ background: "#FF4D00" }}>+</span>
+            <span className="w-14 h-14 flex items-center justify-center text-white text-2xl font-black rounded-2xl shadow-lg" style={{ background: "#1a1a1a" }}>+</span>
           </button>
           <button onClick={() => user ? router.push("/dashboard") : router.push("/auth")} className="flex flex-col items-center gap-0.5 px-3 py-1.5">
             <span className="text-xl">👤</span>
@@ -1185,7 +1185,7 @@ export default function Home() {
           {user?.email === ADMIN_EMAIL ? (
             <button onClick={() => router.push("/admin")} className="flex flex-col items-center gap-0.5 px-3 py-1.5">
               <span className="text-xl">⚙️</span>
-              <span className="text-[10px] font-bold text-orange-500">Admin</span>
+              <span className="text-[10px] font-bold text-gray-600">Admin</span>
             </button>
           ) : (
             <button onClick={() => user ? router.push("/dashboard") : router.push("/auth")} className="flex flex-col items-center gap-0.5 px-3 py-1.5">
