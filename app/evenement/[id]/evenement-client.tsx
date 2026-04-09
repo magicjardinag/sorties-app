@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
+import { track } from "@/lib/analytics"
 
 type Evenement = {
   id: string
@@ -257,6 +258,7 @@ export default function EvenementDetail() {
       evenement_id: evenement.id,
       user_agent: navigator.userAgent.slice(0, 200),
     }).then(() => {})
+    track("vue_evenement", evenement.id, { categorie: evenement.categorie, ville: evenement.ville })
     // Charger le nb de vues
     supabase.from("vues_evenements")
       .select("id", { count: "exact" })
@@ -326,6 +328,7 @@ export default function EvenementDetail() {
         .insert({ evenement_id: evenement.id, user_id: user.id })
       setHasParticipated(true)
       setParticipationCount(c => c + 1)
+      track("clic_participer", evenement.id, { titre: evenement.titre })
 
       // Notifier l'organisateur par email
       try {
@@ -347,6 +350,7 @@ export default function EvenementDetail() {
   }
 
   const partager = () => {
+    track("clic_partage", evenement?.id, { titre: evenement?.titre })
     if (navigator.share) {
       navigator.share({ title: evenement?.titre, url: window.location.href })
     } else {
@@ -428,7 +432,7 @@ export default function EvenementDetail() {
             <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-6" />
             <h3 className="font-black text-lg text-gray-900 mb-4" style={{ fontFamily: "'Syne', sans-serif" }}>Ajouter à l'agenda</h3>
             <div className="flex flex-col gap-3">
-              <button onClick={() => { window.open(genererLienGoogleCalendar(evenement), "_blank"); setShowAgenda(false) }}
+              <button onClick={() => { window.open(genererLienGoogleCalendar(evenement), "_blank"); setShowAgenda(false); track("ajout_calendrier", evenement.id, { type: "google" }) }}
                 className="flex items-center gap-3 w-full border border-gray-200 rounded-2xl p-4 hover:bg-gray-50 transition-colors text-left">
                 <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-xl">📅</div>
                 <div>
@@ -436,7 +440,7 @@ export default function EvenementDetail() {
                   <p className="text-xs text-gray-400">Ouvre Google Calendar</p>
                 </div>
               </button>
-              <button onClick={() => { telechargerICS(); setShowAgenda(false) }}
+              <button onClick={() => { telechargerICS(); setShowAgenda(false); track("ajout_calendrier", evenement.id, { type: "ics" }) }}
                 className="flex items-center gap-3 w-full border border-gray-200 rounded-2xl p-4 hover:bg-gray-50 transition-colors text-left">
                 <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-xl">🍎</div>
                 <div>
@@ -561,7 +565,7 @@ export default function EvenementDetail() {
             ‹
           </button>
           <button
-            onClick={() => setFavori(f => !f)}
+            onClick={() => { const newVal = !favori; setFavori(newVal); track(newVal ? "ajout_favori" : "retrait_favori", evenement.id) }}
             className="w-10 h-10 rounded-full flex items-center justify-center text-lg"
             style={{ background: "rgba(255,255,255,0.2)", backdropFilter: "blur(8px)" }}
           >
