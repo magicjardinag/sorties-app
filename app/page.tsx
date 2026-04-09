@@ -471,6 +471,7 @@ export default function Home() {
   const [installPrompt, setInstallPrompt] = useState<any>(null)
   const [showInstallBtn, setShowInstallBtn] = useState(false)
   const [showQRModal, setShowQRModal] = useState(false)
+  const [showGeoSheet, setShowGeoSheet] = useState(false)
 
   useEffect(() => {
     const handler = (e: any) => { e.preventDefault(); setInstallPrompt(e); setShowInstallBtn(true) }
@@ -709,30 +710,20 @@ export default function Home() {
                 <span className="text-2xl leading-tight">📅</span>
                 <span className="text-[9px]" style={{ opacity: isAgendaActif ? 0.8 : 0.4 }}>agenda</span>
               </button>
-              {!filtreProximite ? (
-                <button onClick={activerGeolocalisation} disabled={loadingGeo}
-                  className="flex-shrink-0 flex flex-col items-center justify-center transition-all disabled:opacity-50"
-                  style={{
-                    background: "#fff",
-                    color: "#374151",
-                    border: "1px solid #e5e7eb",
-                    borderRadius: "14px",
-                    minWidth: 58, padding: "8px 10px",
-                  }}>
-                  <span className="text-[10px] font-bold uppercase tracking-wide" style={{ opacity: 0.5 }}>Lieu</span>
-                  <span className="text-2xl leading-tight">{loadingGeo ? "⏳" : "📍"}</span>
-                  <span className="text-[9px]" style={{ opacity: 0.4 }}>près de moi</span>
-                </button>
-              ) : (
-                <div className="flex flex-col items-center justify-center transition-all"
-                  style={{ background: ACCENT, color: "#fff", border: "none", borderRadius: "20px", minWidth: 58, padding: "8px 10px", boxShadow: "0 4px 12px rgba(26,26,46,0.25)" }}>
-                  <span className="text-[10px] font-bold uppercase tracking-wide" style={{ opacity: 0.8 }}>📍 actif</span>
-                  <div className="flex items-center gap-1 my-0.5">
-                    <input type="range" min="5" max="200" step="5" value={rayon} onChange={e => setRayon(Number(e.target.value))} className="w-14" />
-                  </div>
-                  <button onClick={() => { setFiltreProximite(false); setPosition(null) }} className="text-[9px]" style={{ opacity: 0.7 }}>{rayon}km ✕</button>
-                </div>
-              )}
+              <button onClick={() => setShowGeoSheet(true)}
+                className="flex-shrink-0 flex flex-col items-center justify-center transition-all"
+                style={{
+                  background: filtreProximite ? ACCENT : "#fff",
+                  color: filtreProximite ? "#fff" : "#374151",
+                  border: filtreProximite ? "none" : "1px solid #e5e7eb",
+                  borderRadius: filtreProximite ? "20px" : "14px",
+                  minWidth: 58, padding: "8px 10px",
+                  boxShadow: filtreProximite ? "0 4px 12px rgba(26,26,46,0.25)" : "none",
+                }}>
+                <span className="text-[10px] font-bold uppercase tracking-wide" style={{ opacity: filtreProximite ? 1 : 0.5 }}>Lieu</span>
+                <span className="text-2xl leading-tight">📍</span>
+                <span className="text-[9px]" style={{ opacity: filtreProximite ? 0.8 : 0.4 }}>{filtreProximite ? `${rayon}km` : "près de moi"}</span>
+              </button>
             </div>
           </div>
           <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 items-center" style={{ scrollbarWidth: "none" }}>
@@ -854,6 +845,68 @@ export default function Home() {
                 alt="QR Code" className="rounded-2xl border-4 border-gray-100" width={180} height={180} />
             </div>
             <button onClick={() => setShowQRModal(false)} className="w-full py-3 rounded-full font-bold text-white" style={{ background: ACCENT }}>Fermer</button>
+          </div>
+        </div>
+      )}
+
+      {/* MODALE GÉO BOTTOM SHEET */}
+      {showGeoSheet && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-end justify-center" onClick={() => setShowGeoSheet(false)}>
+          <div onClick={e => e.stopPropagation()} className="bg-white rounded-t-3xl w-full max-w-lg p-6 pb-10">
+            <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5" />
+            <h3 className="font-black text-gray-900 text-lg mb-1" style={{ fontFamily: "'Syne', sans-serif" }}>📍 Près de moi</h3>
+            <p className="text-sm text-gray-400 mb-6">Affiche les événements dans un rayon autour de ta position.</p>
+
+            {/* Slider rayon */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm font-semibold text-gray-700">Rayon de recherche</span>
+                <span className="text-lg font-black" style={{ color: "#1a1a2e", fontFamily: "'Syne', sans-serif" }}>{rayon} km</span>
+              </div>
+              <input type="range" min="5" max="200" step="5" value={rayon}
+                onChange={e => setRayon(Number(e.target.value))}
+                className="w-full accent-gray-900" />
+              <div className="flex justify-between text-xs text-gray-400 mt-1">
+                <span>5 km</span>
+                <span>100 km</span>
+                <span>200 km</span>
+              </div>
+            </div>
+
+            {/* Boutons */}
+            <div className="flex flex-col gap-3">
+              {!filtreProximite ? (
+                <button onClick={() => { activerGeolocalisation(); setShowGeoSheet(false) }}
+                  disabled={loadingGeo}
+                  className="w-full py-3.5 rounded-2xl font-bold text-white text-sm disabled:opacity-50"
+                  style={{ background: "#1a1a2e" }}>
+                  {loadingGeo ? "⏳ Localisation..." : "📍 Activer ma position"}
+                </button>
+              ) : (
+                <>
+                  <div className="flex items-center gap-3 p-3 rounded-2xl" style={{ background: "#f0fdf4" }}>
+                    <span className="text-green-500 text-xl">✅</span>
+                    <div>
+                      <p className="text-sm font-bold text-green-700">Position activée</p>
+                      <p className="text-xs text-green-600">Événements dans {rayon} km autour de toi</p>
+                    </div>
+                  </div>
+                  <button onClick={() => { setShowGeoSheet(false) }}
+                    className="w-full py-3 rounded-2xl font-bold text-white text-sm"
+                    style={{ background: "#1a1a2e" }}>
+                    Appliquer — {rayon} km
+                  </button>
+                  <button onClick={() => { setFiltreProximite(false); setPosition(null); setShowGeoSheet(false) }}
+                    className="w-full py-2.5 rounded-2xl font-semibold text-gray-400 text-sm border border-gray-200">
+                    Désactiver la localisation
+                  </button>
+                </>
+              )}
+              <button onClick={() => { setShowGeoSheet(false); router.push("/carte") }}
+                className="w-full py-2.5 rounded-2xl font-semibold text-sm border border-gray-200 text-gray-600">
+                🗺️ Explorer sur la carte
+              </button>
+            </div>
           </div>
         </div>
       )}
