@@ -24,18 +24,18 @@ const categories = [
 ]
 
 const HERO_SLIDES = [
-  { categorie: "Musique", emoji: "🎵", phrase: "Tes oreilles méritent mieux que Spotify.", sub: "Musique · en ce moment" },
-  { categorie: "Sport", emoji: "🏃", phrase: "Ton canapé survivra sans toi ce soir.", sub: "Sport · en ce moment" },
-  { categorie: "Nature & Rando", emoji: "🌿", phrase: "La nature existe aussi en vrai, paraît-il.", sub: "Nature & Rando · en ce moment" },
-  { categorie: "Culture", emoji: "🎨", phrase: "Sors, t'auras l'air cultivé au bureau lundi.", sub: "Culture · en ce moment" },
-  { categorie: "Food", emoji: "🍕", phrase: "Tu peux pas manger pareil chez toi. Promis.", sub: "Food · en ce moment" },
-  { categorie: "Danse", emoji: "💃", phrase: "Personne juge. Enfin presque.", sub: "Danse · en ce moment" },
-  { categorie: "Bar & Nuit", emoji: "🍸", phrase: "Un verre dehors, ça compte comme du social.", sub: "Bar & Nuit · en ce moment" },
-  { categorie: "Atelier", emoji: "🛠️", phrase: "Crée un truc. Même raté c'est sympa.", sub: "Atelier · en ce moment" },
-  { categorie: "Enfants", emoji: "🧒", phrase: "Épuise-les dehors. Dors mieux ce soir.", sub: "Enfants · en ce moment" },
-  { categorie: "Animaux", emoji: "🐾", phrase: "Ton chien a besoin de toi. (C'est lui qui le dit.)", sub: "Animaux · en ce moment" },
-  { categorie: "Brocante", emoji: "🏺", phrase: "Achète des trucs dont t'as pas besoin. Avec style.", sub: "Brocante · en ce moment" },
-  { categorie: "Loto", emoji: "🎰", phrase: "Ce soir c'est peut-être toi. (C'est pas toi.)", sub: "Loto · en ce moment" },
+  { categorie: "Musique", emoji: "🎵", bg: "#7C3AED", accent: "#f3f4f6", phrase: "Tes oreilles méritent mieux que Spotify.", sub: "Musique · en ce moment" },
+  { categorie: "Sport", emoji: "🏃", bg: "#059669", accent: "#f3f4f6", phrase: "Ton canapé survivra sans toi ce soir.", sub: "Sport · en ce moment" },
+  { categorie: "Nature & Rando", emoji: "🌿", bg: "#0891B2", accent: "#f3f4f6", phrase: "La nature existe aussi en vrai, paraît-il.", sub: "Nature & Rando · en ce moment" },
+  { categorie: "Culture", emoji: "🎨", bg: "#D97706", accent: "#f3f4f6", phrase: "Sors, t'auras l'air cultivé au bureau lundi.", sub: "Culture · en ce moment" },
+  { categorie: "Food", emoji: "🍕", bg: "#DC2626", accent: "#f3f4f6", phrase: "Tu peux pas manger pareil chez toi. Promis.", sub: "Food · en ce moment" },
+  { categorie: "Danse", emoji: "💃", bg: "#DB2777", accent: "#f3f4f6", phrase: "Personne juge. Enfin presque.", sub: "Danse · en ce moment" },
+  { categorie: "Bar & Nuit", emoji: "🍸", bg: "#1D4ED8", accent: "#f3f4f6", phrase: "Un verre dehors, ça compte comme du social.", sub: "Bar & Nuit · en ce moment" },
+  { categorie: "Atelier", emoji: "🛠️", bg: "#B45309", accent: "#f3f4f6", phrase: "Crée un truc. Même raté c'est sympa.", sub: "Atelier · en ce moment" },
+  { categorie: "Enfants", emoji: "🧒", bg: "#0EA5E9", accent: "#f3f4f6", phrase: "Épuise-les dehors. Dors mieux ce soir.", sub: "Enfants · en ce moment" },
+  { categorie: "Animaux", emoji: "🐾", bg: "#16A34A", accent: "#f3f4f6", phrase: "Ton chien a besoin de toi. (C'est lui qui le dit.)", sub: "Animaux · en ce moment" },
+  { categorie: "Brocante", emoji: "🏺", bg: "#92400E", accent: "#f3f4f6", phrase: "Achète des trucs dont t'as pas besoin. Avec style.", sub: "Brocante · en ce moment" },
+  { categorie: "Loto", emoji: "🎰", bg: "#BE185D", accent: "#f3f4f6", phrase: "Ce soir c'est peut-être toi. (C'est pas toi.)", sub: "Loto · en ce moment" },
 ]
 
 const FALLBACK_PHOTOS_POOL: Record<string, string[]> = {
