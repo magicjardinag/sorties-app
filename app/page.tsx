@@ -673,22 +673,23 @@ export default function Home() {
           {/* Sélecteur jours horizontal */}
           <div className="flex items-center gap-2">
             <div className="flex-1 flex gap-2 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
-              {/* Bouton Tous */}
-              <button onClick={() => { setJourActif("tout"); setShowCalendrier(false) }}
-                className="flex-shrink-0 flex flex-col items-center justify-center rounded-2xl border transition-all"
-                style={{ background: jourActif==="tout" ? ACCENT : "#fff", color: jourActif==="tout" ? "#fff" : "#555", borderColor: jourActif==="tout" ? ACCENT : "#e5e5e5", minWidth: 52, padding: "6px 8px" }}>
-                <span className="text-[10px] font-bold uppercase tracking-wide">Tous</span>
-                <span className="text-lg font-black leading-none my-0.5">✦</span>
-                <span className="text-[9px] opacity-0">—</span>
-              </button>
+
               {/* Jours défilants */}
               {prochainsjours.map(j => (
                 <button key={j.dateStr} onClick={() => { const next = jourActif===j.dateStr ? "tout" : j.dateStr; setJourActif(next); setShowCalendrier(false); if (next !== "tout") track("filtre_date", undefined, { date: j.dateStr }) }}
-                  className="flex-shrink-0 flex flex-col items-center justify-center rounded-2xl border transition-all"
-                  style={{ background: jourActif===j.dateStr ? ACCENT : "#fff", color: jourActif===j.dateStr ? "#fff" : "#555", borderColor: jourActif===j.dateStr ? ACCENT : "#e5e5e5", minWidth: 52, padding: "6px 8px" }}>
-                  <span className="text-[10px] font-bold uppercase tracking-wide">{j.jourNom}</span>
-                  <span className="text-xl font-black leading-tight">{j.jourNum}</span>
-                  <span className="text-[9px] opacity-60">{j.mois}</span>
+                  className="flex-shrink-0 flex flex-col items-center justify-center transition-all"
+                  style={{
+                    background: jourActif===j.dateStr ? ACCENT : "#fff",
+                    color: jourActif===j.dateStr ? "#fff" : "#374151",
+                    border: jourActif===j.dateStr ? "none" : "1px solid #e5e7eb",
+                    borderRadius: jourActif===j.dateStr ? "20px" : "14px",
+                    minWidth: 58,
+                    padding: "8px 10px",
+                    boxShadow: jourActif===j.dateStr ? "0 4px 12px rgba(26,26,46,0.25)" : "none",
+                  }}>
+                  <span className="text-[10px] font-bold uppercase tracking-wide" style={{ opacity: jourActif===j.dateStr ? 1 : 0.5 }}>{j.jourNom}</span>
+                  <span className="text-2xl font-black leading-tight">{j.jourNum}</span>
+                  <span className="text-[9px]" style={{ opacity: jourActif===j.dateStr ? 0.8 : 0.4 }}>{j.mois}</span>
                 </button>
               ))}
             </div>
