@@ -598,12 +598,7 @@ export default function Home() {
           <button onClick={() => router.push("/")} className="flex-shrink-0 font-black text-xl tracking-tight" style={{ color: ACCENT }}>
             Sorties<span style={{ color: "#6b7280" }}>App</span>
           </button>
-          <div className="hidden sm:flex flex-1 max-w-md items-center bg-gray-100 rounded-full px-4 py-2.5 gap-2">
-            <span className="text-gray-400 text-sm">🔍</span>
-            <input type="text" placeholder="Événement, ville..." className="bg-transparent flex-1 text-sm text-gray-700 outline-none placeholder-gray-400 font-medium" value={recherche} onChange={e => setRecherche(e.target.value)} />
-            {recherche && <button onClick={() => setRecherche("")} className="text-gray-400 text-sm">✕</button>}
-          </div>
-          <div className="hidden sm:flex items-center gap-2">
+            <div className="hidden sm:flex items-center gap-2">
             <button onClick={() => { router.push("/carte"); track("clic_carte") }} className="flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium text-gray-600 hover:bg-gray-100">🗺️ Carte</button>
             {user?.email===ADMIN_EMAIL && <button onClick={() => router.push("/admin")} className="px-3 py-2 rounded-full text-sm font-medium text-gray-500 hover:bg-gray-100">⚙️</button>}
             {user ? <button onClick={() => router.push("/dashboard")} className="px-3 py-2 rounded-full text-sm font-medium text-gray-600 hover:bg-gray-100">Mon espace</button>
