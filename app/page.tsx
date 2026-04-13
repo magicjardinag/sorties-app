@@ -562,7 +562,7 @@ export default function Home() {
   const filtresBoutons = [{label:"Tous",value:"tout"},{label:"Aujourd'hui",value:dates.today},{label:"Demain",value:dates.demain},{label:"Ce week-end",value:"weekend"}]
 
   // 14 prochains jours pour le sélecteur horizontal
-  const prochainsjours = Array.from({ length: 14 }, (_, i) => {
+  const prochainsjours = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(today)
     d.setDate(today.getDate() + i)
     const dateStr = d.toISOString().split("T")[0]
@@ -746,14 +746,16 @@ export default function Home() {
       </section>
 
       {/* LAYOUT PRINCIPAL */}
-      {showCalendrier && (
-        <div className="hidden lg:block fixed left-6 top-32 z-30">
-          <MiniCalendrier evenements={evenements.filter(e => new Date(e.quand) >= today)} jourActif={jourActif} setJourActif={setJourActif} />
-        </div>
-      )}
 
       {/* GRILLE */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex gap-6 items-start">
+        {/* Sidebar calendrier desktop */}
+        {showCalendrier && (
+          <div className="hidden lg:block flex-shrink-0 sticky top-20">
+            <MiniCalendrier evenements={evenements.filter(e => new Date(e.quand) >= today)} jourActif={jourActif} setJourActif={(d) => { setJourActif(d); if (d === "tout") setShowCalendrier(false) }} />
+          </div>
+        )}
+        <div className="flex-1 min-w-0">
         <div className="flex items-center gap-3 mb-5">
           <span className="font-black text-2xl text-gray-900">{loading ? "..." : evenementsFiltres.length}</span>
           <span className="text-sm font-medium text-gray-500">
@@ -826,6 +828,7 @@ export default function Home() {
             })}
           </div>
         )}
+        </div>
       </div>
 
       {/* PUB MOBILE */}
