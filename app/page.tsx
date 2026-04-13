@@ -598,7 +598,8 @@ export default function Home() {
           <button onClick={() => router.push("/")} className="flex-shrink-0 font-black text-xl tracking-tight" style={{ color: ACCENT }}>
             Sorties<span style={{ color: "#6b7280" }}>App</span>
           </button>
-            <div className="hidden sm:flex items-center gap-2">
+
+          <div className="hidden sm:flex items-center gap-2">
             <button onClick={() => { router.push("/carte"); track("clic_carte") }} className="flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium text-gray-600 hover:bg-gray-100">🗺️ Carte</button>
             {user?.email===ADMIN_EMAIL && <button onClick={() => router.push("/admin")} className="px-3 py-2 rounded-full text-sm font-medium text-gray-500 hover:bg-gray-100">⚙️</button>}
             {user ? <button onClick={() => router.push("/dashboard")} className="px-3 py-2 rounded-full text-sm font-medium text-gray-600 hover:bg-gray-100">Mon espace</button>
@@ -895,7 +896,7 @@ export default function Home() {
                       <p className="text-xs text-green-600">Événements dans {rayon} km autour de toi</p>
                     </div>
                   </div>
-                  <button onClick={() => { setShowGeoSheet(false) }}
+                  <button onClick={() => { setFiltreProximite(true); setShowGeoSheet(false) }}
                     className="w-full py-3 rounded-2xl font-bold text-white text-sm"
                     style={{ background: "#1a1a2e" }}>
                     Appliquer — {rayon} km
