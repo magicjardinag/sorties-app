@@ -435,14 +435,7 @@ function HeroCarousel({ evenements, recherche, setRecherche }: { evenements: Eve
               )}
             </div>
 
-            <div className="flex items-center bg-white rounded-full px-4 py-2 gap-3 max-w-md" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.08)", border: "1px solid rgba(0,0,0,0.06)" }}>
-              <span className="text-gray-400">🔍</span>
-              <input type="text" placeholder="Un concert, une rando, une soirée..."
-                className="bg-transparent flex-1 text-sm text-gray-800 outline-none placeholder-gray-400 py-1"
-                value={recherche} onChange={e => setRecherche(e.target.value)} />
-              <button className="flex-shrink-0 px-5 py-2 rounded-full text-sm font-bold text-white transition-colors"
-                style={{ background: "#1a1a2e" }}>Go →</button>
-            </div>
+
           </div>
         </div>
       )}
@@ -599,6 +592,11 @@ export default function Home() {
             Sorties<span style={{ color: "#6b7280" }}>App</span>
           </button>
 
+          <div className="hidden sm:flex flex-1 max-w-md items-center bg-gray-100 rounded-full px-4 py-2.5 gap-2">
+            <span className="text-gray-400 text-sm">🔍</span>
+            <input type="text" placeholder="Événement, ville..." className="bg-transparent flex-1 text-sm text-gray-700 outline-none placeholder-gray-400 font-medium" value={recherche} onChange={e => setRecherche(e.target.value)} />
+            {recherche && <button onClick={() => setRecherche("")} className="text-gray-400 text-sm">✕</button>}
+          </div>
           <div className="hidden sm:flex items-center gap-2">
             <button onClick={() => { router.push("/carte"); track("clic_carte") }} className="flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium text-gray-600 hover:bg-gray-100">🗺️ Carte</button>
             {user?.email===ADMIN_EMAIL && <button onClick={() => router.push("/admin")} className="px-3 py-2 rounded-full text-sm font-medium text-gray-500 hover:bg-gray-100">⚙️</button>}
