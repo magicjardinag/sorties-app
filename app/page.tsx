@@ -316,7 +316,7 @@ function HeroCarousel({ evenements, recherche, setRecherche }: { evenements: Eve
           {/* Label catégorie */}
           <div className="flex items-center gap-2 mb-3">
             <span style={{ fontSize: 22 }}>{slide.emoji}</span>
-            <span className="text-xs font-bold tracking-widest uppercase text-gray-400">{slide.sub}</span>
+            <span className="text-xs font-bold tracking-widest uppercase" style={{ color: "rgba(255,255,255,0.7)" }}>{slide.sub}</span>
           </div>
 
           {/* Slogan */}
@@ -324,7 +324,7 @@ function HeroCarousel({ evenements, recherche, setRecherche }: { evenements: Eve
             fontFamily: "'Syne', sans-serif",
             fontSize: "clamp(22px, 6.5vw, 32px)",
             letterSpacing: "-0.5px",
-            color: "#1a1a2e",
+            color: "#fff",
             lineHeight: 1.15,
             opacity: phraseVisible ? 1 : 0,
             transition: "opacity 0.2s ease",
@@ -400,12 +400,12 @@ function HeroCarousel({ evenements, recherche, setRecherche }: { evenements: Eve
 
           {/* Contenu droit */}
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-bold tracking-widest uppercase mb-3 text-gray-400">{slide.sub}</p>
+            <p className="text-xs font-bold tracking-widest uppercase mb-3" style={{ color: "rgba(255,255,255,0.7)" }}>{slide.sub}</p>
             <h2 className="font-black mb-5" style={{
               fontFamily: "'Syne', sans-serif",
               fontSize: "clamp(28px, 4vw, 52px)",
               letterSpacing: "-1.5px",
-              color: "#1a1a2e",
+              color: "#fff",
               lineHeight: 1.05,
               opacity: phraseVisible ? 1 : 0,
               transform: phraseVisible ? "translateY(0)" : "translateY(-8px)",
